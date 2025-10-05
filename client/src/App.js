@@ -53,7 +53,6 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 };
 
 function AppContent() {
-  const { } = useAuth();
 
   return (
     <CartProvider>
