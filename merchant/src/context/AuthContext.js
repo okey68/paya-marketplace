@@ -41,12 +41,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // Check if user is logged in on app start
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  const checkAuthStatus = async () => {
+  const checkAuthStatus = React.useCallback(async () => {
     try {
       const token = localStorage.getItem('merchantToken');
       if (!token) {
@@ -68,7 +63,12 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Check if user is logged in on app start
+  useEffect(() => {
+    checkAuthStatus();
+  }, [checkAuthStatus]);
 
   const login = async (email, password) => {
     try {

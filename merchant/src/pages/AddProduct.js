@@ -30,7 +30,6 @@ const AddEditProduct = () => {
   });
 
   const [newTag, setNewTag] = useState('');
-  const [selectedImages, setSelectedImages] = useState([]);
 
   const categories = [
     'Electronics',
@@ -46,13 +45,7 @@ const AddEditProduct = () => {
     'Other'
   ];
 
-  useEffect(() => {
-    if (isEdit) {
-      fetchProduct();
-    }
-  }, [id, isEdit]);
-
-  const fetchProduct = async () => {
+  const fetchProduct = React.useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(`/products/${id}`);
@@ -66,19 +59,24 @@ const AddEditProduct = () => {
         dimensions: {
           length: productData.dimensions?.length?.toString() || '',
           width: productData.dimensions?.width?.toString() || '',
-          height: productData.dimensions?.height?.toString() || ''
         }
       });
     } catch (error) {
       console.error('Error fetching product:', error);
       toast.error('Failed to load product');
-      navigate('/products');
+      navigate('/merchant/products');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
 
-  const handleInputChange = (field, value) => {
+  useEffect(() => {
+    if (isEdit) {
+      fetchProduct();
+    }
+  }, [isEdit, fetchProduct]);
+
+  const handleInputChange = React.useCallback((field, value) => {
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
       setProduct(prev => ({
@@ -94,7 +92,7 @@ const AddEditProduct = () => {
         [field]: value
       }));
     }
-  };
+  }, []);
 
   const handleAddTag = () => {
     if (newTag.trim() && !product.tags.includes(newTag.trim())) {
