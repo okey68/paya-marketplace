@@ -1,0 +1,224 @@
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
+import toast from 'react-hot-toast';
+
+const Cart = () => {
+  const { items, getItemCount, getTotal, updateQuantity, removeFromCart, clearCart } = useCart();
+  const navigate = useNavigate();
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const formatCurrency = (amount) => {
+    return `KSh ${amount.toLocaleString()}`;
+  };
+
+  const handleQuantityChange = async (itemId, newQuantity) => {
+    if (newQuantity < 1) return;
+    
+    setIsUpdating(true);
+    try {
+      updateQuantity(itemId, newQuantity);
+      toast.success('Cart updated');
+    } catch (error) {
+      toast.error('Failed to update cart');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleRemoveItem = (itemId, itemName) => {
+    removeFromCart(itemId);
+    toast.success(`${itemName} removed from cart`);
+  };
+
+  const handleClearCart = () => {
+    if (window.confirm('Are you sure you want to clear your cart?')) {
+      clearCart();
+      toast.success('Cart cleared');
+    }
+  };
+
+  const handleCheckout = () => {
+    // For now, redirect to a placeholder checkout page
+    navigate('/checkout');
+  };
+
+  const subtotal = getTotal();
+  const shipping = subtotal > 5000 ? 0 : 500; // Free shipping over KSh 5,000
+  const tax = Math.round(subtotal * 0.16); // 16% VAT
+  const total = subtotal + shipping + tax;
+
+  if (getItemCount() === 0) {
+    return (
+      <div className="cart-container">
+        <div className="container">
+          <div className="empty-cart">
+            <div className="empty-cart-icon">🛒</div>
+            <h2>Your cart is empty</h2>
+            <p>Start shopping to add items to your cart</p>
+            <Link to="/marketplace" className="btn btn-primary btn-lg">
+              Browse Products
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="cart-container">
+      <div className="container">
+        <div className="cart-header">
+          <h1>Shopping Cart</h1>
+          <button 
+            className="btn btn-outline btn-sm"
+            onClick={handleClearCart}
+          >
+            Clear Cart
+          </button>
+        </div>
+
+        <div className="cart-content">
+          {/* Cart Items */}
+          <div className="cart-items">
+            <div className="cart-items-header">
+              <span>Product</span>
+              <span>Price</span>
+              <span>Quantity</span>
+              <span>Total</span>
+              <span></span>
+            </div>
+
+            {items.map(item => (
+              <div key={item.id} className="cart-item">
+                <div className="item-product">
+                  <div className="item-image">
+                    {item.image ? (
+                      <img 
+                        src={`/api/uploads/${item.image}`} 
+                        alt={item.name}
+                        onError={(e) => {
+                          e.target.src = '/placeholder-product.png';
+                        }}
+                      />
+                    ) : (
+                      <div className="placeholder-image">📦</div>
+                    )}
+                  </div>
+                  <div className="item-details">
+                    <h3>{item.name}</h3>
+                    <p>by {item.merchantName}</p>
+                    <Link to={`/product/${item.id}`} className="view-product">
+                      View Product
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="item-price">
+                  {formatCurrency(item.price)}
+                </div>
+
+                <div className="item-quantity">
+                  <div className="quantity-controls">
+                    <button 
+                      onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                      disabled={item.quantity <= 1 || isUpdating}
+                    >
+                      -
+                    </button>
+                    <span>{item.quantity}</span>
+                    <button 
+                      onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                      disabled={isUpdating}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className="item-total">
+                  {formatCurrency(item.price * item.quantity)}
+                </div>
+
+                <div className="item-actions">
+                  <button 
+                    className="remove-btn"
+                    onClick={() => handleRemoveItem(item.id, item.name)}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Cart Summary */}
+          <div className="cart-summary">
+            <div className="summary-card">
+              <h3>Order Summary</h3>
+              
+              <div className="summary-row">
+                <span>Subtotal ({getItemCount()} items)</span>
+                <span>{formatCurrency(subtotal)}</span>
+              </div>
+              
+              <div className="summary-row">
+                <span>Shipping</span>
+                <span>{shipping === 0 ? 'Free' : formatCurrency(shipping)}</span>
+              </div>
+              
+              <div className="summary-row">
+                <span>VAT (16%)</span>
+                <span>{formatCurrency(tax)}</span>
+              </div>
+              
+              <div className="summary-divider"></div>
+              
+              <div className="summary-row total-row">
+                <span>Total</span>
+                <span>{formatCurrency(total)}</span>
+              </div>
+
+              {shipping > 0 && (
+                <div className="shipping-notice">
+                  <p>💡 Add {formatCurrency(5000 - subtotal)} more for free shipping!</p>
+                </div>
+              )}
+
+              <button 
+                className="btn btn-primary btn-lg btn-full"
+                onClick={handleCheckout}
+              >
+                Proceed to Checkout
+              </button>
+
+              <div className="security-badges">
+                <div className="badge">
+                  <span>🔒</span>
+                  <span>Secure Checkout</span>
+                </div>
+                <div className="badge">
+                  <span>🚚</span>
+                  <span>Fast Delivery</span>
+                </div>
+                <div className="badge">
+                  <span>🔄</span>
+                  <span>Easy Returns</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Continue Shopping */}
+        <div className="continue-shopping">
+          <Link to="/marketplace" className="btn btn-outline">
+            ← Continue Shopping
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Cart;
