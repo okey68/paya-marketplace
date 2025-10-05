@@ -2,15 +2,20 @@
   "name": "paya-marketplace",
   "version": "1.0.0",
   "description": "Paya Marketplace - Multi-vendor e-commerce platform for Kenyan businesses",
-  "main": "index.js",
+  "main": "server/src/index.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\" \"npm run admin:dev\"",
     "server:dev": "cd server && npm run dev",
     "client:dev": "cd client && npm start",
     "admin:dev": "cd admin && npm start",
     "install:all": "npm install && cd client && npm install && cd ../server && npm install && cd ../admin && npm install",
-    "build": "cd client && npm run build && cd ../admin && npm run build",
-    "start": "cd server && npm start"
+    "build": "cd server && npm install --production",
+    "start": "cd server && npm start",
+    "postinstall": "cd server && npm install --production"
   },
   "keywords": ["marketplace", "ecommerce", "kenya", "bnpl", "paya"],
   "author": "Paya",
