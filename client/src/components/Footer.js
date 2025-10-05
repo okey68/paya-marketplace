@@ -34,9 +34,9 @@ const Footer = () => {
               Kenya's premier marketplace connecting businesses with customers through innovative BNPL solutions.
             </p>
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <a href="#" style={{ color: '#a0aec0', fontSize: '1.25rem' }}>📧</a>
-              <a href="#" style={{ color: '#a0aec0', fontSize: '1.25rem' }}>📱</a>
-              <a href="#" style={{ color: '#a0aec0', fontSize: '1.25rem' }}>🐦</a>
+              <a href="mailto:info@paya.com" style={{ color: '#a0aec0', fontSize: '1.25rem' }}>📧</a>
+              <a href="tel:+254700000000" style={{ color: '#a0aec0', fontSize: '1.25rem' }}>📱</a>
+              <a href="https://twitter.com/paya" style={{ color: '#a0aec0', fontSize: '1.25rem' }}>🐦</a>
             </div>
           </div>
 
@@ -57,19 +57,19 @@ const Footer = () => {
                 </Link>
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                <a href="#" style={{ color: '#a0aec0', textDecoration: 'none' }}>
+                <Link to="/how-it-works" style={{ color: '#a0aec0', textDecoration: 'none' }}>
                   How BNPL Works
-                </a>
+                </Link>
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                <a href="#" style={{ color: '#a0aec0', textDecoration: 'none' }}>
+                <Link to="/support" style={{ color: '#a0aec0', textDecoration: 'none' }}>
                   Customer Support
-                </a>
+                </Link>
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                <a href="#" style={{ color: '#a0aec0', textDecoration: 'none' }}>
+                <Link to="/track-order" style={{ color: '#a0aec0', textDecoration: 'none' }}>
                   Track Your Order
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -91,19 +91,19 @@ const Footer = () => {
                 </Link>
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                <a href="#" style={{ color: '#a0aec0', textDecoration: 'none' }}>
+                <Link to="/seller-resources" style={{ color: '#a0aec0', textDecoration: 'none' }}>
                   Seller Resources
-                </a>
+                </Link>
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                <a href="#" style={{ color: '#a0aec0', textDecoration: 'none' }}>
+                <Link to="/fees" style={{ color: '#a0aec0', textDecoration: 'none' }}>
                   Fee Structure
-                </a>
+                </Link>
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                <a href="#" style={{ color: '#a0aec0', textDecoration: 'none' }}>
+                <Link to="/merchant-support" style={{ color: '#a0aec0', textDecoration: 'none' }}>
                   Merchant Support
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -120,24 +120,24 @@ const Footer = () => {
             </h4>
             <ul style={{ listStyle: 'none', padding: 0 }}>
               <li style={{ marginBottom: '0.5rem' }}>
-                <a href="#" style={{ color: '#a0aec0', textDecoration: 'none' }}>
+                <Link to="/about" style={{ color: '#a0aec0', textDecoration: 'none' }}>
                   About Us
-                </a>
+                </Link>
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                <a href="#" style={{ color: '#a0aec0', textDecoration: 'none' }}>
+                <Link to="/careers" style={{ color: '#a0aec0', textDecoration: 'none' }}>
                   Careers
-                </a>
+                </Link>
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                <a href="#" style={{ color: '#a0aec0', textDecoration: 'none' }}>
+                <Link to="/privacy" style={{ color: '#a0aec0', textDecoration: 'none' }}>
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li style={{ marginBottom: '0.5rem' }}>
-                <a href="#" style={{ color: '#a0aec0', textDecoration: 'none' }}>
+                <Link to="/terms" style={{ color: '#a0aec0', textDecoration: 'none' }}>
                   Terms of Service
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
