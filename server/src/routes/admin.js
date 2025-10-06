@@ -7,41 +7,120 @@ const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Seed admin user (unprotected, call once to create admin)
-router.post('/seed-admin', async (req, res) => {
+// Seed database with test accounts (unprotected, call once to create test data)
+router.post('/seed-database', async (req, res) => {
   try {
-    // Check if admin already exists
-    const existingAdmin = await User.findOne({ email: 'admin@paya.com', role: 'admin' });
+    const results = {
+      admin: null,
+      merchant: null
+    };
+
+    // 1. Create Admin Account
+    const existingAdmin = await User.findOne({ email: 'admin@paya.com' });
     
     if (existingAdmin) {
-      return res.status(400).json({ message: 'Admin user already exists' });
+      results.admin = 'Admin account already exists';
+    } else {
+      const adminUser = new User({
+        firstName: 'Paya',
+        lastName: 'Admin',
+        email: 'admin@paya.com',
+        password: 'admin123',
+        role: 'admin',
+        isActive: true,
+        isVerified: true,
+        phone: '+254700000001',
+        address: {
+          street: 'Admin Street',
+          city: 'Nairobi',
+          county: 'Nairobi',
+          postalCode: '00100',
+          country: 'Kenya'
+        }
+      });
+
+      await adminUser.save();
+      results.admin = 'Admin account created successfully';
     }
 
-    // Create admin user
-    const adminUser = new User({
-      firstName: 'Paya',
-      lastName: 'Admin',
-      email: 'admin@paya.com',
-      password: 'admin123',
-      role: 'admin',
-      isActive: true,
-      isVerified: true,
-      address: {
-        city: 'Nairobi',
-        county: 'Nairobi',
-        country: 'Kenya'
+    // 2. Create Merchant Account
+    const existingMerchant = await User.findOne({ email: 'merchant@paya.com' });
+    
+    if (existingMerchant) {
+      results.merchant = 'Merchant account already exists';
+    } else {
+      const merchantUser = new User({
+        firstName: 'Test',
+        lastName: 'Merchant',
+        email: 'merchant@paya.com',
+        password: 'merchant123',
+        role: 'merchant',
+        isActive: true,
+        isVerified: true,
+        phone: '+254700000002',
+        address: {
+          street: '123 Business Avenue',
+          city: 'Nairobi',
+          county: 'Nairobi',
+          postalCode: '00100',
+          country: 'Kenya'
+        },
+        business: {
+          name: 'Test Merchant Store',
+          description: 'A test merchant store for development and testing',
+          category: 'Electronics',
+          registrationNumber: 'TEST-BIZ-001',
+          taxId: 'TAX-001',
+          bankAccount: {
+            bankName: 'Test Bank',
+            accountNumber: '1234567890',
+            accountName: 'Test Merchant Store'
+          },
+          documents: {
+            businessLicense: {
+              filename: 'test-license.pdf',
+              uploadDate: new Date()
+            },
+            taxCertificate: {
+              filename: 'test-tax-cert.pdf',
+              uploadDate: new Date()
+            }
+          },
+          verificationStatus: 'approved',
+          approvedAt: new Date()
+        }
+      });
+
+      await merchantUser.save();
+      results.merchant = 'Merchant account created successfully';
+    }
+
+    res.json({ 
+      message: 'Database seeding complete',
+      results,
+      accounts: {
+        admin: {
+          email: 'admin@paya.com',
+          password: 'admin123',
+          urls: {
+            dev: 'http://localhost:3001',
+            prod: 'https://paya-marketplace-admin.netlify.app'
+          }
+        },
+        merchant: {
+          email: 'merchant@paya.com',
+          password: 'merchant123',
+          business: 'Test Merchant Store',
+          urls: {
+            dev: 'http://localhost:3002',
+            prod: 'https://paya-marketplace-merchant.netlify.app'
+          }
+        }
       }
     });
-
-    await adminUser.save();
-    res.json({ 
-      message: 'Admin user created successfully',
-      email: 'admin@paya.com',
-      password: 'admin123'
-    });
   } catch (error) {
-    console.error('Error seeding admin:', error);
-    res.status(500).json({ message: 'Error creating admin user', error: error.message });
+    console.error('Error seeding database:', error);
+    res.status(500).json({ message: 'Error seeding database', error: error.message });
   }
 });
 
