@@ -189,11 +189,11 @@ router.post('/seed-database', async (req, res) => {
           postalCode: '00100',
           country: 'Kenya'
         },
-        business: {
-          name: 'Test Merchant Store',
-          description: 'A test merchant store for development and testing',
-          category: 'Electronics',
-          registrationNumber: 'TEST-BIZ-001',
+        businessInfo: {
+          businessName: 'Test Merchant Store',
+          businessDescription: 'A test merchant store for development and testing',
+          businessCategory: 'Electronics',
+          businessRegistrationNumber: 'TEST-BIZ-001',
           taxId: 'TAX-001',
           bankAccount: {
             bankName: 'Test Bank',
@@ -210,8 +210,9 @@ router.post('/seed-database', async (req, res) => {
               uploadDate: new Date()
             }
           },
-          verificationStatus: 'approved',
-          approvedAt: new Date()
+          approvalStatus: 'approved',
+          approvedAt: new Date(),
+          approvedBy: 'system'
         }
       });
 
@@ -224,7 +225,7 @@ router.post('/seed-database', async (req, res) => {
     if (merchant) {
       const existingProducts = await Product.countDocuments();
       if (existingProducts === 0) {
-        const merchantName = merchant.business?.name || 'Test Merchant Store';
+        const merchantName = merchant.businessInfo?.businessName || 'Test Merchant Store';
         const productsWithMerchant = sampleProducts.map(product => ({
           ...product,
           merchant: merchant._id,

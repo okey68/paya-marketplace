@@ -16,7 +16,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Configure axios defaults
-  axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+  axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'https://web-production-e3e0c.up.railway.app/api';
+
+  // Define logout function first so it can be used in interceptor
+  const logout = React.useCallback(() => {
+    localStorage.removeItem('merchantToken');
+    delete axios.defaults.headers.common['Authorization'];
+    setUser(null);
+  }, []);
 
   // Set up axios interceptor to include token in requests
   useEffect(() => {
@@ -39,7 +46,7 @@ export const AuthProvider = ({ children }) => {
     return () => {
       axios.interceptors.response.eject(responseInterceptor);
     };
-  }, []);
+  }, [logout]);
 
   const checkAuthStatus = React.useCallback(async () => {
     try {
@@ -95,12 +102,6 @@ export const AuthProvider = ({ children }) => {
         message: error.response?.data?.message || error.message || 'Login failed'
       };
     }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('merchantToken');
-    delete axios.defaults.headers.common['Authorization'];
-    setUser(null);
   };
 
   const updateUser = (userData) => {

@@ -64,7 +64,7 @@ const AddEditProduct = () => {
     } catch (error) {
       console.error('Error fetching product:', error);
       toast.error('Failed to load product');
-      navigate('/merchant/products');
+      navigate('/products');
     } finally {
       setLoading(false);
     }

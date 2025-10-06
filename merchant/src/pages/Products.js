@@ -15,8 +15,8 @@ const MerchantProducts = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('/products/merchant');
-      setProducts(response.data);
+      const response = await axios.get('/products/merchant/my-products');
+      setProducts(response.data.products || response.data);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Failed to load products');
@@ -90,6 +90,30 @@ const MerchantProducts = () => {
         </button>
       </div>
 
+      {/* Products Summary - Moved to top */}
+      {products.length > 0 && (
+        <div className="products-summary">
+          <div className="summary-stats">
+            <div className="stat">
+              <strong>{products.length}</strong>
+              <span>Total Products</span>
+            </div>
+            <div className="stat">
+              <strong>{products.filter(p => p.status === 'active').length}</strong>
+              <span>Active</span>
+            </div>
+            <div className="stat">
+              <strong>{products.filter(p => p.stock <= 5).length}</strong>
+              <span>Low Stock</span>
+            </div>
+            <div className="stat">
+              <strong>{products.filter(p => p.stock === 0).length}</strong>
+              <span>Out of Stock</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filters and Search */}
       <div className="products-filters">
         <div className="search-box">
@@ -124,50 +148,66 @@ const MerchantProducts = () => {
         </div>
       </div>
 
-      {/* Products Grid */}
+      {/* Products List */}
       {filteredProducts.length > 0 ? (
-        <div className="products-grid">
+        <div className="products-list">
+          <div className="products-list-header">
+            <div className="col-product">Product</div>
+            <div className="col-category">Category</div>
+            <div className="col-price">Price</div>
+            <div className="col-stock">Stock</div>
+            <div className="col-status">Status</div>
+            <div className="col-actions">Actions</div>
+          </div>
           {filteredProducts.map(product => (
-            <div key={product._id} className="product-card">
-              <div className="product-image">
-                {product.images && product.images.length > 0 ? (
-                  <img 
-                    src={`/api/uploads/${product.images[0]}`} 
-                    alt={product.name}
-                    onError={(e) => {
-                      e.target.src = '/placeholder-product.png';
-                    }}
-                  />
-                ) : (
-                  <div className="placeholder-image">📦</div>
-                )}
-              </div>
-
-              <div className="product-info">
-                <h3>{product.name}</h3>
-                <p className="product-category">{product.category}</p>
-                <p className="product-price">KSh {product.price.toLocaleString()}</p>
-                <p className="product-stock">
-                  Stock: {product.stock} 
-                  {product.stock <= 5 && product.stock > 0 && (
-                    <span className="low-stock"> (Low Stock)</span>
+            <div key={product._id} className="product-list-item">
+              <div className="col-product">
+                <div className="product-image-small">
+                  {product.images && product.images.length > 0 ? (
+                    <img 
+                      src={`/api/uploads/${product.images[0]}`} 
+                      alt={product.name}
+                      onError={(e) => {
+                        e.target.src = '/placeholder-product.png';
+                      }}
+                    />
+                  ) : (
+                    <div className="placeholder-image-small">📦</div>
                   )}
-                  {product.stock === 0 && (
-                    <span className="out-of-stock"> (Out of Stock)</span>
-                  )}
-                </p>
-                
-                <div className="product-status">
-                  <span className={`status-badge status-${product.status}`}>
-                    {product.status}
-                  </span>
+                </div>
+                <div className="product-name-info">
+                  <h4>{product.name}</h4>
+                  <span className="product-sku">{product.sku}</span>
                 </div>
               </div>
 
-              <div className="product-actions">
+              <div className="col-category">
+                <span className="category-badge">{product.category}</span>
+              </div>
+
+              <div className="col-price">
+                <strong>KSh {product.price.toLocaleString()}</strong>
+              </div>
+
+              <div className="col-stock">
+                <span className={product.stock <= 5 ? 'stock-low' : product.stock === 0 ? 'stock-out' : 'stock-ok'}>
+                  {product.stock}
+                  {product.stock <= 5 && product.stock > 0 && ' (Low)'}
+                  {product.stock === 0 && ' (Out)'}
+                </span>
+              </div>
+
+              <div className="col-status">
+                <span className={`status-badge status-${product.status}`}>
+                  {product.status}
+                </span>
+              </div>
+
+              <div className="col-actions">
                 <button 
                   className="btn btn-sm btn-secondary"
                   onClick={() => window.location.href = `/products/edit/${product._id}`}
+                  title="Edit"
                 >
                   Edit
                 </button>
@@ -175,6 +215,7 @@ const MerchantProducts = () => {
                 <button 
                   className={`btn btn-sm ${product.status === 'active' ? 'btn-warning' : 'btn-success'}`}
                   onClick={() => handleToggleStatus(product._id, product.status)}
+                  title={product.status === 'active' ? 'Deactivate' : 'Activate'}
                 >
                   {product.status === 'active' ? 'Deactivate' : 'Activate'}
                 </button>
@@ -182,6 +223,7 @@ const MerchantProducts = () => {
                 <button 
                   className="btn btn-sm btn-danger"
                   onClick={() => handleDeleteProduct(product._id)}
+                  title="Delete"
                 >
                   Delete
                 </button>
@@ -205,30 +247,6 @@ const MerchantProducts = () => {
           >
             Add Your First Product
           </button>
-        </div>
-      )}
-
-      {/* Products Summary */}
-      {products.length > 0 && (
-        <div className="products-summary">
-          <div className="summary-stats">
-            <div className="stat">
-              <strong>{products.length}</strong>
-              <span>Total Products</span>
-            </div>
-            <div className="stat">
-              <strong>{products.filter(p => p.status === 'active').length}</strong>
-              <span>Active</span>
-            </div>
-            <div className="stat">
-              <strong>{products.filter(p => p.stock <= 5).length}</strong>
-              <span>Low Stock</span>
-            </div>
-            <div className="stat">
-              <strong>{products.filter(p => p.stock === 0).length}</strong>
-              <span>Out of Stock</span>
-            </div>
-          </div>
         </div>
       )}
     </div>

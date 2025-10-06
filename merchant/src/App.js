@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
 // Components
@@ -39,8 +39,8 @@ const ProtectedRoute = ({ children }) => {
 
 function AppContent() {
   const { user } = useAuth();
-  const location = window.location.pathname;
-  const isLoginPage = location === '/login';
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/login';
 
   return (
     <div className="App">
