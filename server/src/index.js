@@ -47,11 +47,18 @@ const corsOptions = {
       'http://localhost:3001',
       'http://localhost:3002',
       'http://localhost:3003',
-      'https://paya-marketplace.netlify.app'
+      'https://paya-marketplace.netlify.app',
+      'https://paya-marketplace-admin.netlify.app',
+      'https://paya-marketplace-merchant.netlify.app'
     ];
     
     // Allow any localhost or 127.0.0.1 origin for development
     if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true);
+    }
+    
+    // Allow any Netlify deploy preview URLs
+    if (origin.includes('.netlify.app')) {
       return callback(null, true);
     }
     
