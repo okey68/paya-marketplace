@@ -39,11 +39,13 @@ const ProtectedRoute = ({ children }) => {
 
 function AppContent() {
   const { user } = useAuth();
+  const location = window.location.pathname;
+  const isLoginPage = location === '/login';
 
   return (
     <div className="App">
-      <Navbar />
-      <main className="main-content">
+      {!isLoginPage && <Navbar />}
+      <main className="main-content" style={isLoginPage ? { padding: 0 } : {}}>
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />

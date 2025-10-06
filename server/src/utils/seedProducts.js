@@ -129,7 +129,7 @@ const sampleProducts = [
 const seedProducts = async () => {
   try {
     // Connect to MongoDB
-    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://okey68_db_user:6PyTMOIkvsQF5cRh@college.gd8jyma.mongodb.net/paya-marketplace?retryWrites=true&w=majority';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://paya-admin:QVFHuUWKKlOYsAgR@marketplace.ty20ofu.mongodb.net/paya-marketplace?retryWrites=true&w=majority&appName=marketplace';
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB Atlas');
 
@@ -145,10 +145,13 @@ const seedProducts = async () => {
     console.log('Cleared existing products');
 
     // Create products with merchant reference
+    const merchantName = merchant.business?.name || merchant.businessInfo?.businessName || `${merchant.firstName} ${merchant.lastName}`;
+    console.log(`Using merchant: ${merchantName} (${merchant.email})`);
+    
     const productsWithMerchant = sampleProducts.map(product => ({
       ...product,
       merchant: merchant._id,
-      merchantName: merchant.businessInfo?.businessName || `${merchant.firstName} ${merchant.lastName}`,
+      merchantName: merchantName,
       inventory: {
         quantity: product.stock,
         lowStockThreshold: 5,
