@@ -87,7 +87,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Database connection
-const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://okey68_db_user:6PyTMOIkvsQF5cRh@college.gd8jyma.mongodb.net/paya-marketplace?retryWrites=true&w=majority';
+const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://paya-admin:QVFHuUWKKlOYsAgR@marketplace.ty20ofu.mongodb.net/paya-marketplace?retryWrites=true&w=majority&appName=marketplace';
 
 mongoose.connect(mongoUri, {
   useNewUrlParser: true,
