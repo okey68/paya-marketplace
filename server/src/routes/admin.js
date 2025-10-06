@@ -167,11 +167,38 @@ router.post('/seed-database', async (req, res) => {
       results.admin = 'Admin account created successfully';
     }
 
-    // 2. Create Merchant Account
+    // 2. Create/Update Merchant Account
     const existingMerchant = await User.findOne({ email: 'merchant@paya.com' });
     
     if (existingMerchant) {
-      results.merchant = 'Merchant account already exists';
+      // Update existing merchant with correct businessInfo structure
+      existingMerchant.businessInfo = {
+        businessName: 'Test Merchant Store',
+        businessDescription: 'A test merchant store for development and testing',
+        businessCategory: 'Electronics',
+        businessRegistrationNumber: 'TEST-BIZ-001',
+        taxId: 'TAX-001',
+        bankAccount: {
+          bankName: 'Test Bank',
+          accountNumber: '1234567890',
+          accountName: 'Test Merchant Store'
+        },
+        documents: {
+          businessLicense: {
+            filename: 'test-license.pdf',
+            uploadDate: new Date()
+          },
+          taxCertificate: {
+            filename: 'test-tax-cert.pdf',
+            uploadDate: new Date()
+          }
+        },
+        approvalStatus: 'approved',
+        approvedAt: new Date(),
+        approvedBy: 'system'
+      };
+      await existingMerchant.save();
+      results.merchant = 'Merchant account updated with approval';
     } else {
       const merchantUser = new User({
         firstName: 'Test',
