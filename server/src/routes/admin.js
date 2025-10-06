@@ -7,7 +7,45 @@ const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-// All admin routes require admin role
+// Seed admin user (unprotected, call once to create admin)
+router.post('/seed-admin', async (req, res) => {
+  try {
+    // Check if admin already exists
+    const existingAdmin = await User.findOne({ email: 'admin@paya.com', role: 'admin' });
+    
+    if (existingAdmin) {
+      return res.status(400).json({ message: 'Admin user already exists' });
+    }
+
+    // Create admin user
+    const adminUser = new User({
+      firstName: 'Paya',
+      lastName: 'Admin',
+      email: 'admin@paya.com',
+      password: 'admin123',
+      role: 'admin',
+      isActive: true,
+      isVerified: true,
+      address: {
+        city: 'Nairobi',
+        county: 'Nairobi',
+        country: 'Kenya'
+      }
+    });
+
+    await adminUser.save();
+    res.json({ 
+      message: 'Admin user created successfully',
+      email: 'admin@paya.com',
+      password: 'admin123'
+    });
+  } catch (error) {
+    console.error('Error seeding admin:', error);
+    res.status(500).json({ message: 'Error creating admin user', error: error.message });
+  }
+});
+
+// All other admin routes require admin role
 router.use(authenticateToken, requireRole('admin'));
 
 // Dashboard statistics
