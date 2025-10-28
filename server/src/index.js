@@ -16,6 +16,9 @@ if (!process.env.JWT_SECRET) {
 
 const app = express();
 
+// Trust proxy - required for Railway and other reverse proxies
+app.set('trust proxy', 1);
+
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
