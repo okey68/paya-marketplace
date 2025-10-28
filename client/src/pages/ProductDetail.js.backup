@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import axios from 'axios';
+import api from '../utils/api';
 import toast from 'react-hot-toast';
 
 const ProductDetail = () => {
@@ -17,7 +17,7 @@ const ProductDetail = () => {
 
   const fetchProduct = React.useCallback(async () => {
     try {
-      const response = await axios.get(`/products/${id}`);
+      const response = await api.get(`/products/${id}`);
       setProduct(response.data);
     } catch (error) {
       console.error('Error fetching product:', error);
@@ -138,9 +138,9 @@ const ProductDetail = () => {
             </div>
 
             <div className="product-price">
-              <span className="current-price">KSh {product.price.toLocaleString()}</span>
+              <span className="current-price">KES {product.price.toLocaleString()}</span>
               {product.originalPrice && product.originalPrice > product.price && (
-                <span className="original-price">KSh {product.originalPrice.toLocaleString()}</span>
+                <span className="original-price">KES {product.originalPrice.toLocaleString()}</span>
               )}
             </div>
 
@@ -199,7 +199,7 @@ const ProductDetail = () => {
                 <span className="icon">🚚</span>
                 <div>
                   <strong>Free Delivery</strong>
-                  <p>On orders over KSh 5,000</p>
+                  <p>On orders over KES 5,000</p>
                 </div>
               </div>
               <div className="feature">

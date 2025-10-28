@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -67,15 +67,20 @@ const Login = () => {
         maxWidth: '480px'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <h1 style={{ 
-            fontSize: '2.5rem', 
-            fontWeight: '800', 
-            color: '#1a202c', 
-            marginBottom: '0.75rem',
-            letterSpacing: '-0.025em'
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            marginBottom: '1.5rem' 
           }}>
-            Paya Merchant
-          </h1>
+            <img 
+              src="/paya-logo.svg" 
+              alt="Paya" 
+              style={{ 
+                height: '50px', 
+                width: 'auto' 
+              }}
+            />
+          </div>
           <p style={{ 
             color: '#a0aec0',
             fontSize: '1.05rem'
@@ -172,6 +177,25 @@ const Login = () => {
             {isSubmitting ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
+        <div style={{ 
+          marginTop: '1.75rem', 
+          textAlign: 'center',
+          fontSize: '0.95rem',
+          color: '#718096'
+        }}>
+          Don't have a merchant shop yet?{' '}
+          <Link 
+            to="/register" 
+            style={{ 
+              color: '#667eea', 
+              fontWeight: '600',
+              textDecoration: 'none'
+            }}
+          >
+            Create Account
+          </Link>
+        </div>
 
         <div style={{ 
           marginTop: '2rem', 

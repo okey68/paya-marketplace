@@ -50,15 +50,16 @@ const orderSchema = new mongoose.Schema({
   customer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false // Allow null for guest orders
   },
   customerInfo: {
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     email: { type: String, required: true },
+    phoneCountryCode: { type: String, default: '+254' },
     phoneNumber: { type: String },
     dateOfBirth: { type: Date, required: true },
-    kraPin: { type: String, required: true }
+    kraPin: { type: String, required: false } // Optional for guest orders
   },
   
   // Shipping Address
@@ -105,6 +106,9 @@ const orderSchema = new mongoose.Schema({
     type: String,
     enum: [
       'pending_payment',
+      'underwriting',
+      'approved',
+      'rejected',
       'payment_processing', 
       'paid',
       'processing',
@@ -162,6 +166,29 @@ const orderSchema = new mongoose.Schema({
     deliveredAt: { type: Date },
     notes: { type: String }
   }],
+  
+  // Underwriting Result
+  underwritingResult: {
+    approved: { type: Boolean },
+    reason: { type: String },
+    thresholds: {
+      minAge: { type: Number },
+      minIncome: { type: Number },
+      minYearsEmployed: { type: Number },
+      minCreditScore: { type: Number },
+      maxDefaults: { type: Number },
+      maxOtherObligations: { type: Number }
+    },
+    applicantData: {
+      age: { type: Number },
+      income: { type: Number },
+      yearsEmployed: { type: Number },
+      creditScore: { type: Number },
+      defaults: { type: Number },
+      otherObligations: { type: Number }
+    },
+    evaluatedAt: { type: Date }
+  },
   
   // Order Timeline
   timeline: [{

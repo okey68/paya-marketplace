@@ -47,6 +47,11 @@ const userSchema = new mongoose.Schema({
     trim: true,
     uppercase: true
   },
+  phoneCountryCode: {
+    type: String,
+    trim: true,
+    default: '+254'
+  },
   phoneNumber: {
     type: String,
     trim: true
@@ -61,6 +66,27 @@ const userSchema = new mongoose.Schema({
     country: { type: String, default: 'Kenya' }
   },
   
+  // Employment Information (for BNPL underwriting)
+  employmentInfo: {
+    employerName: { type: String, trim: true },
+    jobTitle: { type: String, trim: true },
+    monthlyIncome: { type: Number },
+    yearsEmployed: { type: Number },
+    employmentStatus: { 
+      type: String, 
+      enum: ['permanent', 'contract', 'temporary', 'self-employed'],
+      default: 'permanent'
+    }
+  },
+  
+  // Financial Information (for BNPL underwriting)
+  financialInfo: {
+    creditScore: { type: Number },
+    hasDefaults: { type: Boolean, default: false },
+    defaultCount: { type: Number, default: 0 },
+    otherObligations: { type: Number, default: 0 }
+  },
+  
   // Account Status
   isActive: {
     type: Boolean,
@@ -73,15 +99,47 @@ const userSchema = new mongoose.Schema({
   
   // Merchant-specific fields (populated when role is merchant)
   businessInfo: {
+    // Basic Business Information
+    companyNumber: { type: String, trim: true },
+    registrationDate: { type: Date },
     businessName: { type: String, trim: true },
     businessEmail: { type: String, lowercase: true, trim: true },
     businessRegistrationNumber: { type: String, trim: true },
-    businessType: { type: String, trim: true },
-    taxId: { type: String, trim: true },
+    taxNumber: { type: String, trim: true },
+    taxId: { type: String, trim: true }, // Keep for backward compatibility
+    tradingName: { type: String, trim: true },
+    industrialClassification: { type: String, trim: true },
+    industrialSector: { type: String, trim: true },
+    typeOfBusiness: { 
+      type: String, 
+      enum: ['Business', 'Family', 'Club', 'Other'],
+      trim: true 
+    },
+    businessType: { 
+      type: String, 
+      enum: ['Sole Proprietorship', 'Partnership', 'Limited Company'],
+      trim: true 
+    },
+    website: { type: String, trim: true },
+    description: { type: String, trim: true },
     
     // Business documents
     documents: {
-      businessFormation: {
+      certificateOfIncorporation: {
+        filename: { type: String, default: null },
+        originalName: { type: String, default: null },
+        path: { type: String, default: null },
+        size: { type: Number, default: null },
+        uploadDate: { type: Date, default: null }
+      },
+      kraPinCertificate: {
+        filename: { type: String, default: null },
+        originalName: { type: String, default: null },
+        path: { type: String, default: null },
+        size: { type: Number, default: null },
+        uploadDate: { type: Date, default: null }
+      },
+      cr12: {
         filename: { type: String, default: null },
         originalName: { type: String, default: null },
         path: { type: String, default: null },
@@ -94,15 +152,102 @@ const userSchema = new mongoose.Schema({
         path: { type: String, default: null },
         size: { type: Number, default: null },
         uploadDate: { type: Date, default: null }
+      },
+      // Keep old fields for backward compatibility
+      businessFormation: {
+        filename: { type: String, default: null },
+        originalName: { type: String, default: null },
+        path: { type: String, default: null },
+        size: { type: Number, default: null },
+        uploadDate: { type: Date, default: null }
       }
     },
     
-    // Business status
+    // Directors Information
+    directors: [{
+      name: { type: String, trim: true },
+      dob: { type: Date },
+      nationality: { 
+        type: String, 
+        enum: ['Kenyan', 'USA', 'UK', 'Tanzanian', 'South African'],
+        default: 'Kenyan'
+      },
+      kraPin: { type: String, trim: true, uppercase: true },
+      address: { type: String, trim: true },
+      
+      // Director documents
+      documents: {
+        photoIdFront: {
+          filename: { type: String, default: null },
+          originalName: { type: String, default: null },
+          path: { type: String, default: null },
+          size: { type: Number, default: null },
+          uploadDate: { type: Date, default: null }
+        },
+        photoIdBack: {
+          filename: { type: String, default: null },
+          originalName: { type: String, default: null },
+          path: { type: String, default: null },
+          size: { type: Number, default: null },
+          uploadDate: { type: Date, default: null }
+        },
+        kraCertificate: {
+          filename: { type: String, default: null },
+          originalName: { type: String, default: null },
+          path: { type: String, default: null },
+          size: { type: Number, default: null },
+          uploadDate: { type: Date, default: null }
+        },
+        proofOfAddress: {
+          filename: { type: String, default: null },
+          originalName: { type: String, default: null },
+          path: { type: String, default: null },
+          size: { type: Number, default: null },
+          uploadDate: { type: Date, default: null }
+        },
+        selfie: {
+          filename: { type: String, default: null },
+          originalName: { type: String, default: null },
+          path: { type: String, default: null },
+          size: { type: Number, default: null },
+          uploadDate: { type: Date, default: null }
+        }
+      }
+    }],
+    
+    // Business status and approvals
     approvalStatus: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending'
     },
+    payaApproval: {
+      status: { 
+        type: String, 
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+      },
+      approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      approvedAt: { type: Date },
+      rejectedAt: { type: Date },
+      rejectionReason: { type: String }
+    },
+    bankApproval: {
+      status: { 
+        type: String, 
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+      },
+      approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      approvedAt: { type: Date },
+      rejectedAt: { type: Date },
+      rejectionReason: { type: String }
+    },
+    walletConnected: { type: Boolean, default: false },
+    walletId: { type: String, trim: true },
+    walletConnectedAt: { type: Date },
+    
+    // Legacy fields for backward compatibility
     approvedAt: { type: Date },
     rejectedAt: { type: Date },
     rejectionReason: { type: String }

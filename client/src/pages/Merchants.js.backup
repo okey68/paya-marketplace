@@ -1,0 +1,264 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../utils/api';
+import toast from 'react-hot-toast';
+
+const Merchants = () => {
+  const [merchants, setMerchants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+
+  const categories = [
+    'All Categories',
+    'Electronics',
+    'Appliances', 
+    'Clothing',
+    'Cosmetics',
+    'Medical Care',
+    'Services',
+    'Other'
+  ];
+
+  useEffect(() => {
+    fetchMerchants();
+  }, []);
+
+  const fetchMerchants = async () => {
+    try {
+      const response = await api.get('/merchants/public');
+      // Handle both array response and object response with merchants array
+      const merchantsData = response.data.merchants || response.data || [];
+      setMerchants(Array.isArray(merchantsData) ? merchantsData : []);
+    } catch (error) {
+      console.error('Error fetching merchants:', error);
+      toast.error('Failed to load merchants');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredMerchants = merchants.filter(merchant => {
+    const matchesSearch = merchant.businessInfo?.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         merchant.businessInfo?.businessType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         merchant.businessInfo?.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = selectedCategory === '' || selectedCategory === 'All Categories' || 
+                           merchant.businessInfo?.businessType === selectedCategory;
+    
+    return matchesSearch && matchesCategory && merchant.businessInfo?.approvalStatus === 'approved';
+  });
+
+  const getMerchantInitials = (businessName) => {
+    if (!businessName) return 'M';
+    return businessName
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
+  };
+
+  const getMerchantStats = (merchant) => {
+    // Mock stats - in real app these would come from the API
+    return {
+      products: Math.floor(Math.random() * 50) + 5,
+      rating: (Math.random() * 1.5 + 3.5).toFixed(1),
+      reviews: Math.floor(Math.random() * 200) + 10
+    };
+  };
+
+  if (loading) {
+    return (
+      <div className="merchants-container">
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Loading trusted merchants...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="merchants-page">
+      {/* Hero Section */}
+      <section className="merchants-hero">
+        <div className="container">
+          <div className="hero-content">
+            <h1>Trusted by Kenya's Leading Merchants</h1>
+            <p>Discover quality products from verified businesses across the country</p>
+            <div className="hero-stats">
+              <div className="stat">
+                <span className="stat-number">{merchants.length}+</span>
+                <span className="stat-label">Verified Merchants</span>
+              </div>
+              <div className="stat">
+                <span className="stat-number">10K+</span>
+                <span className="stat-label">Products Available</span>
+              </div>
+              <div className="stat">
+                <span className="stat-number">50K+</span>
+                <span className="stat-label">Happy Customers</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Merchants Logos Section */}
+      <section className="merchants-logos-section">
+        <div className="container">
+          <h2 className="section-subtitle">Featured Merchants</h2>
+          <div className="merchants-logos-grid">
+            {filteredMerchants.slice(0, 12).map(merchant => (
+              <Link 
+                key={merchant._id} 
+                to={`/merchant/${merchant._id}`}
+                className="merchant-logo-card"
+              >
+                {merchant.businessInfo?.logo ? (
+                  <img 
+                    src={merchant.businessInfo.logo} 
+                    alt={merchant.businessInfo?.businessName}
+                    className="merchant-logo"
+                  />
+                ) : (
+                  <div className="merchant-logo-placeholder">
+                    {getMerchantInitials(merchant.businessInfo?.businessName)}
+                  </div>
+                )}
+                <span className="merchant-name">{merchant.businessInfo?.businessName}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Search and Filter Section */}
+      <section className="merchants-directory">
+        <div className="container">
+          <div className="directory-header">
+            <h2>Merchant Directory</h2>
+            <p>Browse all our trusted merchant partners</p>
+          </div>
+
+          <div className="directory-controls">
+            <div className="search-bar">
+              <input
+                type="text"
+                placeholder="Search merchants by name or business type..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+              <button className="search-btn">🔍</button>
+            </div>
+            
+            <div className="category-filters">
+              {categories.map(category => (
+                <button
+                  key={category}
+                  className={`category-filter ${selectedCategory === category || (category === 'All Categories' && selectedCategory === '') ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory(category === 'All Categories' ? '' : category)}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Merchants Grid */}
+          <div className="merchants-grid">
+            {filteredMerchants.map(merchant => {
+              const stats = getMerchantStats(merchant);
+              return (
+                <div key={merchant._id} className="merchant-card">
+                  <Link to={`/merchant/${merchant._id}`} className="merchant-card-link">
+                    <div className="merchant-header">
+                      {merchant.businessInfo?.logo ? (
+                        <img 
+                          src={merchant.businessInfo.logo} 
+                          alt={merchant.businessInfo?.businessName}
+                          className="merchant-avatar"
+                        />
+                      ) : (
+                        <div className="merchant-avatar-placeholder">
+                          {getMerchantInitials(merchant.businessInfo?.businessName)}
+                        </div>
+                      )}
+                      <div className="merchant-info">
+                        <h3 className="merchant-name">{merchant.businessInfo?.businessName}</h3>
+                        <p className="merchant-type">{merchant.businessInfo?.businessType || 'General'}</p>
+                        <div className="merchant-rating">
+                          <span className="stars">★★★★☆</span>
+                          <span className="rating-text">({stats.rating}) • {stats.reviews} reviews</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="merchant-description">
+                      <p>{merchant.businessInfo?.description || 'Quality products and excellent service'}</p>
+                    </div>
+
+                    <div className="merchant-stats">
+                      <div className="stat-item">
+                        <span className="stat-value">{stats.products}</span>
+                        <span className="stat-label">Products</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-value">{stats.rating}</span>
+                        <span className="stat-label">Rating</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-value">{merchant.businessInfo?.location || 'Nairobi'}</span>
+                        <span className="stat-label">Location</span>
+                      </div>
+                    </div>
+
+                    <div className="merchant-actions">
+                      <button className="btn-visit-store">
+                        Visit Store →
+                      </button>
+                    </div>
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+
+          {filteredMerchants.length === 0 && (
+            <div className="empty-state">
+              <div className="empty-icon">🏪</div>
+              <h3>No Merchants Found</h3>
+              <p>Try adjusting your search or filter criteria</p>
+              <button 
+                className="btn btn-primary"
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedCategory('');
+                }}
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="merchants-cta">
+        <div className="container">
+          <div className="cta-content">
+            <h2>Want to Join Our Merchant Network?</h2>
+            <p>Start selling your products to thousands of customers across Kenya</p>
+            <Link to="/merchant/register" className="btn btn-primary btn-large">
+              Become a Merchant
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Merchants;

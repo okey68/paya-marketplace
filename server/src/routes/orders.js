@@ -3,11 +3,12 @@ const { body, query, validationResult } = require('express-validator');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const { authenticateToken, requireRole, requireApprovedMerchant } = require('../middleware/auth');
+const slackService = require('../../services/slackService');
 
 const router = express.Router();
 
-// Create new order (customers only)
-router.post('/', authenticateToken, requireRole('customer'), [
+// Create new order (customers and guests)
+router.post('/', [
   body('items').isArray({ min: 1 }).withMessage('Order must contain at least one item'),
   body('items.*.product').isMongoId().withMessage('Invalid product ID'),
   body('items.*.quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
@@ -25,7 +26,7 @@ router.post('/', authenticateToken, requireRole('customer'), [
       });
     }
 
-    const { items, shippingAddress, customerNotes } = req.body;
+    const { items, shippingAddress, customerNotes, payment, customerInfo } = req.body;
 
     // Validate products and calculate totals
     const orderItems = [];
@@ -72,17 +73,32 @@ router.post('/', authenticateToken, requireRole('customer'), [
 
     const totalAmount = subtotal + totalTax + totalShipping;
 
+    // Generate order number
+    const date = new Date();
+    const dateStr = date.getFullYear().toString() + 
+                   (date.getMonth() + 1).toString().padStart(2, '0') + 
+                   date.getDate().toString().padStart(2, '0');
+    const random = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+    const orderNumber = `PY-${dateStr}-${random}`;
+
     // Create order
     const order = new Order({
-      customer: req.user._id,
-      customerInfo: {
+      orderNumber,
+      customer: req.user?._id || null, // Allow null for guest orders
+      customerInfo: customerInfo || (req.user ? {
         firstName: req.user.firstName,
         lastName: req.user.lastName,
         email: req.user.email,
+        phoneCountryCode: req.user.phoneCountryCode,
         phoneNumber: req.user.phoneNumber,
         dateOfBirth: req.user.dateOfBirth,
         kraPin: req.user.kraPin
-      },
+      } : {
+        firstName: 'Guest',
+        lastName: 'User',
+        email: 'guest@example.com',
+        dateOfBirth: new Date('1990-01-01')
+      }),
       shippingAddress,
       items: orderItems,
       subtotal,
@@ -90,10 +106,15 @@ router.post('/', authenticateToken, requireRole('customer'), [
       totalShipping,
       totalAmount,
       customerNotes,
+      payment: payment || {
+        method: 'paya_bnpl',
+        status: 'pending'
+      },
+      status: 'pending_payment', // Always start as pending until fully completed
       timeline: [{
         status: 'pending_payment',
         timestamp: new Date(),
-        note: 'Order created'
+        note: 'BNPL application started'
       }]
     });
 
@@ -114,6 +135,13 @@ router.post('/', authenticateToken, requireRole('customer'), [
     }));
 
     await order.save();
+
+    // Send Slack notifications
+    await slackService.notifyNewOrder(order);
+    if (payment?.method === 'paya_bnpl') {
+      await slackService.notifyBNPLApplication(order);
+    }
+    await slackService.notifyHighValueOrder(order);
 
     res.status(201).json({
       message: 'Order created successfully',
@@ -237,7 +265,8 @@ router.get('/merchant/orders', authenticateToken, requireApprovedMerchant, [
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .populate('customer', 'firstName lastName email phoneNumber')
-      .populate('items.product', 'name images');
+      .populate('items.product', 'name images')
+      .populate('items.merchant', 'businessInfo.businessName firstName lastName');
 
     const totalQuery = { 'items.merchant': req.user._id };
     if (status) totalQuery.status = status;
@@ -262,6 +291,35 @@ router.get('/merchant/orders', authenticateToken, requireApprovedMerchant, [
   } catch (error) {
     console.error('Get merchant orders error:', error);
     res.status(500).json({ message: 'Failed to fetch merchant orders' });
+  }
+});
+
+// Get single merchant order
+router.get('/merchant/orders/:id', authenticateToken, requireApprovedMerchant, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate('customer', 'firstName lastName email phoneNumber')
+      .populate('items.product', 'name images sku')
+      .populate('items.merchant', 'businessInfo.businessName firstName lastName');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Check if merchant has access to this order
+    const merchantHasAccess = order.items.some(item => 
+      item.merchant._id.toString() === req.user._id.toString()
+    );
+
+    if (!merchantHasAccess) {
+      return res.status(403).json({ message: 'Access denied to this order' });
+    }
+
+    res.json({ order });
+
+  } catch (error) {
+    console.error('Get merchant order error:', error);
+    res.status(500).json({ message: 'Failed to fetch order' });
   }
 });
 
@@ -304,6 +362,150 @@ router.get('/merchant/stats', authenticateToken, requireApprovedMerchant, [
   } catch (error) {
     console.error('Get merchant stats error:', error);
     res.status(500).json({ message: 'Failed to fetch merchant statistics' });
+  }
+});
+
+// Update order status during checkout
+router.patch('/:id/status', [
+  body('status').isIn(['pending_payment', 'underwriting', 'approved', 'rejected', 'paid', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded']).withMessage('Invalid status'),
+  body('note').optional().trim(),
+  body('underwritingResult').optional()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Validation errors', 
+        errors: errors.array() 
+      });
+    }
+
+    const { status, note, underwritingResult } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Store old status for notification
+    const oldStatus = order.status;
+
+    // Update order status
+    order.status = status;
+    
+    // Save underwriting result if provided
+    if (underwritingResult) {
+      order.underwritingResult = {
+        approved: underwritingResult.approved,
+        reason: underwritingResult.reasons ? underwritingResult.reasons.join(', ') : '',
+        thresholds: underwritingResult.thresholds,
+        applicantData: underwritingResult.applicantData,
+        evaluatedAt: new Date()
+      };
+    }
+    
+    // Add timeline entry
+    order.timeline.push({
+      status,
+      timestamp: new Date(),
+      note: note || `Status updated to ${status}`
+    });
+
+    // If status is paid, update payment info
+    if (status === 'paid' && order.payment.method === 'paya_bnpl') {
+      order.payment.status = 'completed';
+      order.payment.paidAt = new Date();
+      if (order.payment.bnpl) {
+        order.payment.bnpl.agreementAccepted = true;
+        order.payment.bnpl.agreementAcceptedAt = new Date();
+      }
+    }
+
+    await order.save();
+
+    // Send Slack notification for status change
+    await slackService.notifyOrderStatusChange(order, oldStatus, status);
+
+    // Send specific notifications for BNPL status changes
+    if (status === 'approved' && order.payment?.method === 'paya_bnpl') {
+      await slackService.notifyBNPLApproval(order);
+    } else if (status === 'rejected' && order.payment?.method === 'paya_bnpl') {
+      // Extract rejection reasons from the note
+      const reasons = note ? note.replace('BNPL application rejected: ', '').split(', ') : ['Application did not meet criteria'];
+      await slackService.notifyBNPLRejection(order, reasons);
+    }
+
+    res.json({
+      message: 'Order status updated successfully',
+      order
+    });
+
+  } catch (error) {
+    console.error('Update order status error:', error);
+    res.status(500).json({ message: 'Failed to update order status' });
+  }
+});
+
+// Get all orders (admin only)
+router.get('/admin/orders', authenticateToken, requireRole('admin'), [
+  query('page').optional().isInt({ min: 1 }),
+  query('limit').optional().isInt({ min: 1, max: 50 }),
+  query('status').optional().trim(),
+  query('merchant').optional().isMongoId(),
+  query('customer').optional().isMongoId()
+], async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status, merchant, customer } = req.query;
+
+    const query = {};
+    if (status) query.status = status;
+    if (merchant) query['items.merchant'] = merchant;
+    if (customer) query.customer = customer;
+
+    const orders = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .populate('customer', 'firstName lastName email phoneNumber')
+      .populate('items.product', 'name images')
+      .populate('items.merchant', 'businessInfo.businessName firstName lastName');
+
+    const total = await Order.countDocuments(query);
+
+    res.json({
+      orders,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: parseInt(limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Get admin orders error:', error);
+    res.status(500).json({ message: 'Failed to fetch orders' });
+  }
+});
+
+// Get single order (admin only)
+router.get('/admin/order-detail/:id', authenticateToken, requireRole('admin'), async (req, res) => {
+  try {
+    console.log('Admin order detail route hit with ID:', req.params.id);
+    const order = await Order.findById(req.params.id)
+      .populate('customer', 'firstName lastName email phoneNumber')
+      .populate('items.product', 'name images sku')
+      .populate('items.merchant', 'businessInfo.businessName firstName lastName');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    res.json({ order });
+
+  } catch (error) {
+    console.error('Get admin order error:', error);
+    res.status(500).json({ message: 'Failed to fetch order' });
   }
 });
 

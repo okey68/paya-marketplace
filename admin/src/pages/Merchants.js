@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const Merchants = () => {
+  const navigate = useNavigate();
   const [merchants, setMerchants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -138,10 +140,22 @@ const Merchants = () => {
                 {merchants.map((merchant) => (
                   <tr key={merchant._id}>
                     <td>
-                      <strong>{merchant.businessInfo?.businessName || 'N/A'}</strong>
+                      <button
+                        onClick={() => navigate(`/merchants/${merchant._id}`)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          color: '#667eea',
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <strong>{merchant.businessInfo?.businessName || 'N/A'}</strong>
+                      </button>
                       <br />
                       <small style={{ color: '#718096' }}>
-                        {merchant.businessInfo?.businessType || 'N/A'}
+                        {merchant.businessInfo?.businessType || 'retail'}
                       </small>
                     </td>
                     <td>{merchant.firstName} {merchant.lastName}</td>

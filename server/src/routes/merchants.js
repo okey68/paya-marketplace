@@ -1,11 +1,64 @@
 const express = require('express');
 const { query, validationResult } = require('express-validator');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const { optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Get all approved merchants (public) - alias route
+router.get('/public', optionalAuth, [
+  query('page').optional().isInt({ min: 1 }),
+  query('limit').optional().isInt({ min: 1, max: 50 }),
+  query('search').optional().trim(),
+  query('businessType').optional().trim()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Validation errors', 
+        errors: errors.array() 
+      });
+    }
+
+    const { page = 1, limit = 20, search, businessType } = req.query;
+
+    const mongoQuery = {
+      role: 'merchant',
+      'businessInfo.approvalStatus': 'approved',
+      isActive: true
+    };
+
+    if (search) {
+      mongoQuery.$or = [
+        { 'businessInfo.businessName': { $regex: search, $options: 'i' } },
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (businessType) {
+      mongoQuery['businessInfo.businessType'] = businessType;
+    }
+
+    const merchants = await User.find(mongoQuery)
+      .select('firstName lastName businessInfo address createdAt')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await User.countDocuments(mongoQuery);
+
+    res.json(merchants);
+
+  } catch (error) {
+    console.error('Get public merchants error:', error);
+    res.status(500).json({ message: 'Failed to fetch merchants' });
+  }
+});
 
 // Get all approved merchants (public)
 router.get('/', optionalAuth, [
@@ -87,6 +140,11 @@ router.get('/', optionalAuth, [
 // Get merchant by ID with products (public)
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid merchant ID' });
+    }
+
     const merchant = await User.findOne({
       _id: req.params.id,
       role: 'merchant',

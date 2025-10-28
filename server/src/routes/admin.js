@@ -347,8 +347,14 @@ router.get('/stats', async (req, res) => {
         $group: {
           _id: null,
           totalRevenue: { $sum: '$totalAmount' },
-          totalAdvanced: { $sum: '$payment.bnpl.advanceAmount' },
           averageOrderValue: { $avg: '$totalAmount' }
+        }
+      },
+      {
+        $project: {
+          totalRevenue: 1,
+          totalAdvanced: { $floor: { $multiply: ['$totalRevenue', 0.99] } },
+          averageOrderValue: 1
         }
       }
     ]);
@@ -363,13 +369,15 @@ router.get('/stats', async (req, res) => {
     const recentUsers = await User.find({ isActive: true })
       .sort({ createdAt: -1 })
       .limit(5)
-      .select('firstName lastName email role createdAt businessInfo.businessName');
+      .select('firstName lastName email role createdAt businessInfo.businessName')
+      .lean();
 
     const recentOrdersList = await Order.find()
       .sort({ createdAt: -1 })
       .limit(5)
       .populate('customer', 'firstName lastName')
-      .select('orderNumber totalAmount status createdAt');
+      .select('orderNumber totalAmount status createdAt')
+      .lean();
 
     res.json({
       period,
@@ -474,6 +482,85 @@ router.get('/merchants', [
   }
 });
 
+// Get single merchant details
+router.get('/merchants/:id', async (req, res) => {
+  try {
+    const merchant = await User.findOne({ 
+      _id: req.params.id, 
+      role: 'merchant' 
+    }).select('-password');
+
+    if (!merchant) {
+      return res.status(404).json({ message: 'Merchant not found' });
+    }
+
+    // Get additional stats for the merchant
+    const productCount = await Product.countDocuments({ merchant: merchant._id });
+    const orderCount = await Order.countDocuments({ 'items.merchant': merchant._id });
+    
+    const merchantWithStats = {
+      ...merchant.toObject(),
+      stats: {
+        productCount,
+        orderCount
+      }
+    };
+
+    res.json(merchantWithStats);
+
+  } catch (error) {
+    console.error('Get merchant details error:', error);
+    res.status(500).json({ message: 'Failed to fetch merchant details' });
+  }
+});
+
+// Get merchant's products
+router.get('/merchants/:id/products', async (req, res) => {
+  try {
+    const merchant = await User.findOne({ 
+      _id: req.params.id, 
+      role: 'merchant' 
+    });
+
+    if (!merchant) {
+      return res.status(404).json({ message: 'Merchant not found' });
+    }
+
+    const products = await Product.find({ merchant: req.params.id })
+      .sort({ createdAt: -1 });
+
+    res.json(products);
+
+  } catch (error) {
+    console.error('Get merchant products error:', error);
+    res.status(500).json({ message: 'Failed to fetch merchant products' });
+  }
+});
+
+// Get merchant's orders
+router.get('/merchants/:id/orders', async (req, res) => {
+  try {
+    const merchant = await User.findOne({ 
+      _id: req.params.id, 
+      role: 'merchant' 
+    });
+
+    if (!merchant) {
+      return res.status(404).json({ message: 'Merchant not found' });
+    }
+
+    const orders = await Order.find({ 'items.merchant': req.params.id })
+      .populate('customer', 'firstName lastName email')
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+
+  } catch (error) {
+    console.error('Get merchant orders error:', error);
+    res.status(500).json({ message: 'Failed to fetch merchant orders' });
+  }
+});
+
 // Approve/reject merchant
 router.patch('/merchants/:id/approval', [
   body('status').isIn(['approved', 'rejected']).withMessage('Status must be approved or rejected'),
@@ -499,16 +586,31 @@ router.patch('/merchants/:id/approval', [
       return res.status(404).json({ message: 'Merchant not found' });
     }
 
+    // Update both legacy and new approval status fields
     merchant.businessInfo.approvalStatus = status;
+    
+    // Initialize payaApproval if it doesn't exist
+    if (!merchant.businessInfo.payaApproval) {
+      merchant.businessInfo.payaApproval = {};
+    }
+    
+    merchant.businessInfo.payaApproval.status = status;
 
     if (status === 'approved') {
       merchant.businessInfo.approvedAt = new Date();
+      merchant.businessInfo.payaApproval.approvedAt = new Date();
+      merchant.businessInfo.payaApproval.approvedBy = req.user?._id;
       merchant.businessInfo.rejectedAt = null;
       merchant.businessInfo.rejectionReason = null;
+      merchant.businessInfo.payaApproval.rejectedAt = null;
+      merchant.businessInfo.payaApproval.rejectionReason = null;
     } else if (status === 'rejected') {
       merchant.businessInfo.rejectedAt = new Date();
       merchant.businessInfo.rejectionReason = rejectionReason;
+      merchant.businessInfo.payaApproval.rejectedAt = new Date();
+      merchant.businessInfo.payaApproval.rejectionReason = rejectionReason;
       merchant.businessInfo.approvedAt = null;
+      merchant.businessInfo.payaApproval.approvedAt = null;
     }
 
     await merchant.save();
@@ -521,6 +623,62 @@ router.patch('/merchants/:id/approval', [
   } catch (error) {
     console.error('Update merchant approval error:', error);
     res.status(500).json({ message: 'Failed to update merchant approval' });
+  }
+});
+
+// Approve/reject bank approval for merchant
+router.patch('/merchants/:id/bank-approval', [
+  body('status').isIn(['approved', 'rejected']).withMessage('Status must be approved or rejected'),
+  body('rejectionReason').optional().trim()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Validation errors', 
+        errors: errors.array() 
+      });
+    }
+
+    const { status, rejectionReason } = req.body;
+
+    const merchant = await User.findOne({ 
+      _id: req.params.id, 
+      role: 'merchant' 
+    });
+
+    if (!merchant) {
+      return res.status(404).json({ message: 'Merchant not found' });
+    }
+
+    // Initialize bankApproval if it doesn't exist
+    if (!merchant.businessInfo.bankApproval) {
+      merchant.businessInfo.bankApproval = {};
+    }
+    
+    merchant.businessInfo.bankApproval.status = status;
+
+    if (status === 'approved') {
+      merchant.businessInfo.bankApproval.approvedAt = new Date();
+      merchant.businessInfo.bankApproval.approvedBy = req.user?._id;
+      merchant.businessInfo.bankApproval.rejectedAt = null;
+      merchant.businessInfo.bankApproval.rejectionReason = null;
+    } else if (status === 'rejected') {
+      merchant.businessInfo.bankApproval.rejectedAt = new Date();
+      merchant.businessInfo.bankApproval.rejectionReason = rejectionReason;
+      merchant.businessInfo.bankApproval.approvedAt = null;
+    }
+
+    await merchant.save();
+
+    res.json({
+      message: `Bank approval ${status} successfully`,
+      merchant: merchant.toSafeObject()
+    });
+
+  } catch (error) {
+    console.error('Update bank approval error:', error);
+    res.status(500).json({ message: 'Failed to update bank approval' });
   }
 });
 
@@ -589,7 +747,37 @@ router.get('/orders', [
         $group: {
           _id: null,
           totalAmount: { $sum: '$totalAmount' },
-          totalAdvanced: { $sum: '$payment.bnpl.advanceAmount' }
+          totalPaid: { 
+            $sum: { 
+              $cond: [
+                { $eq: ['$status', 'paid'] }, 
+                '$totalAmount', 
+                0
+              ] 
+            } 
+          },
+          totalApproved: { 
+            $sum: { 
+              $cond: [
+                { $in: ['$status', ['approved', 'paid']] }, 
+                '$totalAmount', 
+                0
+              ] 
+            } 
+          }
+        }
+      },
+      {
+        $project: {
+          totalAmount: 1,
+          totalAdvanced: { $floor: { $multiply: ['$totalAmount', 0.99] } },
+          totalRemitted: '$totalPaid',
+          totalOutstanding: { 
+            $subtract: [
+              { $floor: { $multiply: ['$totalApproved', 0.99] } },
+              '$totalPaid'
+            ]
+          }
         }
       }
     ]);
@@ -602,7 +790,12 @@ router.get('/orders', [
         totalItems: total,
         itemsPerPage: parseInt(limit)
       },
-      totals: totals[0] || { totalAmount: 0, totalAdvanced: 0 }
+      totals: totals[0] || { 
+        totalAmount: 0, 
+        totalAdvanced: 0,
+        totalRemitted: 0,
+        totalOutstanding: 0
+      }
     });
 
   } catch (error) {

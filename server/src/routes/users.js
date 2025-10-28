@@ -25,7 +25,14 @@ router.put('/profile', authenticateToken, [
   body('address.street').optional().trim(),
   body('address.city').optional().trim(),
   body('address.county').optional().trim(),
-  body('address.postalCode').optional().trim()
+  body('address.postalCode').optional().trim(),
+  body('businessInfo.businessName').optional().trim(),
+  body('businessInfo.businessType').optional().trim(),
+  body('businessInfo.description').optional().trim(),
+  body('businessInfo.website').optional().trim(),
+  body('businessInfo.taxId').optional().trim(),
+  body('businessInfo.businessRegistrationNumber').optional().trim(),
+  body('businessInfo.approvalStatus').optional().trim()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -36,13 +43,19 @@ router.put('/profile', authenticateToken, [
       });
     }
 
-    const allowedFields = ['firstName', 'lastName', 'phoneNumber', 'address'];
+    const allowedFields = ['firstName', 'lastName', 'phoneNumber', 'address', 'businessInfo'];
     const updates = {};
 
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {
         if (field === 'address' && typeof req.body[field] === 'object') {
           updates[field] = { ...req.user.address, ...req.body[field] };
+        } else if (field === 'businessInfo' && typeof req.body[field] === 'object') {
+          // Merge businessInfo with existing data
+          updates[field] = { 
+            ...req.user.businessInfo?.toObject?.() || req.user.businessInfo || {}, 
+            ...req.body[field] 
+          };
         } else {
           updates[field] = req.body[field];
         }
@@ -130,6 +143,30 @@ router.patch('/deactivate', authenticateToken, [
   } catch (error) {
     console.error('Deactivate account error:', error);
     res.status(500).json({ message: 'Failed to deactivate account' });
+  }
+});
+
+// Get user by email (for BNPL underwriting - limited data)
+router.get('/by-email/:email', async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.params.email, isActive: true });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Return only underwriting-relevant data
+    res.json({
+      user: {
+        employmentInfo: user.employmentInfo,
+        financialInfo: user.financialInfo,
+        dateOfBirth: user.dateOfBirth,
+      }
+    });
+
+  } catch (error) {
+    console.error('Get user by email error:', error);
+    res.status(500).json({ message: 'Failed to get user' });
   }
 });
 

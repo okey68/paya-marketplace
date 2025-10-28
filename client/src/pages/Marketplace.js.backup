@@ -1,0 +1,406 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
+import api from '../utils/api';
+import toast from 'react-hot-toast';
+
+const Marketplace = () => {
+  const [products, setProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [selectedPriceRange, setSelectedPriceRange] = useState('');
+  const [categoriesExpanded, setCategoriesExpanded] = useState(true);
+  const [priceExpanded, setPriceExpanded] = useState(true);
+  const [viewMode, setViewMode] = useState('grid'); // grid or list
+  const [wishlist, setWishlist] = useState([]);
+  
+  const { addToCart } = useCart();
+
+  const categories = [
+    'Electronics',
+    'Appliances',
+    'Clothing',
+    'Cosmetics',
+    'Medical Care',
+    'Services',
+    'Other'
+  ];
+
+  const priceRanges = [
+    { label: 'Under KES 5,000', min: 0, max: 5000, value: '0-5000' },
+    { label: 'KES 5,000 - KES 15,000', min: 5000, max: 15000, value: '5000-15000' },
+    { label: 'KES 15,000 - KES 50,000', min: 15000, max: 50000, value: '15000-50000' },
+    { label: 'KES 50,000 - KES 100,000', min: 50000, max: 100000, value: '50000-100000' },
+    { label: 'KES 100,000 - KES 200,000', min: 100000, max: 200000, value: '100000-200000' },
+    { label: 'Over KES 200,000', min: 200000, max: Infinity, value: '200000-inf' }
+  ];
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await api.get('/products/public');
+      // Handle both array response (old format) and object response (new format)
+      const productsData = response.data.products || response.data;
+      const allProducts = Array.isArray(productsData) ? productsData : [];
+      setProducts(allProducts);
+      
+      // Set featured products (first 4 products or highest priced)
+      const featured = allProducts
+        .sort((a, b) => b.price - a.price)
+        .slice(0, 4);
+      setFeaturedProducts(featured);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast.error('Failed to load products');
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleAddToCart = (product) => {
+    addToCart({
+      id: product._id,
+      name: product.name,
+      price: product.price,
+      image: product.images?.[0],
+      merchant: product.merchantName,
+      product: product
+    });
+    toast.success(`${product.name} added to cart!`);
+  };
+
+  const toggleWishlist = (productId) => {
+    setWishlist(prev => {
+      const isInWishlist = prev.includes(productId);
+      if (isInWishlist) {
+        toast.success('Removed from wishlist');
+        return prev.filter(id => id !== productId);
+      } else {
+        toast.success('Added to wishlist');
+        return [...prev, productId];
+      }
+    });
+  };
+
+  const getProductRating = (product) => {
+    // Mock rating system - in real app this would come from reviews
+    return Math.floor(Math.random() * 2) + 4; // 4-5 stars
+  };
+
+  const formatPrice = (price) => {
+    return `KES ${price.toLocaleString()}`;
+  };
+
+  const filteredProducts = products
+    .filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesCategory = selectedCategory === '' || product.category === selectedCategory;
+      
+      // Handle selected price range
+      let matchesPrice = true;
+      if (selectedPriceRange) {
+        const range = priceRanges.find(r => r.value === selectedPriceRange);
+        if (range) {
+          matchesPrice = product.price >= range.min && (range.max === Infinity || product.price <= range.max);
+        }
+      }
+      
+      return matchesSearch && matchesCategory && matchesPrice;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'newest':
+        default:
+          return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+    });
+
+  if (loading) {
+    return (
+      <div className="marketplace-container">
+        <div className="loading-spinner">Loading products...</div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="marketplace-container">
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Loading amazing products...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="modern-marketplace">
+      {/* Hero Section */}
+      <section className="hero-section">
+        <div className="container">
+          <div className="hero-content">
+            <h1>Discover Amazing Products</h1>
+            <p>Shop from trusted merchants across Kenya</p>
+            <div className="hero-search">
+              <input
+                type="text"
+                placeholder="Search for products, brands, categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="hero-search-input"
+              />
+              <button className="hero-search-btn">
+                🔍
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Products */}
+      {featuredProducts.length > 0 && (
+        <section className="featured-section">
+          <div className="container">
+            <h2 className="section-title">Featured Products</h2>
+            <div className="featured-grid">
+              {featuredProducts.map(product => (
+                <div key={product._id} className="featured-card">
+                  <Link to={`/product/${product._id}`}>
+                    <div className="featured-image">
+                      {product.images && product.images.length > 0 ? (
+                        <img 
+                          src={`/api/uploads/${product.images[0]}`} 
+                          alt={product.name}
+                          onError={(e) => {
+                            e.target.src = '/placeholder-product.png';
+                          }}
+                        />
+                      ) : (
+                        <div className="placeholder-image">📦</div>
+                      )}
+                      <div className="featured-badge">Featured</div>
+                    </div>
+                    <div className="featured-info">
+                      <h3>{product.name}</h3>
+                      <p className="featured-price">{formatPrice(product.price)}</p>
+                      <div className="featured-rating">
+                        {'★'.repeat(getProductRating(product))}{'☆'.repeat(5-getProductRating(product))}
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Main Shopping Section */}
+      <section className="shopping-section">
+        <div className="container">
+          <div className="shopping-layout">
+            {/* Enhanced Sidebar */}
+            <aside className="modern-sidebar">
+              <div className="sidebar-header">
+                <h3>Filters</h3>
+                <button 
+                  className="clear-filters"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedCategory('');
+                    setSelectedPriceRange('');
+                  }}
+                >
+                  Clear All
+                </button>
+              </div>
+
+              {/* Categories */}
+              <div className="filter-section">
+                <h4>Categories</h4>
+                <div className="category-grid">
+                  <button
+                    className={`category-chip ${selectedCategory === '' ? 'active' : ''}`}
+                    onClick={() => setSelectedCategory('')}
+                  >
+                    All ({products.length})
+                  </button>
+                  {categories.map(category => {
+                    const count = products.filter(p => p.category === category).length;
+                    return (
+                      <button
+                        key={category}
+                        className={`category-chip ${selectedCategory === category ? 'active' : ''}`}
+                        onClick={() => setSelectedCategory(category)}
+                      >
+                        {category} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Price Range */}
+              <div className="filter-section">
+                <h4>Price Range</h4>
+                <div className="price-grid">
+                  <button
+                    className={`price-chip ${selectedPriceRange === '' ? 'active' : ''}`}
+                    onClick={() => setSelectedPriceRange('')}
+                  >
+                    All Prices
+                  </button>
+                  {priceRanges.map(range => (
+                    <button
+                      key={range.value}
+                      className={`price-chip ${selectedPriceRange === range.value ? 'active' : ''}`}
+                      onClick={() => setSelectedPriceRange(range.value)}
+                    >
+                      {range.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="shopping-main">
+              {/* Toolbar */}
+              <div className="shopping-toolbar">
+                <div className="results-info">
+                  <span>{filteredProducts.length} products found</span>
+                  {selectedCategory && <span className="filter-tag">in {selectedCategory}</span>}
+                </div>
+                <div className="toolbar-controls">
+                  <div className="view-toggle">
+                    <button 
+                      className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                      onClick={() => setViewMode('grid')}
+                    >
+                      ⊞
+                    </button>
+                    <button 
+                      className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                      onClick={() => setViewMode('list')}
+                    >
+                      ☰
+                    </button>
+                  </div>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="sort-select"
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="name">Name A-Z</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Products */}
+              {filteredProducts.length > 0 ? (
+                <div className={`products-container ${viewMode}`}>
+                  {filteredProducts.map(product => (
+                    <div key={product._id} className="modern-product-card">
+                      <div className="product-image-container">
+                        <Link to={`/product/${product._id}`}>
+                          {product.images && product.images.length > 0 ? (
+                            <img 
+                              src={`/api/uploads/${product.images[0]}`} 
+                              alt={product.name}
+                              className="product-image"
+                              onError={(e) => {
+                                e.target.src = '/placeholder-product.png';
+                              }}
+                            />
+                          ) : (
+                            <div className="placeholder-image">📦</div>
+                          )}
+                        </Link>
+                        <button 
+                          className={`wishlist-btn ${wishlist.includes(product._id) ? 'active' : ''}`}
+                          onClick={() => toggleWishlist(product._id)}
+                        >
+                          {wishlist.includes(product._id) ? '❤️' : '🤍'}
+                        </button>
+                        {product.inventory?.quantity <= 5 && product.inventory?.quantity > 0 && (
+                          <div className="stock-badge low">Only {product.inventory.quantity} left</div>
+                        )}
+                        {product.inventory?.quantity === 0 && (
+                          <div className="stock-badge out">Out of Stock</div>
+                        )}
+                      </div>
+
+                      <div className="product-details">
+                        <Link to={`/product/${product._id}`} className="product-link">
+                          <h3 className="product-title">{product.name}</h3>
+                          <p className="product-merchant">by {product.merchantName}</p>
+                          <div className="product-rating">
+                            {'★'.repeat(getProductRating(product))}{'☆'.repeat(5-getProductRating(product))}
+                            <span className="rating-count">(24)</span>
+                          </div>
+                          <p className="product-price">{formatPrice(product.price)}</p>
+                        </Link>
+
+                        <div className="product-actions">
+                          <button 
+                            className="add-to-cart-btn"
+                            onClick={() => handleAddToCart(product)}
+                            disabled={product.inventory?.quantity === 0}
+                          >
+                            {product.inventory?.quantity === 0 ? 'Out of Stock' : '🛒 Add to Cart'}
+                          </button>
+                          <Link 
+                            to={`/product/${product._id}`}
+                            className="quick-view-btn"
+                          >
+                            👁️ Quick View
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-icon">🔍</div>
+                  <h3>No Products Found</h3>
+                  <p>We couldn't find any products matching your criteria</p>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setSelectedCategory('');
+                      setSelectedPriceRange('');
+                    }}
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+              )}
+            </main>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Marketplace;

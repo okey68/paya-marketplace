@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const AddEditProduct = () => {
@@ -285,7 +285,7 @@ const AddEditProduct = () => {
           
           <div className="form-grid">
             <div className="form-group">
-              <label>Price (KSh) *</label>
+              <label>Price (KES) *</label>
               <input
                 type="number"
                 min="0"

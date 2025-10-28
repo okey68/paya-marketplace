@@ -23,11 +23,25 @@ const storage = multer.diskStorage({
   }
 });
 
+// File filter to accept images and PDFs
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|pdf|doc|docx/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedTypes.test(file.mimetype);
+
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    cb(new Error('Only images (JPEG, PNG) and documents (PDF, DOC, DOCX) are allowed'));
+  }
+};
+
 const upload = multer({ 
   storage: storage,
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
-  }
+  },
+  fileFilter: fileFilter
 });
 
 // @route   POST /api/uploads/business-doc
@@ -39,48 +53,31 @@ router.post('/business-doc', authenticateToken, upload.single('document'), async
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const { documentType } = req.body;
+    const { documentType, category } = req.body;
     
-    // Update user's business documents
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Update the specific document type
-    if (documentType === 'businessFormation') {
-      user.businessInfo.documents.businessFormation = {
-        filename: req.file.filename,
-        originalName: req.file.originalname,
-        path: req.file.path,
-        size: req.file.size,
-        uploadDate: new Date()
-      };
-    } else if (documentType === 'businessPermit') {
-      user.businessInfo.documents.businessPermit = {
-        filename: req.file.filename,
-        originalName: req.file.originalname,
-        path: req.file.path,
-        size: req.file.size,
-        uploadDate: new Date()
-      };
-    }
-
-    await user.save();
+    console.log('Upload request:', { documentType, category, filename: req.file.filename });
+    
+    // Return file info without saving to database for now
+    // The frontend will handle saving during final submission
+    const fileInfo = {
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      path: `/uploads/${req.file.filename}`,
+      size: req.file.size,
+      uploadDate: new Date()
+    };
 
     res.json({
       message: 'Document uploaded successfully',
-      file: {
-        id: req.file.filename,
-        filename: req.file.filename,
-        originalName: req.file.originalname,
-        size: req.file.size,
-        documentType
-      }
+      file: fileInfo
     });
   } catch (error) {
     console.error('Business document upload error:', error);
-    res.status(500).json({ message: 'Server error during file upload' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      message: 'Server error during file upload',
+      error: error.message 
+    });
   }
 });
 

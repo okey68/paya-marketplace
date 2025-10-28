@@ -44,14 +44,45 @@ const Orders = () => {
     }).format(amount);
   };
 
+  const downloadCSV = () => {
+    const headers = ['Customer', 'Email', 'Merchant', 'Order Number', 'Total Amount', 'Advanced (99%)', 'Status', 'Date'];
+    const rows = orders.map(order => [
+      order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : `${order.customerInfo.firstName} ${order.customerInfo.lastName}`,
+      order.customerInfo.email,
+      order.items && order.items.length > 0 && order.items[0].merchant ? order.items[0].merchant.businessInfo?.businessName || 'Unknown' : 'Unknown',
+      order.orderNumber,
+      order.totalAmount,
+      Math.floor(order.totalAmount * 0.99),
+      order.status,
+      new Date(order.createdAt).toLocaleDateString()
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending_payment: { class: 'badge-warning', label: 'Pending Payment' },
-      paid: { class: 'badge-info', label: 'Paid' },
+      underwriting: { class: 'badge-info', label: 'Underwriting' },
+      approved: { class: 'badge-success', label: 'Approved' },
+      rejected: { class: 'badge-danger', label: 'Rejected' },
+      paid: { class: 'badge-success', label: 'Paid' },
       processing: { class: 'badge-info', label: 'Processing' },
       shipped: { class: 'badge-warning', label: 'Shipped' },
       delivered: { class: 'badge-success', label: 'Delivered' },
-      cancelled: { class: 'badge-danger', label: 'Cancelled' }
+      cancelled: { class: 'badge-danger', label: 'Cancelled' },
+      refunded: { class: 'badge-warning', label: 'Refunded' }
     };
     
     const config = statusConfig[status] || { class: 'badge-info', label: status };
@@ -66,58 +97,103 @@ const Orders = () => {
       </div>
 
       {/* Summary Stats */}
-      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
         <div className="stat-card">
-          <div className="stat-value">{pagination.totalItems || 0}</div>
-          <div className="stat-label">Total Orders</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{formatCurrency(totals.totalAmount)}</div>
-          <div className="stat-label">Total Order Value</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{formatCurrency(totals.totalAdvanced)}</div>
-          <div className="stat-label">Total Advanced (99%)</div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="card">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-          <div className="form-group">
-            <label className="form-label">Status</label>
-            <select
-              className="form-input"
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-            >
-              <option value="">All Status</option>
-              <option value="pending_payment">Pending Payment</option>
-              <option value="paid">Paid</option>
-              <option value="processing">Processing</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+          <div className="stat-content">
+            <div className="stat-value">{pagination.totalItems || 0}</div>
+            <div className="stat-label">Total Orders</div>
           </div>
-          
-          <div className="form-group">
-            <label className="form-label">Search</label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Order number, customer..."
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
-            />
+        </div>
+        <div className="stat-card">
+          <div className="stat-content">
+            <div className="stat-value">{formatCurrency(totals.totalAmount || 0)}</div>
+            <div className="stat-label">Total Order Value</div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-content">
+            <div className="stat-value">{formatCurrency(totals.totalAdvanced || 0)}</div>
+            <div className="stat-label">Total Advanced (99%)</div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-content">
+            <div className="stat-value">{formatCurrency(totals.totalRemitted || 0)}</div>
+            <div className="stat-label">Remitted</div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-content">
+            <div className="stat-value">{formatCurrency(totals.totalOutstanding || 0)}</div>
+            <div className="stat-label">Outstanding</div>
           </div>
         </div>
       </div>
 
       {/* Orders Table */}
       <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">Orders</h3>
+        <div className="card-header" style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
+          <h3 className="card-title" style={{ margin: 0, marginBottom: '0.5rem' }}>Orders</h3>
+          
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+            <div className="form-group" style={{ margin: 0, width: '150px' }}>
+              <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Status</label>
+              <select
+                className="form-input"
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
+                style={{ padding: '0.5rem', height: '36px' }}
+              >
+                <option value="">All Status</option>
+                <option value="pending_payment">Pending Payment</option>
+                <option value="underwriting">Underwriting</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="paid">Paid</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            
+            <div className="form-group" style={{ margin: 0, width: '300px' }}>
+              <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Search</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Order number, customer..."
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
+                style={{ padding: '0.5rem', height: '36px' }}
+              />
+            </div>
+          </div>
+          
+          <button 
+            onClick={downloadCSV}
+            style={{ 
+              marginLeft: 'auto',
+              marginBottom: '0.5rem',
+              padding: '0.5rem',
+              background: 'white',
+              border: '1px solid #e2e8f0',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '36px',
+              height: '36px'
+            }}
+            title="Download CSV"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#718096" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
         </div>
 
         {loading ? (
@@ -129,43 +205,56 @@ const Orders = () => {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Order #</th>
                   <th>Customer</th>
-                  <th>Items</th>
+                  <th>Order #</th>
                   <th>Total Amount</th>
                   <th>Advanced (99%)</th>
                   <th>Status</th>
                   <th>Date</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.map((order) => (
                   <tr key={order._id}>
                     <td>
-                      <strong>{order.orderNumber}</strong>
+                      <div>
+                        <div style={{ fontWeight: '500' }}>
+                          {order.customer ? 
+                            `${order.customer.firstName} ${order.customer.lastName}` : 
+                            `${order.customerInfo.firstName} ${order.customerInfo.lastName}`
+                          }
+                        </div>
+                        <small style={{ color: '#718096', fontSize: '0.75rem' }}>
+                          {order.customerInfo.email}
+                        </small>
+                      </div>
                     </td>
                     <td>
-                      {order.customer ? 
-                        `${order.customer.firstName} ${order.customer.lastName}` : 
-                        `${order.customerInfo.firstName} ${order.customerInfo.lastName}`
-                      }
-                      <br />
-                      <small style={{ color: '#718096' }}>
-                        {order.customerInfo.email}
-                      </small>
-                    </td>
-                    <td>
-                      {order.items.length} item{order.items.length !== 1 ? 's' : ''}
-                      <br />
-                      <small style={{ color: '#718096' }}>
-                        {order.items.slice(0, 2).map(item => item.productName).join(', ')}
-                        {order.items.length > 2 && ` +${order.items.length - 2} more`}
-                      </small>
+                      <div>
+                        <div style={{ fontWeight: '500' }}>
+                          {order.items && order.items.length > 0 && order.items[0].merchant ? 
+                            order.items[0].merchant.businessInfo?.businessName || 'Unknown Merchant' : 
+                            'Unknown Merchant'
+                          }
+                        </div>
+                        <small style={{ color: '#718096', fontSize: '0.75rem' }}>
+                          {order.orderNumber}
+                        </small>
+                      </div>
                     </td>
                     <td>{formatCurrency(order.totalAmount)}</td>
-                    <td>{formatCurrency(order.payment?.bnpl?.advanceAmount || 0)}</td>
+                    <td>{formatCurrency(Math.floor(order.totalAmount * 0.99))}</td>
                     <td>{getStatusBadge(order.status)}</td>
                     <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <button
+                        className="btn btn-sm btn-primary"
+                        onClick={() => window.location.href = `/orders/${order._id}`}
+                      >
+                        View
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

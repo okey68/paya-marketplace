@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import axios from 'axios';
+import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const MerchantDashboard = () => {
@@ -21,8 +21,8 @@ const MerchantDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const [statsRes, ordersRes] = await Promise.all([
-        axios.get('/merchants/stats'),
-        axios.get('/orders/merchant/recent')
+        api.get('/merchants/stats'),
+        api.get('/orders/merchant/recent')
       ]);
 
       setStats(statsRes.data);
@@ -71,7 +71,7 @@ const MerchantDashboard = () => {
         <div className="stat-card">
           <div className="stat-icon">💰</div>
           <div className="stat-content">
-            <h3>KSh {stats.totalRevenue?.toLocaleString() || 0}</h3>
+            <h3>KES {stats.totalRevenue?.toLocaleString() || 0}</h3>
             <p>Total Revenue</p>
           </div>
         </div>
@@ -138,7 +138,7 @@ const MerchantDashboard = () => {
                     <td>#{order._id.slice(-6)}</td>
                     <td>{order.customer?.fullName || 'N/A'}</td>
                     <td>{order.items?.length || 0} items</td>
-                    <td>KSh {order.totalAmount?.toLocaleString()}</td>
+                    <td>KES {order.totalAmount?.toLocaleString()}</td>
                     <td>
                       <span className={`status-badge status-${order.status}`}>
                         {order.status}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
@@ -7,6 +7,7 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const { getItemCount } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = () => {
@@ -41,28 +42,49 @@ const Navbar = () => {
               fontSize: '1.5rem',
               fontWeight: '700',
               color: '#667eea',
-              textDecoration: 'none'
+              textDecoration: 'none',
+              flex: '0 0 auto'
             }}
           >
             Paya Marketplace
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Center Navigation */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '2rem'
+            gap: '0.5rem',
+            flex: '1',
+            justifyContent: 'center'
           }} className="hidden-mobile">
-            <Link to="/marketplace" style={{ textDecoration: 'none', color: '#4a5568' }}>
+            <Link 
+              to="/marketplace" 
+              className={`nav-link ${location.pathname === '/marketplace' ? 'active' : ''}`}
+              style={{ textDecoration: 'none', color: '#4a5568' }}
+            >
               Shop
+            </Link>
+            <Link 
+              to="/merchants" 
+              className={`nav-link ${location.pathname === '/merchants' ? 'active' : ''}`}
+              style={{ textDecoration: 'none', color: '#4a5568' }}
+            >
+              Merchants
+            </Link>
+            <Link 
+              to="/support" 
+              className={`nav-link ${location.pathname === '/support' ? 'active' : ''}`}
+              style={{ textDecoration: 'none', color: '#4a5568' }}
+            >
+              Support
             </Link>
 
             <Link 
               to="/cart" 
+              className={`nav-link ${location.pathname === '/cart' ? 'active' : ''}`}
               style={{ 
                 textDecoration: 'none', 
                 color: '#4a5568',
-                position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem'
@@ -86,9 +108,17 @@ const Navbar = () => {
                 </span>
               )}
             </Link>
+          </div>
 
+          {/* Right Auth Buttons */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            flex: '0 0 auto'
+          }} className="hidden-mobile">
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <>
                 <span style={{ color: '#718096', fontSize: '0.875rem' }}>
                   Hello, {user.firstName}
                 </span>
@@ -98,16 +128,16 @@ const Navbar = () => {
                 >
                   Logout
                 </button>
-              </div>
+              </>
             ) : (
-              <div style={{ display: 'flex', gap: '1rem' }}>
+              <>
                 <Link to="/login" className="btn btn-outline btn-sm">
                   Login
                 </Link>
                 <Link to="/register" className="btn btn-primary btn-sm">
                   Sign Up
                 </Link>
-              </div>
+              </>
             )}
           </div>
 
@@ -209,21 +239,6 @@ const Navbar = () => {
         )}
       </div>
 
-      <style jsx>{`
-        @media (max-width: 768px) {
-          .hidden-mobile {
-            display: none !important;
-          }
-          .mobile-only {
-            display: block !important;
-          }
-        }
-        @media (min-width: 769px) {
-          .mobile-only {
-            display: none !important;
-          }
-        }
-      `}</style>
     </nav>
   );
 };

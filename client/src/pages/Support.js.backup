@@ -1,0 +1,183 @@
+import React, { useState } from 'react';
+import axios from 'axios';
+import './Support.css';
+
+const Support = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+    orderNumber: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [ticketNumber, setTicketNumber] = useState('');
+  const [error, setError] = useState('');
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError('');
+
+    try {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+      const response = await axios.post(`${API_URL}/support/submit`, formData);
+      setTicketNumber(response.data.ticket.ticketNumber);
+      setSubmitted(true);
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: '',
+        orderNumber: ''
+      });
+    } catch (err) {
+      console.error('Support submission error:', err);
+      setError(err.response?.data?.message || 'Failed to submit support ticket. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div className="support-page">
+        <div className="support-container">
+          <div className="success-message">
+            <div className="success-icon">✓</div>
+            <h2>Support Ticket Submitted!</h2>
+            <p>Your ticket number is: <strong>{ticketNumber}</strong></p>
+            <p>We'll get back to you as soon as possible at the email address you provided.</p>
+            <button 
+              className="btn btn-primary"
+              onClick={() => setSubmitted(false)}
+            >
+              Submit Another Ticket
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="support-page">
+      <div className="support-container">
+        <div className="support-header">
+          <h1>Contact Support</h1>
+          <p>Have a question or need help? We're here to assist you!</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="support-form">
+          {error && (
+            <div className="error-alert">
+              {error}
+            </div>
+          )}
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="name">Name *</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                placeholder="Your full name"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="email">Email *</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                placeholder="your.email@example.com"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="orderNumber">Order Number (Optional)</label>
+            <input
+              type="text"
+              id="orderNumber"
+              name="orderNumber"
+              value={formData.orderNumber}
+              onChange={handleChange}
+              placeholder="PY-YYYYMMDD-XXXXX"
+            />
+            <small className="form-hint">
+              If your question is about a specific order, please include the order number
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="subject">Subject *</label>
+            <input
+              type="text"
+              id="subject"
+              name="subject"
+              value={formData.subject}
+              onChange={handleChange}
+              required
+              placeholder="Brief description of your issue"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="message">Message *</label>
+            <textarea
+              id="message"
+              name="message"
+              value={formData.message}
+              onChange={handleChange}
+              required
+              rows="6"
+              placeholder="Please provide as much detail as possible..."
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            className="btn btn-primary btn-submit"
+            disabled={submitting}
+          >
+            {submitting ? 'Submitting...' : 'Submit Ticket'}
+          </button>
+        </form>
+
+        <div className="support-info">
+          <h3>Other Ways to Reach Us</h3>
+          <div className="contact-methods">
+            <div className="contact-method">
+              <strong>Email:</strong> support@paya.com
+            </div>
+            <div className="contact-method">
+              <strong>Phone:</strong> +254 700 000 000
+            </div>
+            <div className="contact-method">
+              <strong>Hours:</strong> Monday - Friday, 9AM - 6PM EAT
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Support;

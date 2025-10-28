@@ -8,11 +8,12 @@
     "npm": ">=8.0.0"
   },
   "scripts": {
-    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\" \"npm run admin:dev\"",
-    "server:dev": "cd server && npm run dev",
-    "client:dev": "cd client && npm start",
-    "admin:dev": "cd admin && npm start",
-    "install:all": "npm install && cd client && npm install && cd ../server && npm install && cd ../admin && npm install",
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\" \"npm run admin:dev\" \"npm run merchant:dev\"",
+    "server:dev": "cd server && PORT=5001 npm run dev",
+    "client:dev": "cd client && PORT=3002 npm start",
+    "admin:dev": "cd admin && PORT=3000 npm start",
+    "merchant:dev": "cd merchant && PORT=3003 npm start",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install && cd ../admin && npm install && cd ../merchant && npm install",
     "build": "cd server && npm install --production --legacy-peer-deps",
     "start": "cd server && npm start",
     "postinstall": "cd server && npm install --production --legacy-peer-deps"

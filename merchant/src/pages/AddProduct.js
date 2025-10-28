@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import toast from 'react-hot-toast';
 
 const AddEditProduct = () => {
@@ -33,32 +33,29 @@ const AddEditProduct = () => {
 
   const categories = [
     'Electronics',
-    'Fashion',
-    'Home & Garden',
-    'Sports & Outdoors',
-    'Books',
-    'Health & Beauty',
-    'Toys & Games',
-    'Automotive',
-    'Food & Beverages',
-    'Art & Crafts',
+    'Appliances',
+    'Clothing',
+    'Cosmetics',
+    'Medical Care',
+    'Services',
     'Other'
   ];
 
   const fetchProduct = React.useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/products/${id}`);
+      const response = await api.get(`/products/${id}`);
       const productData = response.data;
       
       setProduct({
         ...productData,
-        price: productData.price.toString(),
-        stock: productData.stock.toString(),
+        price: productData.price?.toString() || '',
+        stock: (productData.stock || productData.inventory?.quantity || 0).toString(),
         weight: productData.weight?.toString() || '',
         dimensions: {
           length: productData.dimensions?.length?.toString() || '',
           width: productData.dimensions?.width?.toString() || '',
+          height: productData.dimensions?.height?.toString() || ''
         }
       });
     } catch (error) {
@@ -122,7 +119,7 @@ const AddEditProduct = () => {
         const formData = new FormData();
         formData.append('image', file);
         
-        const response = await axios.post('/uploads/product-image', formData, {
+        const response = await api.post('/uploads/product-image', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
@@ -164,29 +161,39 @@ const AddEditProduct = () => {
 
     try {
       const productData = {
-        ...product,
+        name: product.name,
+        description: product.description,
         price: parseFloat(product.price),
-        stock: parseInt(product.stock),
+        category: product.category,
+        sku: product.sku,
+        tags: product.tags,
+        status: product.status,
         weight: product.weight ? parseFloat(product.weight) : undefined,
         dimensions: {
           length: product.dimensions.length ? parseFloat(product.dimensions.length) : undefined,
           width: product.dimensions.width ? parseFloat(product.dimensions.width) : undefined,
           height: product.dimensions.height ? parseFloat(product.dimensions.height) : undefined
+        },
+        inventory: {
+          quantity: parseInt(product.stock) || 0,
+          lowStockThreshold: 5,
+          trackInventory: true
         }
       };
 
       if (isEdit) {
-        await axios.put(`/products/${id}`, productData);
+        await api.put(`/products/${id}`, productData);
         toast.success('Product updated successfully');
       } else {
-        await axios.post('/products', productData);
+        await api.post('/products', productData);
         toast.success('Product created successfully');
       }
 
       navigate('/products');
     } catch (error) {
       console.error('Error saving product:', error);
-      toast.error(error.response?.data?.message || 'Failed to save product');
+      console.error('Error details:', error.response?.data);
+      toast.error(error.response?.data?.message || error.response?.data?.error || 'Failed to save product');
     } finally {
       setLoading(false);
     }
@@ -283,7 +290,7 @@ const AddEditProduct = () => {
           
           <div className="form-grid">
             <div className="form-group">
-              <label>Price (KSh) *</label>
+              <label>Price (KES) *</label>
               <input
                 type="number"
                 min="0"

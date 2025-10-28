@@ -2,8 +2,28 @@ const express = require('express');
 const { body, query, validationResult } = require('express-validator');
 const Product = require('../models/Product');
 const { authenticateToken, requireApprovedMerchant, optionalAuth } = require('../middleware/auth');
+const multer = require('multer');
+const xlsx = require('xlsx');
 
 const router = express.Router();
+
+// Configure multer for CSV/Excel upload
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'text/csv',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only CSV and Excel files are allowed'));
+    }
+  }
+});
 
 // Get all active products for marketplace (public) - MUST be before /:id route
 router.get('/public', async (req, res) => {
@@ -410,6 +430,129 @@ router.patch('/:id/inventory', authenticateToken, requireApprovedMerchant, [
   } catch (error) {
     console.error('Update inventory error:', error);
     res.status(500).json({ message: 'Failed to update inventory' });
+  }
+});
+
+// Bulk upload products from CSV/Excel
+router.post('/bulk-upload', authenticateToken, requireApprovedMerchant, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // Get user info from authenticated request
+    // req.user is already the full user object from auth middleware
+    const user = req.user;
+    
+    if (!user) {
+      return res.status(401).json({ 
+        message: 'Authentication required'
+      });
+    }
+    
+    const merchantName = user.businessInfo?.businessName || user.fullName || 'Unknown Merchant';
+
+    // Parse the file
+    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(worksheet);
+
+    if (data.length === 0) {
+      return res.status(400).json({ message: 'File is empty or invalid format' });
+    }
+
+    // Validate required fields
+    const requiredFields = ['name', 'price', 'stock'];
+    const missingFields = requiredFields.filter(field => !data[0].hasOwnProperty(field));
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({ 
+        message: `Missing required columns: ${missingFields.join(', ')}` 
+      });
+    }
+
+    // Process and create products
+    const products = [];
+    const errors = [];
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      
+      try {
+        // Validate row data
+        if (!row.name || !row.price || row.stock === undefined) {
+          errors.push({ row: i + 2, message: 'Missing required fields' });
+          continue;
+        }
+
+        // Parse tags if provided (semicolon-separated)
+        const tags = row.tags ? row.tags.split(';').map(tag => tag.trim()).filter(tag => tag) : [];
+        
+        // Validate and normalize category
+        const validCategories = ['Electronics', 'Appliances', 'Clothing', 'Cosmetics', 'Medical Care', 'Services', 'Other'];
+        let category = row.category ? row.category.trim() : 'Other';
+        if (!validCategories.includes(category)) {
+          category = 'Other';
+        }
+        
+        // Create product object
+        const productData = {
+          name: row.name.trim(),
+          description: row.description || '',
+          price: parseFloat(row.price),
+          currency: row.currency || 'KES',
+          taxRate: row.taxRate ? parseFloat(row.taxRate) : 0,
+          shippingCost: row.shippingCost ? parseFloat(row.shippingCost) : 0,
+          category: category,
+          sku: row.sku || `SKU-${Date.now()}-${i}`,
+          tags: tags,
+          merchant: user._id,
+          merchantName: merchantName,
+          inventory: {
+            quantity: parseInt(row.stock) || 0,
+            lowStockThreshold: row.lowStockThreshold ? parseInt(row.lowStockThreshold) : 10,
+            trackInventory: true
+          },
+          status: 'active'
+        };
+
+        // Validate price and stock
+        if (isNaN(productData.price) || productData.price <= 0) {
+          errors.push({ row: i + 2, message: 'Invalid price' });
+          continue;
+        }
+
+        if (isNaN(productData.inventory.quantity) || productData.inventory.quantity < 0) {
+          errors.push({ row: i + 2, message: 'Invalid stock quantity' });
+          continue;
+        }
+
+        const product = new Product(productData);
+        await product.save();
+        products.push(product);
+
+      } catch (error) {
+        errors.push({ 
+          row: i + 2, 
+          message: error.message || 'Failed to create product' 
+        });
+      }
+    }
+
+    res.json({
+      message: `Successfully uploaded ${products.length} products`,
+      count: products.length,
+      errors: errors.length > 0 ? errors : undefined,
+      products: products.map(p => ({ id: p._id, name: p.name }))
+    });
+
+  } catch (error) {
+    console.error('Bulk upload error:', error);
+    res.status(500).json({ 
+      message: 'Failed to process file',
+      error: error.message 
+    });
   }
 });
 

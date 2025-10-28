@@ -75,6 +75,34 @@ const Products = () => {
     return <span className="badge badge-success">In Stock</span>;
   };
 
+  const downloadCSV = () => {
+    const headers = ['Product', 'SKU', 'Merchant', 'Category', 'Price', 'Stock', 'Status', 'Views', 'Created'];
+    const rows = products.map(product => [
+      product.name,
+      product.sku,
+      product.merchant?.businessInfo?.businessName || 'Unknown',
+      product.category,
+      product.price,
+      product.inventory.trackInventory ? product.inventory.quantity : 'Unlimited',
+      product.status,
+      product.views || 0,
+      new Date(product.createdAt).toLocaleDateString()
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `products-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -82,57 +110,82 @@ const Products = () => {
         <p className="page-subtitle">Monitor all products across the marketplace</p>
       </div>
 
-      {/* Filters */}
-      <div className="card">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-          <div className="form-group">
-            <label className="form-label">Status</label>
-            <select
-              className="form-input"
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-            >
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="draft">Draft</option>
-              <option value="out_of_stock">Out of Stock</option>
-            </select>
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label">Category</label>
-            <select
-              className="form-input"
-              value={filters.category}
-              onChange={(e) => setFilters({ ...filters, category: e.target.value, page: 1 })}
-            >
-              <option value="">All Categories</option>
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label">Search</label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Product name, SKU..."
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
-            />
-          </div>
-        </div>
-      </div>
-
       {/* Products Table */}
       <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">
+        <div className="card-header" style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
+          <h3 className="card-title" style={{ margin: 0, marginBottom: '0.5rem' }}>
             Products ({pagination.totalItems || 0})
           </h3>
+          
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+            <div className="form-group" style={{ margin: 0, width: '250px' }}>
+              <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Search</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Product name, SKU..."
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
+                style={{ padding: '0.5rem', height: '36px' }}
+              />
+            </div>
+            
+            <div className="form-group" style={{ margin: 0, width: '150px' }}>
+              <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Category</label>
+              <select
+                className="form-input"
+                value={filters.category}
+                onChange={(e) => setFilters({ ...filters, category: e.target.value, page: 1 })}
+                style={{ padding: '0.5rem', height: '36px' }}
+              >
+                <option value="">All Categories</option>
+                {categories.map(category => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="form-group" style={{ margin: 0, width: '150px' }}>
+              <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Status</label>
+              <select
+                className="form-input"
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
+                style={{ padding: '0.5rem', height: '36px' }}
+              >
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="draft">Draft</option>
+                <option value="out_of_stock">Out of Stock</option>
+              </select>
+            </div>
+          </div>
+          
+          <button 
+            onClick={downloadCSV}
+            style={{ 
+              marginLeft: 'auto',
+              marginBottom: '0.5rem',
+              padding: '0.5rem',
+              background: 'white',
+              border: '1px solid #e2e8f0',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '36px',
+              height: '36px'
+            }}
+            title="Download CSV"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#718096" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
         </div>
 
         {loading ? (

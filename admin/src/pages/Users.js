@@ -118,6 +118,7 @@ const Users = () => {
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
+                  <th>Phone</th>
                   <th>Role</th>
                   <th>Status</th>
                   <th>Location</th>
@@ -161,6 +162,15 @@ const Users = () => {
                             Business: {user.businessInfo.businessEmail}
                           </small>
                         </div>
+                      )}
+                    </td>
+                    <td>
+                      {user.phoneNumber ? (
+                        <span>
+                          {user.phoneCountryCode || '+254'} {user.phoneNumber}
+                        </span>
+                      ) : (
+                        <span style={{ color: '#a0aec0' }}>N/A</span>
                       )}
                     </td>
                     <td>{getRoleBadge(user.role)}</td>

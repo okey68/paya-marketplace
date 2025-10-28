@@ -142,6 +142,13 @@ const productSchema = new mongoose.Schema({
     default: 0
   },
   
+  // Shopify Integration Data
+  shopifyData: {
+    shopifyId: { type: String },
+    shopifyVariantId: { type: String },
+    lastSyncedAt: { type: Date }
+  },
+  
   // Timestamps
   publishedAt: { type: Date },
   lastModified: { type: Date, default: Date.now }

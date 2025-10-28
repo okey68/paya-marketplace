@@ -42,15 +42,20 @@ const Login = ({ onLogin }) => {
         maxWidth: '480px'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <h1 style={{ 
-            fontSize: '2.5rem', 
-            fontWeight: '800', 
-            color: '#1a202c', 
-            marginBottom: '0.75rem',
-            letterSpacing: '-0.025em'
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            marginBottom: '1.5rem' 
           }}>
-            Paya Admin
-          </h1>
+            <img 
+              src="/paya-logo.svg" 
+              alt="Paya" 
+              style={{ 
+                height: '50px', 
+                width: 'auto' 
+              }}
+            />
+          </div>
           <p style={{ 
             color: '#a0aec0',
             fontSize: '1.05rem'

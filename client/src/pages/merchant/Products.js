@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const MerchantProducts = () => {
@@ -146,7 +146,7 @@ const MerchantProducts = () => {
               <div className="product-info">
                 <h3>{product.name}</h3>
                 <p className="product-category">{product.category}</p>
-                <p className="product-price">KSh {product.price.toLocaleString()}</p>
+                <p className="product-price">KES {product.price.toLocaleString()}</p>
                 <p className="product-stock">
                   Stock: {product.stock} 
                   {product.stock <= 5 && product.stock > 0 && (

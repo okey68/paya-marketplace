@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
+const slackService = require('../../services/slackService');
 const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
@@ -14,6 +15,70 @@ const generateToken = (userId) => {
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 };
+
+// General Registration (for merchant portal)
+router.post('/register', [
+  body('firstName').trim().isLength({ min: 1 }).withMessage('First name is required'),
+  body('lastName').trim().isLength({ min: 1 }).withMessage('Last name is required'),
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('role').isIn(['customer', 'merchant']).withMessage('Valid role is required'),
+  body('phone').optional().trim()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Validation errors', 
+        errors: errors.array() 
+      });
+    }
+
+    const { firstName, lastName, email, password, phone, role } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists with this email' });
+    }
+
+    // Create user based on role
+    const userData = {
+      firstName,
+      lastName,
+      email,
+      password,
+      role,
+      phoneNumber: phone,
+      isActive: true
+    };
+
+    // If merchant, set pending approval status
+    if (role === 'merchant') {
+      userData.businessInfo = {
+        approvalStatus: 'pending'
+      };
+    }
+
+    const user = new User(userData);
+    await user.save();
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    res.status(201).json({
+      message: role === 'merchant' 
+        ? 'Merchant account created successfully. Please complete your profile.' 
+        : 'Account created successfully',
+      token,
+      user: user.toSafeObject()
+    });
+
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Registration failed', error: error.message });
+  }
+});
 
 // Customer Registration
 router.post('/register/customer', [
@@ -135,6 +200,9 @@ router.post('/register/merchant', [
     });
 
     await user.save();
+
+    // Send Slack notification for new merchant application
+    await slackService.notifyMerchantApplication(user);
 
     // Generate token
     const token = generateToken(user._id);

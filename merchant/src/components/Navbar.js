@@ -18,8 +18,12 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="container">
         <div className="navbar-brand">
-          <Link to="/dashboard">
-            <h2>Paya Merchant</h2>
+          <Link to="/dashboard" className="brand-link">
+            <img 
+              src="/paya-logo.svg" 
+              alt="Paya" 
+              className="brand-logo"
+            />
           </Link>
         </div>
 
@@ -34,9 +38,19 @@ const Navbar = () => {
             <Link to="/orders" className={`nav-link ${isActive('/orders')}`}>
               Orders
             </Link>
-            <Link to="/onboarding" className={`nav-link ${isActive('/onboarding')}`}>
-              Settings
+            <Link to="/support" className={`nav-link ${isActive('/support')}`}>
+              Support
             </Link>
+            {/* Show Account link only if onboarding is complete, otherwise show Onboarding */}
+            {user.businessInfo?.businessName && user.businessInfo?.companyNumber && user.businessInfo?.directors?.length > 0 ? (
+              <Link to="/account" className={`nav-link ${isActive('/account')}`}>
+                Account
+              </Link>
+            ) : (
+              <Link to="/onboarding" className={`nav-link ${isActive('/onboarding')}`}>
+                Complete Setup
+              </Link>
+            )}
           </div>
         )}
 

@@ -7,10 +7,17 @@ import Navbar from './components/Navbar';
 
 // Pages
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
+import Orders from './pages/Orders';
+import OrderDetail from './pages/OrderDetail';
 import AddProduct from './pages/AddProduct';
-import MerchantOnboarding from './pages/MerchantOnboarding';
+import MerchantOnboarding from './pages/MerchantOnboardingNew';
+import Account from './pages/Account';
+import Support from './pages/Support';
+import ShopifyAccount from './pages/ShopifyAccount';
+import ShopifyPublishing from './pages/ShopifyPublishing';
 
 // Context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -40,15 +47,16 @@ const ProtectedRoute = ({ children }) => {
 function AppContent() {
   const { user } = useAuth();
   const location = useLocation();
-  const isLoginPage = location.pathname === '/login';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
   return (
     <div className="App">
-      {!isLoginPage && <Navbar />}
-      <main className="main-content" style={isLoginPage ? { padding: 0 } : {}}>
+      {!isAuthPage && <Navbar />}
+      <main className="main-content" style={isAuthPage ? { padding: 0 } : {}}>
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           
           {/* Protected Routes */}
           <Route 
@@ -64,6 +72,22 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <Products />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/orders" 
+            element={
+              <ProtectedRoute>
+                <Orders />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/orders/:id" 
+            element={
+              <ProtectedRoute>
+                <OrderDetail />
               </ProtectedRoute>
             } 
           />
@@ -84,10 +108,38 @@ function AppContent() {
             } 
           />
           <Route 
-            path="/onboarding" 
+            path="/support" 
             element={
               <ProtectedRoute>
-                <MerchantOnboarding />
+                <Support />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/shopify/account" 
+            element={
+              <ProtectedRoute>
+                <ShopifyAccount />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/shopify/publishing" 
+            element={
+              <ProtectedRoute>
+                <ShopifyPublishing />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/onboarding" 
+            element={<MerchantOnboarding />} 
+          />
+          <Route 
+            path="/account" 
+            element={
+              <ProtectedRoute>
+                <Account />
               </ProtectedRoute>
             } 
           />

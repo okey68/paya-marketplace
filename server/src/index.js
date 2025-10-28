@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
+const session = require('express-session');
 require('dotenv').config();
 
 // Set JWT secret if not provided
@@ -23,16 +24,23 @@ const orderRoutes = require('./routes/orders');
 const merchantRoutes = require('./routes/merchants');
 const adminRoutes = require('./routes/admin');
 const uploadRoutes = require('./routes/uploads');
+const supportRoutes = require('./routes/support');
+const integrationsRoutes = require('./routes/integrations');
+const underwritingRoutes = require('./routes/underwriting');
 
 // Security middleware
 app.use(helmet());
 app.use(compression());
 
-// Rate limiting
+// Rate limiting (increased for development)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
+  max: 10000, // significantly increased limit for development
+  message: 'Too many requests from this IP, please try again later.',
+  skip: (req) => {
+    // Skip rate limiting for localhost in development
+    return process.env.NODE_ENV === 'development';
+  }
 });
 app.use('/api/', limiter);
 
@@ -47,6 +55,7 @@ const corsOptions = {
       'http://localhost:3001',
       'http://localhost:3002',
       'http://localhost:3003',
+      'http://localhost:3004',
       'https://paya-marketplace.netlify.app',
       'https://paya-marketplace-admin.netlify.app',
       'https://paya-marketplace-merchant.netlify.app'
@@ -77,14 +86,37 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
+// Special handling for Shopify webhooks - they need raw body for HMAC verification
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/integrations/shopify/webhooks/')) {
+    next();
+  } else {
+    express.json({ limit: '10mb' })(req, res, next);
+  }
+});
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// Session middleware (for Shopify OAuth)
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'paya-session-secret-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
 // Logging
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+// Serve uploaded files statically
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Database connection
 const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://paya-admin:QVFHuUWKKlOYsAgR@marketplace.ty20ofu.mongodb.net/paya-marketplace?retryWrites=true&w=majority&appName=marketplace';
@@ -109,6 +141,9 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/merchants', merchantRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/support', supportRoutes);
+app.use('/api/integrations', integrationsRoutes);
+app.use('/api/underwriting', underwritingRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

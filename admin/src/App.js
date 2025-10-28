@@ -4,13 +4,17 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 // Components
-import Sidebar from './components/Sidebar';
+import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Merchants from './pages/Merchants';
+import MerchantDetail from './pages/MerchantDetail';
 import Orders from './pages/Orders';
+import AdminOrderDetail from './pages/AdminOrderDetail';
 import Products from './pages/Products';
 import Users from './pages/Users';
+import Model from './pages/Model';
+import Support from './pages/Support';
 
 // Configure axios defaults
 axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
@@ -98,14 +102,18 @@ function App() {
 
   return (
     <div className="admin-container">
-      <Sidebar user={user} onLogout={handleLogout} />
+      <Navbar user={user} onLogout={handleLogout} />
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/merchants" element={<Merchants />} />
+          <Route path="/merchants/:id" element={<MerchantDetail />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/orders/:id" element={<AdminOrderDetail />} />
           <Route path="/products" element={<Products />} />
           <Route path="/users" element={<Users />} />
+          <Route path="/model" element={<Model />} />
+          <Route path="/support" element={<Support />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

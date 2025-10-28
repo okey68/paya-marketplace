@@ -1,28 +1,104 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 import toast from 'react-hot-toast';
 
 const MerchantOnboarding = () => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState('account');
+  const [accountBalance, setAccountBalance] = useState(0);
+
+  // Check if user is authenticated
+  useEffect(() => {
+    const token = localStorage.getItem('merchantToken');
+    if (!authLoading && !token) {
+      toast.error('Please login to continue');
+      navigate('/login');
+    }
+  }, [authLoading, navigate]);
+
+  // Check if merchant has already completed onboarding
+  useEffect(() => {
+    if (user?.businessInfo?.businessName) {
+      setIsUpdating(true);
+    }
+  }, [user]);
+
+  // Fetch account balance from paid orders
+  useEffect(() => {
+    const fetchAccountBalance = async () => {
+      try {
+        const ordersRes = await api.get('/orders/merchant/orders');
+        const orders = ordersRes.data.orders || [];
+        
+        // Calculate balance from paid orders only
+        const balance = orders
+          .filter(order => order.status === 'paid' || order.status === 'shipped' || order.status === 'delivered')
+          .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+        
+        setAccountBalance(balance);
+      } catch (error) {
+        console.error('Error fetching account balance:', error);
+        setAccountBalance(0);
+      }
+    };
+
+    if (activeTab === 'account') {
+      fetchAccountBalance();
+    }
+  }, [activeTab]);
   
-  // Business Information State
+  // Business Information State - Initialize with user data
   const [businessInfo, setBusinessInfo] = useState({
-    businessName: user?.businessInfo?.businessName || '',
-    businessType: user?.businessInfo?.businessType || '',
-    description: user?.businessInfo?.description || '',
-    website: user?.businessInfo?.website || '',
-    taxId: user?.businessInfo?.taxId || '',
+    businessName: '',
+    businessType: '',
+    description: '',
+    website: '',
+    taxId: '',
+    businessRegistrationNumber: '',
     address: {
-      street: user?.address?.street || '',
-      city: user?.address?.city || '',
-      county: user?.address?.county || '',
-      postalCode: user?.address?.postalCode || '',
-      country: user?.address?.country || 'Kenya'
+      street: '',
+      city: '',
+      county: '',
+      postalCode: '',
+      country: 'Kenya'
     }
   });
+
+  // Update businessInfo when user data loads
+  useEffect(() => {
+    if (user) {
+      console.log('Loading user data:', user);
+      console.log('Business info:', user.businessInfo);
+      console.log('Business Name from user:', user?.businessInfo?.businessName);
+      console.log('Address from user:', user?.address);
+      
+      const newBusinessInfo = {
+        businessName: user?.businessInfo?.businessName || '',
+        businessType: user?.businessInfo?.businessType || '',
+        description: user?.businessInfo?.description || '',
+        website: user?.businessInfo?.website || '',
+        taxId: user?.businessInfo?.taxId || '',
+        businessRegistrationNumber: user?.businessInfo?.businessRegistrationNumber || '',
+        address: {
+          street: user?.address?.street || '',
+          city: user?.address?.city || '',
+          county: user?.address?.county || '',
+          postalCode: user?.address?.postalCode || '',
+          country: user?.address?.country || 'Kenya'
+        }
+      };
+      
+      console.log('Setting businessInfo to:', newBusinessInfo);
+      setBusinessInfo(newBusinessInfo);
+    }
+  }, [user]);
 
   // Document Upload State
   const [documents, setDocuments] = useState({
@@ -31,9 +107,23 @@ const MerchantOnboarding = () => {
   });
 
   const [uploadedDocs, setUploadedDocs] = useState({
-    businessFormation: user?.businessInfo?.documents?.businessFormation || null,
-    businessPermit: user?.businessInfo?.documents?.businessPermit || null
+    businessFormation: null,
+    businessPermit: null
   });
+
+  // Update uploaded docs when user data loads
+  useEffect(() => {
+    if (user?.businessInfo?.documents) {
+      console.log('Documents from user:', user.businessInfo.documents);
+      console.log('Business Formation:', user.businessInfo.documents.businessFormation);
+      console.log('Business Permit:', user.businessInfo.documents.businessPermit);
+      
+      setUploadedDocs({
+        businessFormation: user.businessInfo.documents.businessFormation || null,
+        businessPermit: user.businessInfo.documents.businessPermit || null
+      });
+    }
+  }, [user]);
 
   const handleBusinessInfoChange = (field, value) => {
     if (field.includes('.')) {
@@ -66,7 +156,7 @@ const MerchantOnboarding = () => {
     formData.append('documentType', documentType);
 
     try {
-      const response = await axios.post('/uploads/business-doc', formData, {
+      const response = await api.post('/uploads/business-doc', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -92,20 +182,34 @@ const MerchantOnboarding = () => {
     try {
       if (currentStep === 1) {
         // Save business information
-        await axios.put('/users/profile', {
+        const payload = {
           businessInfo: {
-            ...businessInfo,
             businessName: businessInfo.businessName,
             businessType: businessInfo.businessType,
             description: businessInfo.description,
             website: businessInfo.website,
-            taxId: businessInfo.taxId
+            taxId: businessInfo.taxId,
+            businessRegistrationNumber: businessInfo.businessRegistrationNumber
           },
           address: businessInfo.address
-        });
+        };
+        
+        console.log('Saving business info:', payload);
+        const response = await api.put('/users/profile', payload);
+        console.log('Save response:', response.data);
 
-        toast.success('Business information saved!');
-        setCurrentStep(2);
+        toast.success(isUpdating ? 'Business information updated!' : 'Business information saved!');
+        
+        // If updating, refresh user data and exit edit mode
+        if (isUpdating) {
+          const response = await api.get('/auth/me');
+          if (response.data.user) {
+            updateUser(response.data.user);
+          }
+          setIsEditing(false);
+        } else {
+          setCurrentStep(2);
+        }
       } else if (currentStep === 2) {
         // Upload documents
         const uploadPromises = [];
@@ -122,23 +226,43 @@ const MerchantOnboarding = () => {
           await Promise.all(uploadPromises);
         }
 
-        // Update business info approval status to pending
-        await axios.put('/users/profile', {
+        // Update approval status to pending (preserve existing business info)
+        await api.put('/users/profile', {
           businessInfo: {
-            ...businessInfo,
+            businessName: businessInfo.businessName,
+            businessType: businessInfo.businessType,
+            description: businessInfo.description,
+            website: businessInfo.website,
+            taxId: businessInfo.taxId,
+            businessRegistrationNumber: businessInfo.businessRegistrationNumber,
             approvalStatus: 'pending'
           }
         });
 
-        toast.success('Documents uploaded! Your application is now under review.');
-        setCurrentStep(3);
+        toast.success(isUpdating ? 'Documents updated!' : 'Documents uploaded! Your application is now under review.');
+        
+        // If updating, refresh user data
+        if (isUpdating) {
+          const response = await api.get('/auth/me');
+          if (response.data.user) {
+            updateUser(response.data.user);
+          }
+        } else {
+          setCurrentStep(3);
+        }
         
         // Update user context
-        if (updateUser) {
+        if (updateUser && !isUpdating) {
           updateUser({
             ...user,
             businessInfo: {
               ...user.businessInfo,
+              businessName: businessInfo.businessName,
+              businessType: businessInfo.businessType,
+              description: businessInfo.description,
+              website: businessInfo.website,
+              taxId: businessInfo.taxId,
+              businessRegistrationNumber: businessInfo.businessRegistrationNumber,
               approvalStatus: 'pending'
             }
           });
@@ -152,10 +276,340 @@ const MerchantOnboarding = () => {
     }
   };
 
+  const renderProfileView = () => (
+    <div className="settings-container">
+      {/* Tabs */}
+      <div className="settings-tabs">
+        <button 
+          className={`tab ${activeTab === 'account' ? 'active' : ''}`}
+          onClick={() => setActiveTab('account')}
+        >
+          Account
+        </button>
+        <button 
+          className={`tab ${activeTab === 'profile' ? 'active' : ''}`}
+          onClick={() => setActiveTab('profile')}
+        >
+          Profile
+        </button>
+        <button 
+          className={`tab ${activeTab === 'documents' ? 'active' : ''}`}
+          onClick={() => setActiveTab('documents')}
+        >
+          Documents
+        </button>
+      </div>
+
+      {/* Account Tab */}
+      {activeTab === 'account' && (
+        <div className="tab-content">
+          {/* Account Balance Card */}
+          <div className="account-balance-card">
+            <div className="account-card-header">
+              <div>
+                <div className="account-label">BUSINESS</div>
+                <h2 className="account-name">{user?.businessInfo?.businessName || 'Business Account'}</h2>
+                <div className="balance-label">Available Balance</div>
+                <div className="balance-amount">KES {accountBalance.toLocaleString()}</div>
+              </div>
+              <div className="wallet-icon">💳</div>
+            </div>
+            <div className="account-card-footer">
+              <div className="account-number">•••••••••••• 1234</div>
+              <div className="account-actions">
+                <button className="action-btn">
+                  <span>↑</span> Send
+                </button>
+                <button className="action-btn">
+                  <span>↓</span> Request
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Transaction History */}
+          <div className="transactions-section">
+            <div className="transactions-header">
+              <h3>Transactions</h3>
+              <button className="export-btn">
+                <span>⬇</span> Export
+              </button>
+            </div>
+
+            {/* Filters */}
+            <div className="transactions-filters">
+              <div className="search-box">
+                <input 
+                  type="text" 
+                  placeholder="Search transactions..." 
+                  className="search-input"
+                />
+              </div>
+              <select className="filter-select">
+                <option>All Status</option>
+                <option>Success</option>
+                <option>Pending</option>
+                <option>Failed</option>
+              </select>
+              <select className="filter-select">
+                <option>All Types</option>
+                <option>Credit</option>
+                <option>Debit</option>
+                <option>Refund</option>
+              </select>
+              <select className="filter-select">
+                <option>10</option>
+                <option>25</option>
+                <option>50</option>
+                <option>100</option>
+              </select>
+              <span className="per-page-label">per page</span>
+            </div>
+
+            {/* Transactions Table */}
+            <div className="transactions-table-container">
+              <table className="transactions-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Account</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th>Gateway</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colSpan="8" className="empty-state">
+                      <div className="empty-icon">📊</div>
+                      <p>No transactions yet</p>
+                      <span className="empty-subtitle">Your transaction history will appear here</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Tab */}
+      {activeTab === 'profile' && (
+        <div className="tab-content">
+          <div className="settings-grid">
+            {/* Personal Information */}
+            <div className="settings-card">
+              <div className="card-header">
+                <div className="card-icon personal">👤</div>
+                <h3>Personal Information</h3>
+              </div>
+              <div className="card-body">
+                <div className="info-row">
+                  <span className="label">Name:</span>
+                  <span className="value">{user?.firstName} {user?.lastName}</span>
+                </div>
+                <div className="info-row">
+                  <span className="label">Email:</span>
+                  <span className="value">{user?.email}</span>
+                </div>
+                <div className="info-row">
+                  <span className="label">Phone:</span>
+                  <span className="value">{user?.phoneNumber || 'Not provided'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="label">Role:</span>
+                  <span className="badge badge-merchant">Merchant</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Business Information */}
+            <div className="settings-card">
+              <div className="card-header">
+                <div className="card-icon business">🏢</div>
+                <h3>Business Information</h3>
+              </div>
+              <div className="card-body">
+                <div className="info-row">
+                  <span className="label">Business Name:</span>
+                  <span className="value">{businessInfo.businessName || 'Not provided'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="label">Business Type:</span>
+                  <span className="value">{businessInfo.businessType || 'Not provided'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="label">Registration Number:</span>
+                  <span className="value">{businessInfo.businessRegistrationNumber || 'Not provided'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="label">Tax ID:</span>
+                  <span className="value">{businessInfo.taxId || 'Not provided'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="label">Website:</span>
+                  <span className="value">{businessInfo.website || 'Not provided'}</span>
+                </div>
+                <div className="info-row full-width">
+                  <span className="label">Description:</span>
+                  <span className="value">{businessInfo.description || 'Not provided'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="label">Approval Status:</span>
+                  <span className={`badge badge-${user?.businessInfo?.approvalStatus || 'pending'}`}>
+                    {(user?.businessInfo?.approvalStatus || 'pending').toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="settings-card">
+              <div className="card-header">
+                <div className="card-icon address">📍</div>
+                <h3>Address</h3>
+              </div>
+              <div className="card-body">
+                <div className="info-row">
+                  <span className="label">Street:</span>
+                  <span className="value">{businessInfo.address.street || 'Not provided'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="label">City:</span>
+                  <span className="value">{businessInfo.address.city || 'Not provided'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="label">County:</span>
+                  <span className="value">{businessInfo.address.county || 'Not provided'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="label">Postal Code:</span>
+                  <span className="value">{businessInfo.address.postalCode || 'Not provided'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Documents Tab */}
+      {activeTab === 'documents' && (
+        <div className="tab-content">
+          <div className="documents-list">
+            {/* Business Formation Document */}
+            <div className="document-row">
+              <div className="doc-info">
+                <div className="doc-type">
+                  <span className="doc-icon-small">📄</span>
+                  <div>
+                    <h4>Formation Document</h4>
+                    <p className="doc-description">Certificate of Incorporation, Business Registration</p>
+                  </div>
+                </div>
+                <div className="doc-file">
+                  {uploadedDocs.businessFormation ? (
+                    <>
+                      <span className="status-badge uploaded">✅ Uploaded</span>
+                      <span className="file-name">
+                        {uploadedDocs.businessFormation.originalName || uploadedDocs.businessFormation.filename || 'document.pdf'}
+                      </span>
+                      {uploadedDocs.businessFormation.size && (
+                        <span className="file-size">
+                          ({(uploadedDocs.businessFormation.size / 1024 / 1024).toFixed(2)} MB)
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="status-badge missing">❌ Not uploaded</span>
+                  )}
+                </div>
+              </div>
+              <div className="doc-actions">
+                {uploadedDocs.businessFormation && (
+                  <a 
+                    href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${uploadedDocs.businessFormation.path || uploadedDocs.businessFormation.url || '/uploads/' + uploadedDocs.businessFormation.filename}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary btn-sm"
+                  >
+                    View
+                  </a>
+                )}
+                <button 
+                  className="btn btn-primary btn-sm"
+                  onClick={() => {
+                    setCurrentStep(2);
+                    setIsEditing(true);
+                  }}
+                >
+                  {uploadedDocs.businessFormation ? 'Update' : 'Upload'}
+                </button>
+              </div>
+            </div>
+
+            {/* Business Permit */}
+            <div className="document-row">
+              <div className="doc-info">
+                <div className="doc-type">
+                  <span className="doc-icon-small">📄</span>
+                  <div>
+                    <h4>Business Permit</h4>
+                    <p className="doc-description">Trading License, Business Permit, Operating License</p>
+                  </div>
+                </div>
+                <div className="doc-file">
+                  {uploadedDocs.businessPermit ? (
+                    <>
+                      <span className="status-badge uploaded">✅ Uploaded</span>
+                      <span className="file-name">
+                        {uploadedDocs.businessPermit.originalName || uploadedDocs.businessPermit.filename || 'document.pdf'}
+                      </span>
+                      {uploadedDocs.businessPermit.size && (
+                        <span className="file-size">
+                          ({(uploadedDocs.businessPermit.size / 1024 / 1024).toFixed(2)} MB)
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="status-badge missing">❌ Not uploaded</span>
+                  )}
+                </div>
+              </div>
+              <div className="doc-actions">
+                {uploadedDocs.businessPermit && (
+                  <a 
+                    href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${uploadedDocs.businessPermit.path || uploadedDocs.businessPermit.url || '/uploads/' + uploadedDocs.businessPermit.filename}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary btn-sm"
+                  >
+                    View
+                  </a>
+                )}
+                <button 
+                  className="btn btn-primary btn-sm"
+                  onClick={() => {
+                    setCurrentStep(2);
+                    setIsEditing(true);
+                  }}
+                >
+                  {uploadedDocs.businessPermit ? 'Update' : 'Upload'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const renderStep1 = () => (
     <div className="onboarding-step">
       <h2>Business Information</h2>
-      <p>Tell us about your business to get started on Paya Marketplace.</p>
+      <p>{isUpdating ? 'Update your business information below.' : 'Tell us about your business to get started on Paya Marketplace.'}</p>
       
       <div className="form-grid">
         <div className="form-group">
@@ -221,6 +675,16 @@ const MerchantOnboarding = () => {
         </div>
 
         <div className="form-group">
+          <label>Business Registration Number</label>
+          <input
+            type="text"
+            value={businessInfo.businessRegistrationNumber}
+            onChange={(e) => handleBusinessInfoChange('businessRegistrationNumber', e.target.value)}
+            placeholder="Enter your business registration number"
+          />
+        </div>
+
+        <div className="form-group">
           <label>Street Address *</label>
           <input
             type="text"
@@ -276,38 +740,68 @@ const MerchantOnboarding = () => {
           <h3>Business Formation Document *</h3>
           <p>Certificate of Incorporation, Business Registration, or similar document</p>
           
-          {uploadedDocs.businessFormation ? (
-            <div className="uploaded-file">
-              <span>✅ {uploadedDocs.businessFormation.originalName}</span>
-              <small>({(uploadedDocs.businessFormation.size / 1024 / 1024).toFixed(2)} MB)</small>
-            </div>
-          ) : (
+          <div className="file-upload-wrapper">
             <input
               type="file"
+              id="businessFormation"
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
               onChange={(e) => handleFileChange('businessFormation', e.target.files[0])}
-              className="file-input"
+              className="file-input-hidden"
             />
-          )}
+            <label htmlFor="businessFormation" className="file-upload-label">
+              {documents.businessFormation ? (
+                <div className="file-selected">
+                  <span>✅ {documents.businessFormation.name}</span>
+                  <small>({(documents.businessFormation.size / 1024 / 1024).toFixed(2)} MB)</small>
+                </div>
+              ) : uploadedDocs.businessFormation ? (
+                <div className="file-selected">
+                  <span>✅ {uploadedDocs.businessFormation.originalName}</span>
+                  <small>({(uploadedDocs.businessFormation.size / 1024 / 1024).toFixed(2)} MB)</small>
+                </div>
+              ) : (
+                <div className="file-upload-placeholder">
+                  <span className="upload-icon">📄</span>
+                  <span>Click to upload or drag and drop</span>
+                  <small>(0.00 MB)</small>
+                </div>
+              )}
+            </label>
+          </div>
         </div>
 
         <div className="document-item">
           <h3>Business Permit *</h3>
           <p>Trading License, Business Permit, or relevant operating license</p>
           
-          {uploadedDocs.businessPermit ? (
-            <div className="uploaded-file">
-              <span>✅ {uploadedDocs.businessPermit.originalName}</span>
-              <small>({(uploadedDocs.businessPermit.size / 1024 / 1024).toFixed(2)} MB)</small>
-            </div>
-          ) : (
+          <div className="file-upload-wrapper">
             <input
               type="file"
+              id="businessPermit"
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
               onChange={(e) => handleFileChange('businessPermit', e.target.files[0])}
-              className="file-input"
+              className="file-input-hidden"
             />
-          )}
+            <label htmlFor="businessPermit" className="file-upload-label">
+              {documents.businessPermit ? (
+                <div className="file-selected">
+                  <span>✅ {documents.businessPermit.name}</span>
+                  <small>({(documents.businessPermit.size / 1024 / 1024).toFixed(2)} MB)</small>
+                </div>
+              ) : uploadedDocs.businessPermit ? (
+                <div className="file-selected">
+                  <span>✅ {uploadedDocs.businessPermit.originalName}</span>
+                  <small>({(uploadedDocs.businessPermit.size / 1024 / 1024).toFixed(2)} MB)</small>
+                </div>
+              ) : (
+                <div className="file-upload-placeholder">
+                  <span className="upload-icon">📄</span>
+                  <span>Click to upload or drag and drop</span>
+                  <small>(0.00 MB)</small>
+                </div>
+              )}
+            </label>
+          </div>
         </div>
 
         <div className="upload-info">
@@ -362,20 +856,39 @@ const MerchantOnboarding = () => {
            (uploadedDocs.businessPermit || documents.businessPermit);
   };
 
-  if (user?.businessInfo?.approvalStatus === 'approved') {
+  // Show loading while auth is loading
+  if (authLoading) {
     return (
-      <div className="container" style={{ padding: '2rem 0' }}>
-        <div className="success-message">
-          <h2>✅ Merchant Account Approved</h2>
-          <p>Your merchant account has been approved! You can now start selling on Paya Marketplace.</p>
-          <button className="btn btn-primary" onClick={() => window.location.href = '/merchant/dashboard'}>
-            Go to Merchant Dashboard
+      <div className="container" style={{ padding: '2rem 0', textAlign: 'center' }}>
+        <div className="loading-spinner">Loading...</div>
+      </div>
+    );
+  }
+
+  // Settings page layout (full width like Orders page) - Show for approved merchants
+  if (isUpdating && !isEditing) {
+    return (
+      <div className="page-container" style={{ paddingTop: 0 }}>
+        <div className="page-content" style={{ position: 'relative' }}>
+          <button 
+            className="btn btn-primary"
+            onClick={() => setIsEditing(true)}
+            style={{ 
+              position: 'absolute', 
+              top: '1.5rem', 
+              right: '1.5rem',
+              zIndex: 10
+            }}
+          >
+            Edit Information
           </button>
+          {renderProfileView()}
         </div>
       </div>
     );
   }
 
+  // Onboarding layout (narrow container)
   return (
     <div className="container" style={{ padding: '2rem 0' }}>
       <div className="onboarding-container">
@@ -398,14 +911,23 @@ const MerchantOnboarding = () => {
         </div>
 
         <div className="onboarding-content">
-          {currentStep === 1 && renderStep1()}
-          {currentStep === 2 && renderStep2()}
-          {currentStep === 3 && renderStep3()}
+          {isEditing ? (
+            <>
+              {currentStep === 1 && renderStep1()}
+              {currentStep === 2 && renderStep2()}
+            </>
+          ) : (
+            <>
+              {currentStep === 1 && renderStep1()}
+              {currentStep === 2 && renderStep2()}
+              {currentStep === 3 && renderStep3()}
+            </>
+          )}
         </div>
 
-        {currentStep < 3 && (
+        {((currentStep < 3 && !isUpdating) || (isUpdating && isEditing)) && (
           <div className="onboarding-actions">
-            {currentStep > 1 && (
+            {currentStep > 1 && !isEditing && (
               <button 
                 className="btn btn-secondary"
                 onClick={() => setCurrentStep(currentStep - 1)}
@@ -415,12 +937,22 @@ const MerchantOnboarding = () => {
               </button>
             )}
             
+            {isEditing && (
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setIsEditing(false)}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+            )}
+            
             <button 
               className="btn btn-primary"
               onClick={handleStepSubmit}
-              disabled={loading || (currentStep === 1 && !canProceedStep1()) || (currentStep === 2 && !canProceedStep2())}
+              disabled={loading || (currentStep === 1 && !canProceedStep1())}
             >
-              {loading ? 'Processing...' : currentStep === 2 ? 'Submit Application' : 'Continue'}
+              {loading ? 'Saving...' : isUpdating ? 'Save Changes' : currentStep === 2 ? 'Submit Application' : 'Continue'}
             </button>
           </div>
         )}

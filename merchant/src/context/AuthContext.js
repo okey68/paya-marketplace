@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -15,58 +15,40 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Configure axios defaults
-  axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'https://web-production-e3e0c.up.railway.app/api';
+  // API configuration is handled in utils/api.js
 
   // Define logout function first so it can be used in interceptor
   const logout = React.useCallback(() => {
     localStorage.removeItem('merchantToken');
-    delete axios.defaults.headers.common['Authorization'];
     setUser(null);
   }, []);
 
-  // Set up axios interceptor to include token in requests
-  useEffect(() => {
-    const token = localStorage.getItem('merchantToken');
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
-
-    // Response interceptor to handle token expiration
-    const responseInterceptor = axios.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response?.status === 401) {
-          logout();
-        }
-        return Promise.reject(error);
-      }
-    );
-
-    return () => {
-      axios.interceptors.response.eject(responseInterceptor);
-    };
-  }, [logout]);
+  // API interceptors are handled in utils/api.js
 
   const checkAuthStatus = React.useCallback(async () => {
-    try {
-      const token = localStorage.getItem('merchantToken');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
+    const token = localStorage.getItem('merchantToken');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      const response = await axios.get('/auth/me');
-      
-      if (response.data.role === 'merchant') {
-        setUser(response.data);
+    // Token is automatically included by api interceptor
+    try {
+      const response = await api.get('/auth/me');
+      if (response.data.user && response.data.user.role === 'merchant') {
+        setUser(response.data.user);
       } else {
-        logout();
+        // Invalid role, clear token
+        localStorage.removeItem('merchantToken');
+        setUser(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      logout();
+      // If token is invalid, clear it
+      if (error.response?.status === 401) {
+        localStorage.removeItem('merchantToken');
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -75,11 +57,11 @@ export const AuthProvider = ({ children }) => {
   // Check if user is logged in on app start
   useEffect(() => {
     checkAuthStatus();
-  }, [checkAuthStatus]);
+  }, []); // Remove checkAuthStatus dependency to prevent re-runs
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('/auth/login', {
+      const response = await api.post('/auth/login', {
         email,
         password
       });
@@ -91,7 +73,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       localStorage.setItem('merchantToken', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      // Token is automatically included by api interceptor
       setUser(userData);
 
       return { success: true, user: userData };
