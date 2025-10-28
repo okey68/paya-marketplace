@@ -10,6 +10,7 @@ const testUsers = [
     lastName: 'Tester',
     role: 'customer',
     phone: '+254712345678',
+    kraPin: 'A001234567Z',
     employmentInfo: {
       employer: 'Test Company Ltd',
       position: 'Senior Developer',
@@ -37,6 +38,7 @@ const testUsers = [
     lastName: 'Tester',
     role: 'customer',
     phone: '+254712345679',
+    kraPin: 'A001234568Z',
     employmentInfo: {
       employer: 'Test Company Ltd',
       position: 'Junior Developer',
@@ -64,6 +66,7 @@ const testUsers = [
     lastName: 'Tester',
     role: 'customer',
     phone: '+254712345680',
+    kraPin: 'A001234569Z',
     employmentInfo: {
       employer: 'Test Company Ltd',
       position: 'Mid-level Developer',
