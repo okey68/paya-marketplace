@@ -9,7 +9,6 @@ const Account = () => {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('banking');
-  const [loading, setLoading] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState({
     payaApproval: 'pending',
     bankApproval: 'pending'
@@ -38,16 +37,17 @@ const Account = () => {
     }
   }, [user]);
 
-  const fetchUserData = async () => {
-    try {
-      const response = await api.get('/users/profile');
-      const userData = response.data.user || response.data;
-      updateUser(userData);
-    } catch (error) {
-      console.error('Failed to fetch user data:', error);
-      toast.error('Failed to refresh data');
-    }
-  };
+  // Unused for now - keeping for future use
+  // const fetchUserData = async () => {
+  //   try {
+  //     const response = await api.get('/users/profile');
+  //     const userData = response.data.user || response.data;
+  //     updateUser(userData);
+  //   } catch (error) {
+  //     console.error('Failed to fetch user data:', error);
+  //     toast.error('Failed to refresh data');
+  //   }
+  // };
 
   const getStatusBadge = (status) => {
     const statusConfig = {

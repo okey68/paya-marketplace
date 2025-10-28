@@ -19,6 +19,7 @@ import toast from 'react-hot-toast';
 const ShopifyAccountSection = () => {
   const [integration, setIntegration] = useState(null);
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line no-unused-vars
   const [accountStatus, setAccountStatus] = useState('pending'); // pending, approved, active
 
   useEffect(() => {

@@ -8,7 +8,6 @@ import {
   InlineStack,
   Text,
   Badge,
-  DataTable,
   Spinner,
   EmptyState,
 } from '@shopify/polaris';
