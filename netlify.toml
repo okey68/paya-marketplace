@@ -1,0 +1,7 @@
+# This is a placeholder - each Netlify site should be configured in the Netlify dashboard
+# with the appropriate base directory
+
+# For reference:
+# Merchant Portal: base = "merchant", publish = "merchant/build", command = "npm run build"
+# Admin Portal: base = "admin", publish = "admin/build", command = "npm run build"
+# Client Portal: base = "client", publish = "client/build", command = "npm run build"
