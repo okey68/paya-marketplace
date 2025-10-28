@@ -11,7 +11,8 @@ import {
   Spinner,
   EmptyState,
 } from '@shopify/polaris';
-import '@shopify/polaris/build/esm/styles.css';
+// Temporarily commented out to fix Netlify build - CSS calc() issue
+// import '@shopify/polaris/build/esm/styles.css';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 

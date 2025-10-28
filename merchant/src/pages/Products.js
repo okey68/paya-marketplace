@@ -3,7 +3,8 @@ import api from '../utils/api';
 import toast from 'react-hot-toast';
 import ShopifyIntegrationPolaris from '../components/ShopifyIntegrationPolaris';
 import { Button, AppProvider } from '@shopify/polaris';
-import '@shopify/polaris/build/esm/styles.css';
+// Temporarily commented out to fix Netlify build - CSS calc() issue
+// import '@shopify/polaris/build/esm/styles.css';
 
 const MerchantProducts = () => {
   const [products, setProducts] = useState([]);
