@@ -5,19 +5,39 @@ class SlackService {
     this.webhookUrl = process.env.SLACK_WEBHOOK_URL;
     this.adminPortalUrl = process.env.ADMIN_PORTAL_URL || 'http://localhost:3001';
     this.enabled = !!this.webhookUrl;
+    
+    // Log initialization status
+    console.log('🔔 Slack Service Initialized:', {
+      enabled: this.enabled,
+      hasWebhookUrl: !!this.webhookUrl,
+      webhookUrlLength: this.webhookUrl ? this.webhookUrl.length : 0,
+      adminPortalUrl: this.adminPortalUrl
+    });
   }
 
   async sendNotification(message) {
+    console.log('📤 Attempting to send Slack notification...', {
+      enabled: this.enabled,
+      messageType: message.text
+    });
+
     if (!this.enabled) {
-      console.log('Slack notifications disabled - no webhook URL configured');
+      console.log('⚠️ Slack notifications disabled - no webhook URL configured');
       return;
     }
 
     try {
-      await axios.post(this.webhookUrl, message);
-      console.log('Slack notification sent successfully');
+      const response = await axios.post(this.webhookUrl, message);
+      console.log('✅ Slack notification sent successfully:', {
+        status: response.status,
+        messageType: message.text
+      });
     } catch (error) {
-      console.error('Failed to send Slack notification:', error.message);
+      console.error('❌ Failed to send Slack notification:', {
+        error: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
     }
   }
 
