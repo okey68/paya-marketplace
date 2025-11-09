@@ -189,7 +189,19 @@ app.use((error, req, res, next) => {
 
 const PORT = process.env.PORT || 5001;
 
+// Debug endpoint to check environment variables (remove in production)
+app.get('/api/debug/env', (req, res) => {
+  res.json({
+    hasSlackWebhook: !!process.env.SLACK_WEBHOOK_URL,
+    slackWebhookLength: process.env.SLACK_WEBHOOK_URL ? process.env.SLACK_WEBHOOK_URL.length : 0,
+    hasAdminPortalUrl: !!process.env.ADMIN_PORTAL_URL,
+    nodeEnv: process.env.NODE_ENV,
+    allEnvKeys: Object.keys(process.env).filter(key => key.includes('SLACK') || key.includes('ADMIN'))
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Paya Marketplace server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Debug: SLACK_WEBHOOK_URL exists: ${!!process.env.SLACK_WEBHOOK_URL}`);
 });
