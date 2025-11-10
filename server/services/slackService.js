@@ -144,7 +144,7 @@ class SlackService {
             },
             {
               type: 'mrkdwn',
-              text: `*Customer:*\n${order.customerInfo?.firstName} ${order.customerInfo?.lastName}`
+              text: `*Customer:*\n${this.formatCustomerName(order.customerInfo)}`
             },
             {
               type: 'mrkdwn',
@@ -213,7 +213,7 @@ class SlackService {
             },
             {
               type: 'mrkdwn',
-              text: `*Customer:*\n${order.customerInfo?.firstName} ${order.customerInfo?.lastName}`
+              text: `*Customer:*\n${this.formatCustomerName(order.customerInfo)}`
             },
             {
               type: 'mrkdwn',
@@ -407,7 +407,7 @@ class SlackService {
             },
             {
               type: 'mrkdwn',
-              text: `*Customer:*\n${order.customerInfo?.firstName} ${order.customerInfo?.lastName}`
+              text: `*Customer:*\n${this.formatCustomerName(order.customerInfo)}`
             },
             {
               type: 'mrkdwn',
@@ -471,7 +471,7 @@ class SlackService {
             },
             {
               type: 'mrkdwn',
-              text: `*Customer:*\n${order.customerInfo?.firstName} ${order.customerInfo?.lastName}`
+              text: `*Customer:*\n${this.formatCustomerName(order.customerInfo)}`
             },
             {
               type: 'mrkdwn',
@@ -531,7 +531,7 @@ class SlackService {
             },
             {
               type: 'mrkdwn',
-              text: `*Customer:*\n${order.customerInfo?.firstName} ${order.customerInfo?.lastName}`
+              text: `*Customer:*\n${this.formatCustomerName(order.customerInfo)}`
             },
             {
               type: 'mrkdwn',
@@ -602,7 +602,7 @@ class SlackService {
             },
             {
               type: 'mrkdwn',
-              text: `*Customer:*\n${order.customerInfo?.firstName} ${order.customerInfo?.lastName}`
+              text: `*Customer:*\n${this.formatCustomerName(order.customerInfo)}`
             },
             {
               type: 'mrkdwn',
