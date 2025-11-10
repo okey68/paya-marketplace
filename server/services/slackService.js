@@ -70,7 +70,7 @@ class SlackService {
     console.log('🔗 Generated order URL:', orderUrl);
     
     const message = {
-      text: '🛍️ New Order Received',
+      text: `🛍️ New Order: ${order.orderNumber} - ${customerName} - Ksh ${order.totalAmount?.toLocaleString()}`,
       blocks: [
         {
           type: 'header',
@@ -105,23 +105,8 @@ class SlackService {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: `*Items:* ${order.items?.length || 0} item(s)`
+            text: `*Items:* ${order.items?.length || 0} item(s)\n<${orderUrl}|View Order Details>`
           }
-        },
-        {
-          type: 'actions',
-          elements: [
-            {
-              type: 'button',
-              text: {
-                type: 'plain_text',
-                text: 'View Order',
-                emoji: true
-              },
-              url: orderUrl,
-              style: 'primary'
-            }
-          ]
         }
       ]
     };
