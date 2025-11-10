@@ -51,6 +51,15 @@ class SlackService {
 
   // New Order Notification
   async notifyNewOrder(order) {
+    console.log('📋 Order data for Slack notification:', {
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      customerInfo: order.customerInfo,
+      hasCustomerInfo: !!order.customerInfo,
+      firstName: order.customerInfo?.firstName,
+      lastName: order.customerInfo?.lastName
+    });
+    
     const orderUrl = `${this.adminPortalUrl}/orders/${order._id}`;
     const customerName = [order.customerInfo?.firstName, order.customerInfo?.lastName]
       .filter(Boolean)
