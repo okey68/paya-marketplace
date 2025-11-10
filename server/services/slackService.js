@@ -44,7 +44,8 @@ class SlackService {
       console.error('❌ Failed to send Slack notification:', {
         error: error.message,
         response: error.response?.data,
-        status: error.response?.status
+        status: error.response?.status,
+        messagePreview: JSON.stringify(message).substring(0, 500)
       });
     }
   }
@@ -60,10 +61,13 @@ class SlackService {
       lastName: order.customerInfo?.lastName
     });
     
-    const orderUrl = `${this.adminPortalUrl}/orders/${order._id}`;
+    const baseUrl = this.adminPortalUrl.replace(/\/$/, ''); // Remove trailing slash
+    const orderUrl = `${baseUrl}/orders/${order._id}`;
     const customerName = [order.customerInfo?.firstName, order.customerInfo?.lastName]
       .filter(Boolean)
       .join(' ') || 'N/A';
+    
+    console.log('🔗 Generated order URL:', orderUrl);
     
     const message = {
       text: '🛍️ New Order Received',
