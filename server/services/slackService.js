@@ -15,6 +15,14 @@ class SlackService {
     });
   }
 
+  // Helper to safely format customer name
+  formatCustomerName(customerInfo) {
+    if (!customerInfo) return 'N/A';
+    return [customerInfo.firstName, customerInfo.lastName]
+      .filter(Boolean)
+      .join(' ') || 'N/A';
+  }
+
   async sendNotification(message) {
     console.log('📤 Attempting to send Slack notification...', {
       enabled: this.enabled,
@@ -44,6 +52,9 @@ class SlackService {
   // New Order Notification
   async notifyNewOrder(order) {
     const orderUrl = `${this.adminPortalUrl}/orders/${order._id}`;
+    const customerName = [order.customerInfo?.firstName, order.customerInfo?.lastName]
+      .filter(Boolean)
+      .join(' ') || 'N/A';
     
     const message = {
       text: '🛍️ New Order Received',
@@ -61,15 +72,15 @@ class SlackService {
           fields: [
             {
               type: 'mrkdwn',
-              text: `*Order Number:*\n${order.orderNumber}`
+              text: `*Order Number:*\n${order.orderNumber || 'N/A'}`
             },
             {
               type: 'mrkdwn',
-              text: `*Total Amount:*\nKsh ${order.totalAmount?.toLocaleString() || 'N/A'}`
+              text: `*Total Amount:*\nKsh ${order.totalAmount?.toLocaleString() || '0'}`
             },
             {
               type: 'mrkdwn',
-              text: `*Customer:*\n${order.customerInfo?.firstName} ${order.customerInfo?.lastName}`
+              text: `*Customer:*\n${customerName}`
             },
             {
               type: 'mrkdwn',
@@ -337,7 +348,7 @@ class SlackService {
             },
             {
               type: 'mrkdwn',
-              text: `*Contact:*\n${merchant.firstName} ${merchant.lastName}`
+              text: `*Contact:*\n${this.formatCustomerName(merchant)}`
             },
             {
               type: 'mrkdwn',
