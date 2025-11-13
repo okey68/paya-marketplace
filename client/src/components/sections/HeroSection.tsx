@@ -167,7 +167,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ user }) => {
               </Box>
 
               {/* Trust Indicators */}
-              <Box
+              {/* <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -216,7 +216,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ user }) => {
                   </Box>{" "}
                   Professionals trust us
                 </Typography>
-              </Box>
+              </Box> */}
             </Box>
           </Box>
 

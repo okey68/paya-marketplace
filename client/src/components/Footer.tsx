@@ -185,9 +185,9 @@ const Footer = () => {
           <Typography variant="body2" color="grey.500">
             © {new Date().getFullYear()} Paya Marketplace. All rights reserved.
           </Typography>
-          <Typography variant="body2" color="grey.500">
+          {/* <Typography variant="body2" color="grey.500">
             Made with ❤️ in Kenya
-          </Typography>
+          </Typography> */}
         </Box>
       </Container>
     </Box>

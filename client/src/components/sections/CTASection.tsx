@@ -96,7 +96,7 @@ const CTASection: React.FC = () => {
         </Box>
 
         {/* Stats Section */}
-        <Box 
+        {/* <Box 
           sx={{ 
             mt: 8, 
             display: 'grid',
@@ -118,7 +118,7 @@ const CTASection: React.FC = () => {
               </Typography>
             </Box>
           ))}
-        </Box>
+        </Box> */}
       </Container>
     </Box>
   );
