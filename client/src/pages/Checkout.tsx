@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import {
   Container,
   Box,
@@ -25,7 +24,6 @@ import {
 } from '@mui/material';
 import {
   CheckCircle as CheckIcon,
-  Celebration as CelebrationIcon,
   ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import api from '../utils/api';
@@ -35,7 +33,6 @@ const steps = ['Personal Info', 'OTP Verification', 'Shipping', 'Decision', 'BNP
 
 const Checkout = () => {
   const { items, getSubtotal, clearCart } = useCart();
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -74,7 +71,6 @@ const Checkout = () => {
   
   // OTP state
   const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
   const TEST_OTP = '12345'; // Test OTP for development
 
   useEffect(() => {
@@ -150,7 +146,6 @@ const Checkout = () => {
     }
 
     // Send OTP (simulated for now)
-    setOtpSent(true);
     toast.success(`OTP sent to ${personalInfo.phoneCountryCode} ${personalInfo.phoneNumber}`);
     setCurrentStep(1); // Move to OTP verification step
   };
@@ -507,12 +502,23 @@ const Checkout = () => {
         />
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between' }}>
-        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate('/cart')}>
+      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' } }}>
+        <Button 
+          variant="outlined" 
+          startIcon={<ArrowBackIcon />} 
+          onClick={() => navigate('/cart')}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
           Back to Cart
         </Button>
-        <Button type="submit" variant="contained" color="primary" size="large">
-          Continue to Shipping
+        <Button 
+          type="submit" 
+          variant="contained" 
+          color="primary" 
+          size="large"
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
+          Continue to Verification
         </Button>
       </Box>
     </Box>
@@ -551,16 +557,28 @@ const Checkout = () => {
       />
 
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
-        <Button variant="text" onClick={handleResendOtp}>
+        <Button variant="text" onClick={handleResendOtp} size="small">
           Didn't receive the code? Resend OTP
         </Button>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between' }}>
-        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => setCurrentStep(0)}>
+      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' } }}>
+        <Button 
+          variant="outlined" 
+          startIcon={<ArrowBackIcon />} 
+          onClick={() => setCurrentStep(0)}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
           Back
         </Button>
-        <Button type="submit" variant="contained" color="primary" size="large" disabled={otp.length !== 5}>
+        <Button 
+          type="submit" 
+          variant="contained" 
+          color="primary" 
+          size="large" 
+          disabled={otp.length !== 5}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
           Verify & Continue
         </Button>
       </Box>
@@ -640,20 +658,30 @@ const Checkout = () => {
           onChange={(e) => {
             setShippingAddress({ ...shippingAddress, country: e.target.value, zipCode: '' });
           }}
-          SelectProps={{ native: true }}
         >
-          <option value="Kenya">Kenya</option>
-          <option value="United States">United States</option>
-          <option value="South Africa">South Africa</option>
-          <option value="Tanzania">Tanzania</option>
+          <MenuItem value="Kenya">Kenya</MenuItem>
+          <MenuItem value="United States">United States</MenuItem>
+          <MenuItem value="South Africa">South Africa</MenuItem>
+          <MenuItem value="Tanzania">Tanzania</MenuItem>
         </TextField>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between' }}>
-        <Button variant="outlined" onClick={() => setCurrentStep(2)}>
+      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' } }}>
+        <Button 
+          variant="outlined" 
+          startIcon={<ArrowBackIcon />}
+          onClick={() => setCurrentStep(1)}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
           Back
         </Button>
-        <Button type="submit" variant="contained" color="primary" size="large">
+        <Button 
+          type="submit" 
+          variant="contained" 
+          color="primary" 
+          size="large"
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
           Submit Application
         </Button>
       </Box>
@@ -698,20 +726,20 @@ const Checkout = () => {
     <Box>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
         <Typography sx={{ fontSize: '4rem', mb: 2 }}>🎉</Typography>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
+        <Typography variant="h4" fontWeight={700} gutterBottom sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
           Congratulations! Your Order Was Approved
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" color="text.secondary" sx={{ px: { xs: 0, sm: 3 } }}>
           Your Buy Now, Pay Later application has been approved! Your payments will be automatically deducted from your
           monthly payroll via your employer.
         </Typography>
       </Box>
 
-      <Paper elevation={0} sx={{ p: 3, border: 1, borderColor: 'divider', mb: 3 }}>
+      <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, border: 1, borderColor: 'divider', mb: 3 }}>
         <Typography variant="h6" fontWeight={700} gutterBottom>
           Payment Terms
         </Typography>
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 3 }}>
           <Box>
             <Typography variant="body2" color="text.secondary">
               Total Amount
@@ -765,7 +793,13 @@ const Checkout = () => {
       </Paper>
 
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-        <Button variant="contained" color="primary" size="large" onClick={() => setCurrentStep(5)}>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          size="large" 
+          onClick={() => setCurrentStep(5)}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
           Accept Terms & Continue
         </Button>
       </Box>
@@ -778,7 +812,7 @@ const Checkout = () => {
         BNPL Agreement
       </Typography>
 
-      <Paper elevation={0} sx={{ p: 3, border: 1, borderColor: 'divider', mb: 3, maxHeight: 400, overflow: 'auto' }}>
+      <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, border: 1, borderColor: 'divider', mb: 3, maxHeight: 400, overflow: 'auto' }}>
         <Typography variant="h6" gutterBottom>
           Buy Now, Pay Later Agreement
         </Typography>
@@ -838,8 +872,13 @@ const Checkout = () => {
         sx={{ mb: 3 }}
       />
 
-      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between' }}>
-        <Button variant="outlined" onClick={() => setCurrentStep(4)}>
+      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' } }}>
+        <Button 
+          variant="outlined" 
+          startIcon={<ArrowBackIcon />}
+          onClick={() => setCurrentStep(4)}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
           Back to Terms
         </Button>
         <Button
@@ -848,6 +887,7 @@ const Checkout = () => {
           size="large"
           onClick={handleAgreementSubmit}
           disabled={!agreementAccepted || loading}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
           {loading ? 'Processing...' : 'Complete Order'}
         </Button>
@@ -865,8 +905,8 @@ const Checkout = () => {
       <Box sx={{ textAlign: 'center' }}>
         <Box
           sx={{
-            width: 64,
-            height: 64,
+            width: { xs: 56, sm: 64 },
+            height: { xs: 56, sm: 64 },
             borderRadius: '50%',
             bgcolor: 'success.main',
             display: 'flex',
@@ -876,12 +916,12 @@ const Checkout = () => {
             mb: 3,
           }}
         >
-          <CheckIcon sx={{ fontSize: 38, color: 'white' }} />
+          <CheckIcon sx={{ fontSize: { xs: 32, sm: 38 }, color: 'white' }} />
         </Box>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
+        <Typography variant="h4" fontWeight={700} gutterBottom sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
           Order Completed Successfully!
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4, px: { xs: 0, sm: 2 } }}>
           Thank you for your purchase! Your order has been confirmed and you will receive email confirmations shortly.
           Your first payment will be deducted from your payroll next month.
         </Typography>
@@ -906,8 +946,8 @@ const Checkout = () => {
           </Box>
         </Alert>
 
-        <Paper elevation={0} sx={{ p: 3, border: 1, borderColor: 'divider', mb: 3, textAlign: 'left' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, border: 1, borderColor: 'divider', mb: 3, textAlign: 'left' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
             <Typography variant="h6" fontWeight={700}>
               Order Summary
             </Typography>
@@ -918,10 +958,15 @@ const Checkout = () => {
             )}
           </Box>
           {orderDetails.items.map((item: any) => (
-            <Box key={item.id} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2">
-                {item.name} x{item.quantity}
-              </Typography>
+            <Box key={item.id} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, gap: 2 }}>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="body2" fontWeight={600}>
+                  {item.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Qty: {item.quantity}
+                </Typography>
+              </Box>
               <Typography variant="body2" fontWeight={600}>
                 {formatCurrency(item.price * item.quantity)}
               </Typography>
@@ -946,7 +991,7 @@ const Checkout = () => {
           </Box>
         </Paper>
 
-        <Paper elevation={0} sx={{ p: 3, border: 1, borderColor: 'divider', mb: 3, textAlign: 'left' }}>
+        <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, border: 1, borderColor: 'divider', mb: 3, textAlign: 'left' }}>
           <Typography variant="h6" fontWeight={700} gutterBottom>
             Payment Plan
           </Typography>
@@ -954,7 +999,7 @@ const Checkout = () => {
             Your payments will be automatically deducted from your payroll on the following dates
           </Typography>
 
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 2, display: { xs: 'none', md: 'block' } }}>
             <Box
               sx={{
                 display: 'grid',
@@ -1042,18 +1087,81 @@ const Checkout = () => {
             })}
           </Box>
 
+          {/* Mobile view */}
+          <Box sx={{ mb: 2, display: { xs: 'block', md: 'none' } }}>
+            {orderDetails.bnplTerms.payments.map((payment: any) => {
+              const principalPerPayment = orderDetails.bnplTerms.subtotal / orderDetails.bnplTerms.numberOfPayments;
+              const interestPerPayment = orderDetails.bnplTerms.totalInterest / orderDetails.bnplTerms.numberOfPayments;
+
+              return (
+                <Box
+                  key={payment.number}
+                  sx={{
+                    p: 2,
+                    border: 1,
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    mb: 2,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" fontWeight={700}>
+                      Payment {payment.number}
+                    </Typography>
+                    <Box
+                      sx={{
+                        px: 1.5,
+                        py: 0.5,
+                        bgcolor: '#FEF3C7',
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography variant="caption" fontWeight={600} sx={{ color: '#92400E' }}>
+                        Pending
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1.5 }}>
+                    {payment.date}
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary">Principal:</Typography>
+                    <Typography variant="body2">{formatCurrency(principalPerPayment)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary">Interest:</Typography>
+                    <Typography variant="body2">{formatCurrency(interestPerPayment)}</Typography>
+                  </Box>
+                  <Divider sx={{ my: 1 }} />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" fontWeight={700}>Total:</Typography>
+                    <Typography variant="body2" fontWeight={700} color="primary">
+                      {formatCurrency(payment.amount)}
+                    </Typography>
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+
           <Divider sx={{ my: 2 }} />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 2, bgcolor: '#DBEAFE', borderRadius: 1 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#1E40AF' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 2, bgcolor: '#DBEAFE', borderRadius: 1, flexWrap: 'wrap', gap: 1 }}>
+            <Typography variant="h6" fontWeight={700} sx={{ color: '#1E40AF', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               Total Amount to Pay:
             </Typography>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#1E40AF' }}>
+            <Typography variant="h6" fontWeight={700} sx={{ color: '#1E40AF', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               {formatCurrency(orderDetails.bnplTerms.totalAmount)}
             </Typography>
           </Box>
         </Paper>
 
-        <Button variant="contained" color="primary" size="large" onClick={() => navigate('/marketplace')}>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          size="large" 
+          onClick={() => navigate('/marketplace')}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
           Back to Shop
         </Button>
       </Box>
@@ -1062,15 +1170,21 @@ const Checkout = () => {
 
   if (items.length === 0 && currentStep < 5) {
     return (
-      <Container maxWidth="md" sx={{ pt: 8, pb: 8, textAlign: 'center' }}>
-        <Typography sx={{ fontSize: '5rem', mb: 2 }}>🛒</Typography>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
+      <Container maxWidth="md" sx={{ pt: 8, pb: 8, textAlign: 'center', px: { xs: 2, sm: 3 } }}>
+        <Typography sx={{ fontSize: { xs: '4rem', sm: '5rem' }, mb: 2 }}>🛒</Typography>
+        <Typography variant="h4" fontWeight={700} gutterBottom sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
           Your cart is empty
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
           Add some items to your cart before checking out.
         </Typography>
-        <Button variant="contained" color="primary" size="large" onClick={() => navigate('/marketplace')}>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          size="large" 
+          onClick={() => navigate('/marketplace')}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
           Continue Shopping
         </Button>
       </Container>
@@ -1080,13 +1194,13 @@ const Checkout = () => {
   // Show rejection page with centered layout (no stepper, no sidebar)
   if (underwritingResult && !underwritingResult.approved) {
     return (
-      <Container maxWidth="md" sx={{ pt: 3, pb: 8 }}>
-        <Paper elevation={0} sx={{ p: 6, border: 1, borderColor: 'divider' }}>
+      <Container maxWidth="md" sx={{ pt: { xs: 2, sm: 3 }, pb: 8, px: { xs: 2, sm: 3 } }}>
+        <Paper elevation={0} sx={{ p: { xs: 3, sm: 6 }, border: 1, borderColor: 'divider' }}>
           <Box sx={{ textAlign: 'center' }}>
             <Box
               sx={{
-                width: 60,
-                height: 60,
+                width: { xs: 50, sm: 60 },
+                height: { xs: 50, sm: 60 },
                 borderRadius: '50%',
                 bgcolor: '#ffebee',
                 display: 'flex',
@@ -1096,9 +1210,9 @@ const Checkout = () => {
                 mb: 2,
               }}
             >
-              <Typography sx={{ fontSize: '1.5rem', color: '#d32f2f' }}>❌</Typography>
+              <Typography sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' }, color: '#d32f2f' }}>❌</Typography>
             </Box>
-            <Typography variant="h5" fontWeight={700} gutterBottom color="error.main">
+            <Typography variant="h5" fontWeight={700} gutterBottom color="error.main" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
               Application Not Approved
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 600, mx: 'auto' }}>
@@ -1113,11 +1227,11 @@ const Checkout = () => {
                 bgcolor: '#ffebee',
                 border: '1px solid #ef5350',
                 borderRadius: 1,
-                p: 2,
+                p: { xs: 1.5, sm: 2 },
                 textAlign: 'center'
               }}
             >
-              <Typography variant="h6" fontWeight={700} gutterBottom color="error.main">
+              <Typography variant="h6" fontWeight={700} gutterBottom color="error.main" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                 Rejection Reasons:
               </Typography>
               <Box sx={{ mt: 1 }}>
@@ -1128,7 +1242,8 @@ const Checkout = () => {
                     sx={{ 
                       color: 'error.dark',
                       mb: 0.5,
-                      fontWeight: 500
+                      fontWeight: 500,
+                      fontSize: { xs: '0.875rem', sm: '0.875rem' }
                     }}
                   >
                     • {reason}
@@ -1137,8 +1252,8 @@ const Checkout = () => {
               </Box>
             </Box>
 
-            <Alert severity="info" sx={{ maxWidth: 600, mx: 'auto', mb: 3 }}>
-              <Typography variant="body2">
+            <Alert severity="info" sx={{ maxWidth: 600, mx: 'auto', mb: 3, textAlign: 'left' }}>
+              <Typography variant="body2" sx={{ fontSize: { xs: '0.875rem', sm: '0.875rem' } }}>
                 <strong>What can you do?</strong>
                 <br />
                 • Contact your HR department to update your employment information
@@ -1150,11 +1265,21 @@ const Checkout = () => {
               </Typography>
             </Alert>
 
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-              <Button variant="outlined" color="primary" onClick={() => navigate('/marketplace')}>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexDirection: { xs: 'column', sm: 'row' } }}>
+              <Button 
+                variant="outlined" 
+                color="primary" 
+                onClick={() => navigate('/marketplace')}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              >
                 Return to Marketplace
               </Button>
-              <Button variant="contained" color="primary" onClick={() => navigate('/support')}>
+              <Button 
+                variant="contained" 
+                color="primary" 
+                onClick={() => navigate('/support')}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              >
                 Contact Support
               </Button>
             </Box>
@@ -1165,22 +1290,34 @@ const Checkout = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ pt: 3, pb: 8 }}>
-      <Typography variant="h4" fontWeight={700} textAlign="center" sx={{ mb: 4 }}>
+    <Container maxWidth="lg" sx={{ pt: { xs: 2, sm: 3 }, pb: 8, px: { xs: 2, sm: 3 } }}>
+      <Typography variant="h4" fontWeight={700} textAlign="center" sx={{ mb: 4, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
         Buy Now, Pay Later
       </Typography>
 
-      <Stepper activeStep={currentStep} sx={{ mb: 4 }}>
-        {steps.map((label) => (
-          <Step key={label}>
-            <StepLabel>{label}</StepLabel>
-          </Step>
-        ))}
-      </Stepper>
+      <Box sx={{ mb: 4, display: { xs: 'none', sm: 'block' } }}>
+        <Stepper activeStep={currentStep}>
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+      </Box>
+
+      {/* Mobile stepper */}
+      <Box sx={{ mb: 3, display: { xs: 'block', sm: 'none' }, textAlign: 'center' }}>
+        <Typography variant="body2" color="text.secondary" fontWeight={600}>
+          Step {currentStep + 1} of {steps.length}
+        </Typography>
+        <Typography variant="body1" fontWeight={700}>
+          {steps[currentStep]}
+        </Typography>
+      </Box>
 
       {currentStep < 6 && (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3 }}>
-          <Paper elevation={0} sx={{ p: 4, border: 1, borderColor: 'divider' }}>
+          <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, border: 1, borderColor: 'divider' }}>
             {currentStep === 0 && renderPersonalInfoStep()}
             {currentStep === 1 && renderOtpStep()}
             {currentStep === 2 && renderShippingStep()}
@@ -1190,22 +1327,33 @@ const Checkout = () => {
           </Paper>
 
           {currentStep < 5 && (
-          <Paper elevation={0} sx={{ p: 3, border: 1, borderColor: 'divider', height: 'fit-content', position: 'sticky', top: 80 }}>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: { xs: 2, sm: 3 }, 
+              border: 1, 
+              borderColor: 'divider', 
+              height: 'fit-content', 
+              position: { xs: 'relative', md: 'sticky' }, 
+              top: { xs: 0, md: 80 },
+              order: { xs: -1, md: 0 }
+            }}
+          >
             <Typography variant="h6" fontWeight={700} gutterBottom>
               Order Summary
             </Typography>
             <Divider sx={{ mb: 2 }} />
             {items.map((item: any) => (
-              <Box key={item.id} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                <Box>
-                  <Typography variant="body2" fontWeight={600}>
+              <Box key={item.id} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, gap: 2 }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" fontWeight={600} noWrap>
                     {item.name}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     Qty: {item.quantity}
                   </Typography>
                 </Box>
-                <Typography variant="body2" fontWeight={600}>
+                <Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'nowrap' }}>
                   {formatCurrency(item.price * item.quantity)}
                 </Typography>
               </Box>
@@ -1233,7 +1381,7 @@ const Checkout = () => {
       )}
 
       {currentStep === 6 && (
-        <Paper elevation={0} sx={{ p: 4, border: 1, borderColor: 'divider' }}>
+        <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, border: 1, borderColor: 'divider' }}>
           {renderCompletedStep()}
         </Paper>
       )}

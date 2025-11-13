@@ -146,8 +146,11 @@ const Navbar = () => {
         position="fixed"
         elevation={1}
         sx={{
-          backgroundColor: 'background.paper',
+          backgroundColor: 'white',
           color: 'text.primary',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
         }}
       >
         <Container maxWidth="xl">
