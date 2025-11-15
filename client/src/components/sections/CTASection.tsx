@@ -70,7 +70,7 @@ const CTASection: React.FC = () => {
           </Button>
           <Button
             component={Link}
-            to="/merchant-onboarding"
+             to="/register?role=merchant"
             variant="outlined"
             size="large"
             sx={{

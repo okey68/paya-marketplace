@@ -128,11 +128,12 @@ const Merchants = () => {
   return (
     <Box sx={{ bgcolor: "white", minHeight: "100vh", marginTop: "-68px" }}>
       {/* Featured Merchants Logos */}
-      <Container maxWidth="lg" sx={{ pt: 4, mb: 6 }}>
+      <Container maxWidth="lg" sx={{ pt: 4, mb: 6
+       }}>
         <Typography
           variant="h5"
           fontWeight={700}
-          textAlign="center"
+          textAlign="start"
           gutterBottom
           sx={{ color: "#0f172a" }}
         >
@@ -140,12 +141,12 @@ const Merchants = () => {
         </Typography>
         <Typography
           variant="body2"
-          textAlign="center"
+          textAlign="start"
           sx={{ color: "#64748b", mb: 4 }}
         >
           Shop from our verified and trusted merchant partners
         </Typography>
-        <Box
+        {/* <Box
           sx={{
             display: "grid",
             gridTemplateColumns: {
@@ -207,12 +208,12 @@ const Merchants = () => {
               </Typography>
             </Paper>
           ))}
-        </Box>
+        </Box> */}
       </Container>
 
       {/* Merchant Directory */}
       <Container maxWidth="lg" sx={{ mb: 6 }}>
-        <Typography
+        {/* <Typography
           variant="h4"
           fontWeight={700}
           textAlign="center"
@@ -227,7 +228,7 @@ const Merchants = () => {
           sx={{ mb: 4, color: "#64748b" }}
         >
           Browse all our trusted merchant partners
-        </Typography>
+        </Typography> */}
 
         {/* Search Bar */}
         <Box
@@ -262,7 +263,7 @@ const Merchants = () => {
           />
 
           {/* Category Filters */}
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 3 }}>
+          {/* <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 3 }}>
             {categories.map((category) => (
               <Chip
                 key={category}
@@ -298,7 +299,7 @@ const Merchants = () => {
                 }}
               />
             ))}
-          </Box>
+          </Box> */}
         </Box>
 
         {/* Merchants Grid */}

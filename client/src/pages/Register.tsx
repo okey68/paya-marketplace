@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -27,7 +27,10 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const Register = () => {
-  const [userType, setUserType] = useState<'customer' | 'merchant'>('customer');
+  const [searchParams] = useSearchParams();
+  const roleParam = searchParams.get('role');
+  const initialUserType = (roleParam === 'merchant' || roleParam === 'customer') ? roleParam : 'customer';
+  const [userType, setUserType] = useState<'customer' | 'merchant'>(initialUserType);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',

@@ -24,7 +24,7 @@ const MerchantSection: React.FC = () => {
           <Card
             elevation={0}
             sx={{
-              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              background: 'linear-gradient(135deg, #4f46e5 0%, #4f46e5 100%)',
               color: 'white',
               p: 5,
               textAlign: 'center',
@@ -144,7 +144,8 @@ const MerchantSection: React.FC = () => {
             </Box>
             <Button
               component={Link}
-              to="/merchant-onboarding"
+              to="/register?role=merchant"
+              // to="/merchant-onboarding"
               variant="contained"
               size="large"
               endIcon={<ArrowForwardIcon />}
@@ -154,11 +155,11 @@ const MerchantSection: React.FC = () => {
                 fontSize: '1rem',
                 fontWeight: 600,
                 borderRadius: 2,
-                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                boxShadow: '0 4px 14px rgba(240, 147, 251, 0.4)',
+                background: '#4f46e5',
+                boxShadow: '0 4px 14px rgba(102, 126, 234, 0.4)',
                 '&:hover': {
                   transform: 'translateY(-2px)',
-                  boxShadow: '0 6px 20px rgba(240, 147, 251, 0.5)',
+                  boxShadow: '0 6px 20px rgba(102, 126, 234, 0.5)',
                 },
                 transition: 'all 0.3s ease',
               }}

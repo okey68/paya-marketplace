@@ -30,7 +30,7 @@ const Footer = () => {
     {
       title: 'For Merchants',
       links: [
-        { label: 'Become a Seller', path: '/merchant-onboarding' },
+        { label: 'Become a Seller', path: '/register?role=merchant' },
         { label: 'Seller Resources', path: '/seller-resources' },
         { label: 'Fee Structure', path: '/fees' },
         { label: 'Merchant Support', path: '/merchant-support' },
