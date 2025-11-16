@@ -12,17 +12,27 @@ const Register = () => {
     lastName: '',
     email: '',
     password: '',
-    confirmPassword: '',
     phoneCountryCode: '+254',
     phoneNumber: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [showOtpStep, setShowOtpStep] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState('');
   const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const dropdownRef = useRef(null);
   const TEST_OTP = '98765';
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const countryCodes = [
     { code: '+254', flag: '🇰🇪', name: 'Kenya' },
@@ -54,11 +64,6 @@ const Register = () => {
     e.preventDefault();
     
     // Validation
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-
     if (formData.password.length < 6) {
       toast.error('Password must be at least 6 characters');
       return;
@@ -149,49 +154,121 @@ const Register = () => {
     <div style={{
       minHeight: '100vh',
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '2rem 1rem'
+      flexDirection: isMobile ? 'column' : 'row'
     }}>
+      {/* Left Side - Background Image with Overlay */}
       <div style={{
-        background: 'white',
-        padding: '3rem 2.5rem',
-        borderRadius: '12px',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-        width: '100%',
-        maxWidth: '520px'
+        flex: '1',
+        position: 'relative',
+        backgroundImage: 'url(https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        display: isMobile ? 'none' : 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '4rem',
+        minHeight: isMobile ? '0' : '100vh'
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            marginBottom: '1.5rem' 
-          }}>
-            <img 
-              src="/paya-logo.svg" 
-              alt="Paya" 
-              style={{ 
-                height: '50px', 
-                width: 'auto' 
-              }}
-            />
-          </div>
-          <h2 style={{
-            fontSize: '1.75rem',
+        {/* Gradient Overlay */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          zIndex: 1
+        }}></div>
+        
+        {/* Content on top of overlay */}
+        <div style={{
+          position: 'relative',
+          zIndex: 2,
+          color: 'white',
+          textAlign: 'center',
+          maxWidth: '500px'
+        }}>
+          <img 
+            src="/paya-logo.svg" 
+            alt="Paya" 
+            style={{ 
+              height: '60px', 
+              width: 'auto',
+              marginBottom: '2rem',
+              filter: 'brightness(0) invert(1)'
+            }}
+          />
+          <h1 style={{
+            fontSize: '2.5rem',
             fontWeight: '700',
-            color: '#1a202c',
-            marginBottom: '0.5rem'
+            marginBottom: '1.5rem',
+            lineHeight: '1.2'
           }}>
-            {showOtpStep ? 'Verify Your Email' : 'Create Merchant Account'}
-          </h2>
-          <p style={{ 
-            color: '#a0aec0',
-            fontSize: '1rem'
+            Join Paya Marketplace
+          </h1>
+          <p style={{
+            fontSize: '1.2rem',
+            lineHeight: '1.8',
+            opacity: '0.95'
           }}>
-            {showOtpStep ? `Enter the code sent to ${formData.email}` : 'Start selling on Paya Marketplace'}
+            Create your merchant account and start reaching thousands of customers. Manage your products, track sales, and grow your business with ease.
           </p>
         </div>
+      </div>
+
+      {/* Right Side - Registration Form */}
+      <div style={{
+        flex: '1',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: isMobile ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#ffffff',
+        padding: isMobile ? '2rem 1rem' : '2rem',
+        minHeight: '100vh',
+        overflowY: 'auto'
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '520px',
+          padding: isMobile ? '2rem 1.5rem' : '2rem',
+          background: isMobile ? 'white' : 'transparent',
+          borderRadius: isMobile ? '12px' : '0',
+          boxShadow: isMobile ? '0 10px 25px rgba(0, 0, 0, 0.2)' : 'none'
+        }}>
+          {isMobile && (
+            <div style={{ 
+              textAlign: 'center', 
+              marginBottom: '2rem' 
+            }}>
+              <img 
+                src="/paya-logo.svg" 
+                alt="Paya" 
+                style={{ 
+                  height: '50px', 
+                  width: 'auto',
+                  marginBottom: '1rem'
+                }}
+              />
+            </div>
+          )}
+          
+          <div style={{ marginBottom: isMobile ? '2rem' : '2.5rem', textAlign: isMobile ? 'center' : 'left' }}>
+            <h2 style={{
+              fontSize: isMobile ? '1.75rem' : '2rem',
+              fontWeight: '700',
+              color: '#1a202c',
+              marginBottom: '0.5rem'
+            }}>
+              {showOtpStep ? 'Verify Your Email' : 'Create Account'}
+            </h2>
+            <p style={{ 
+              color: '#718096',
+              fontSize: isMobile ? '0.95rem' : '1rem'
+            }}>
+              {showOtpStep ? `Enter the code sent to ${formData.email}` : 'Start selling on Paya Marketplace'}
+            </p>
+          </div>
 
         {!showOtpStep ? (
         <form onSubmit={handleSubmit}>
@@ -441,7 +518,7 @@ const Register = () => {
             </div>
           </div>
 
-          <div style={{ marginBottom: '1.25rem' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ 
               display: 'block',
               marginBottom: '0.5rem',
@@ -451,60 +528,52 @@ const Register = () => {
             }} htmlFor="password">
               Password
             </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Minimum 6 characters"
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                fontSize: '0.95rem',
-                border: '2px solid #e2e8f0',
-                borderRadius: '8px',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-            />
-          </div>
-
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ 
-              display: 'block',
-              marginBottom: '0.5rem',
-              color: '#4a5568',
-              fontSize: '0.9rem',
-              fontWeight: '600'
-            }} htmlFor="confirmPassword">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              placeholder="Re-enter your password"
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                fontSize: '0.95rem',
-                border: '2px solid #e2e8f0',
-                borderRadius: '8px',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="Minimum 6 characters"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  paddingRight: '3rem',
+                  fontSize: '0.95rem',
+                  border: '2px solid #e2e8f0',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '0.75rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0.25rem',
+                  color: '#718096',
+                  fontSize: '1.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
           </div>
 
           <button
@@ -643,26 +712,27 @@ const Register = () => {
         </form>
         )}
 
-        {!showOtpStep && (
-        <div style={{ 
-          marginTop: '1.75rem', 
-          textAlign: 'center',
-          fontSize: '0.95rem',
-          color: '#718096'
-        }}>
-          Already have an account?{' '}
-          <Link 
-            to="/login" 
-            style={{ 
-              color: '#667eea', 
-              fontWeight: '600',
-              textDecoration: 'none'
-            }}
-          >
-            Sign In
-          </Link>
+          {!showOtpStep && (
+          <div style={{ 
+            marginTop: '1.75rem', 
+            textAlign: 'center',
+            fontSize: '0.95rem',
+            color: '#718096'
+          }}>
+            Already have an account?{' '}
+            <Link 
+              to="/login" 
+              style={{ 
+                color: '#667eea', 
+                fontWeight: '600',
+                textDecoration: 'none'
+              }}
+            >
+              Sign In
+            </Link>
+          </div>
+          )}
         </div>
-        )}
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ import Account from './pages/Account';
 import Support from './pages/Support';
 import ShopifyAccount from './pages/ShopifyAccount';
 import ShopifyPublishing from './pages/ShopifyPublishing';
+import ShopifyIntegration from './pages/ShopifyIntegration';
 
 // Context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -112,6 +113,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <Support />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/shopify/integration" 
+            element={
+              <ProtectedRoute>
+                <ShopifyIntegration />
               </ProtectedRoute>
             } 
           />
