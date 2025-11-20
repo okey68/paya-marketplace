@@ -319,8 +319,6 @@ const Merchants = () => {
             return (
               <Paper
                 key={merchant._id}
-                component={Link}
-                to={`/merchant/${merchant._id}`}
                 elevation={0}
                 sx={{
                   p: 3,
@@ -442,6 +440,8 @@ const Merchants = () => {
                 </Box>
 
                 <Button
+                  component={Link}
+                  to={`/merchants/${merchant._id}`}
                   variant="contained"
                   fullWidth
                   endIcon={<ArrowForwardIcon />}
