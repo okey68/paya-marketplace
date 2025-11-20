@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
 import {
   AppBar,
   Toolbar,
@@ -17,16 +17,16 @@ import {
   Divider,
   useTheme,
   useMediaQuery,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ShoppingCart as ShoppingCartIcon,
   Menu as MenuIcon,
   Store as StoreIcon,
   Support as SupportIcon,
   Dashboard as DashboardIcon,
-} from '@mui/icons-material';
-import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
+} from "@mui/icons-material";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -34,21 +34,21 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
     setMobileMenuOpen(false);
   };
 
   const cartItemCount = getItemCount();
 
   const navItems = [
-    { label: 'Shop', path: '/marketplace', icon: <StoreIcon /> },
-    { label: 'Merchants', path: '/merchants', icon: <DashboardIcon /> },
-    { label: 'Support', path: '/support', icon: <SupportIcon /> },
+    { label: "Shop", path: "/marketplace", icon: <StoreIcon /> },
+    { label: "Merchants", path: "/merchants", icon: <DashboardIcon /> },
+    { label: "Support", path: "/support", icon: <SupportIcon /> },
   ];
 
   const isActivePath = (path: string) => location.pathname === path;
@@ -65,7 +65,14 @@ const Navbar = () => {
   // Mobile drawer content
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ width: 250 }}>
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box
+        sx={{
+          p: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <Typography variant="h6" color="primary" fontWeight="bold">
           Paya Marketplace
         </Typography>
@@ -78,7 +85,7 @@ const Navbar = () => {
               selected={isActivePath(item.path)}
               onClick={() => handleNavClick(item.path)}
             >
-              <Box sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ mr: 2, display: "flex", alignItems: "center" }}>
                 {item.icon}
               </Box>
               <ListItemText primary={item.label} />
@@ -87,10 +94,10 @@ const Navbar = () => {
         ))}
         <ListItem disablePadding>
           <ListItemButton
-            selected={isActivePath('/cart')}
-            onClick={() => handleNavClick('/cart')}
+            selected={isActivePath("/cart")}
+            onClick={() => handleNavClick("/cart")}
           >
-            <Box sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ mr: 2, display: "flex", alignItems: "center" }}>
               <Badge badgeContent={cartItemCount} color="error">
                 <ShoppingCartIcon />
               </Badge>
@@ -109,9 +116,9 @@ const Navbar = () => {
                 secondary={user.email}
               />
             </ListItem>
-            {user.role === 'merchant' && (
+            {user.role === "merchant" && (
               <ListItem disablePadding>
-                <ListItemButton onClick={() => handleNavClick('/merchant')}>
+                <ListItemButton onClick={() => handleNavClick("/merchant")}>
                   <ListItemText primary="Dashboard" />
                 </ListItemButton>
               </ListItem>
@@ -125,12 +132,12 @@ const Navbar = () => {
         ) : (
           <>
             <ListItem disablePadding>
-              <ListItemButton onClick={() => handleNavClick('/login')}>
+              <ListItemButton onClick={() => handleNavClick("/login")}>
                 <ListItemText primary="Login" />
               </ListItemButton>
             </ListItem>
             <ListItem disablePadding>
-              <ListItemButton onClick={() => handleNavClick('/register')}>
+              <ListItemButton onClick={() => handleNavClick("/register")}>
                 <ListItemText primary="Sign Up" />
               </ListItemButton>
             </ListItem>
@@ -146,8 +153,11 @@ const Navbar = () => {
         position="fixed"
         elevation={1}
         sx={{
-          backgroundColor: 'background.paper',
-          color: 'text.primary',
+          backgroundColor: "white",
+          color: "text.primary",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          borderBottom: "1px solid",
+          borderColor: "divider",
         }}
       >
         <Container maxWidth="xl">
@@ -172,8 +182,8 @@ const Navbar = () => {
               to="/"
               sx={{
                 fontWeight: 700,
-                color: 'primary.main',
-                textDecoration: 'none',
+                color: "#4f46e5",
+                textDecoration: "none",
                 flexGrow: isMobile ? 1 : 0,
                 mr: 4,
               }}
@@ -183,18 +193,27 @@ const Navbar = () => {
 
             {/* Desktop Navigation */}
             {!isMobile && (
-              <Box sx={{ flexGrow: 1, display: 'flex', gap: 1, justifyContent: 'center' }}>
+              <Box
+                sx={{
+                  flexGrow: 1,
+                  display: "flex",
+                  gap: 1,
+                  justifyContent: "center",
+                }}
+              >
                 {navItems.map((item) => (
                   <Button
                     key={item.path}
                     component={RouterLink}
                     to={item.path}
                     sx={{
-                      color: isActivePath(item.path) ? 'primary.main' : 'text.secondary',
+                      color: isActivePath(item.path)
+                        ? "#4f46e5"
+                        : "text.secondary",
                       fontWeight: isActivePath(item.path) ? 600 : 400,
-                      '&:hover': {
-                        color: 'primary.main',
-                        backgroundColor: 'action.hover',
+                      "&:hover": {
+                        color: "#4f46e5",
+                        backgroundColor: "action.hover",
                       },
                     }}
                   >
@@ -205,7 +224,7 @@ const Navbar = () => {
                   component={RouterLink}
                   to="/cart"
                   sx={{
-                    color: isActivePath('/cart') ? 'primary.main' : 'text.secondary',
+                    color: isActivePath("/cart") ? "#4f46e5" : "text.secondary",
                   }}
                 >
                   <Badge badgeContent={cartItemCount} color="error">
@@ -217,17 +236,21 @@ const Navbar = () => {
 
             {/* Desktop Auth Buttons */}
             {!isMobile && (
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                 {user ? (
                   <>
-                    <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mr: 1 }}
+                    >
                       Hello, {user.firstName}
                     </Typography>
                     <Button
                       variant="outlined"
                       size="small"
                       onClick={handleLogout}
-                      sx={{ textTransform: 'none' }}
+                      sx={{ textTransform: "none" }}
                     >
                       Logout
                     </Button>
@@ -239,7 +262,13 @@ const Navbar = () => {
                       to="/login"
                       variant="outlined"
                       size="small"
-                      sx={{ textTransform: 'none' }}
+                      sx={{
+                        textTransform: "none",
+                        borderRadius: 2,
+                        borderColor: "#4f46e5",
+                        width: "100px",
+                        height: "36px",
+                      }}
                     >
                       Login
                     </Button>
@@ -249,7 +278,13 @@ const Navbar = () => {
                       variant="contained"
                       color="primary"
                       size="small"
-                      sx={{ textTransform: 'none' }}
+                      sx={{
+                        textTransform: "none",
+                        borderRadius: 2,
+                        bgcolor: "#4f46e5",
+                        width: "100px",
+                        height: "36px",
+                      }}
                     >
                       Sign Up
                     </Button>
@@ -263,7 +298,7 @@ const Navbar = () => {
               <IconButton
                 component={RouterLink}
                 to="/cart"
-                sx={{ color: 'text.primary' }}
+                sx={{ color: "text.primary" }}
               >
                 <Badge badgeContent={cartItemCount} color="error">
                   <ShoppingCartIcon />

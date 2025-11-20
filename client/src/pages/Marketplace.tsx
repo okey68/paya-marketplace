@@ -175,22 +175,47 @@ const Marketplace = () => {
   const FilterSidebar = () => (
     <Box sx={{ width: isMobile ? 280 : '100%', p: isMobile ? 2 : 0 }}>
       {isMobile && (
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" fontWeight={600}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h6" fontWeight={700} sx={{ color: '#1e293b' }}>
             Filters
           </Typography>
-          <IconButton onClick={() => setFilterDrawerOpen(false)}>
+          <IconButton 
+            onClick={() => setFilterDrawerOpen(false)}
+            sx={{
+              '&:hover': {
+                bgcolor: 'rgba(0,0,0,0.04)',
+              },
+            }}
+          >
             <CloseIcon />
           </IconButton>
         </Box>
       )}
 
       {/* Categories */}
-      <Accordion defaultExpanded elevation={0}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography fontWeight={600}>Categories</Typography>
+      <Accordion 
+        defaultExpanded 
+        elevation={0}
+        sx={{
+          '&:before': { display: 'none' },
+          bgcolor: 'transparent',
+        }}
+      >
+        <AccordionSummary 
+          expandIcon={<ExpandMoreIcon />}
+          sx={{
+            px: 0,
+            minHeight: 48,
+            '&.Mui-expanded': {
+              minHeight: 48,
+            },
+          }}
+        >
+          <Typography fontWeight={700} sx={{ color: '#1e293b' }}>
+            Categories
+          </Typography>
         </AccordionSummary>
-        <AccordionDetails>
+        <AccordionDetails sx={{ px: 0, pt: 0 }}>
           <RadioGroup
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -199,22 +224,68 @@ const Marketplace = () => {
               <FormControlLabel
                 key={category}
                 value={category === 'All Categories' ? '' : category}
-                control={<Radio size="small" />}
-                label={category}
+                control={
+                  <Radio 
+                    size="small" 
+                    sx={{
+                      color: '#cbd5e1',
+                      '&.Mui-checked': {
+                        color: '#4f46e5',
+                      },
+                    }}
+                  />
+                }
+                label={
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: '#475569',
+                      fontWeight: selectedCategory === (category === 'All Categories' ? '' : category) ? 600 : 400,
+                    }}
+                  >
+                    {category}
+                  </Typography>
+                }
+                sx={{ 
+                  mb: 0.5,
+                  ml: 0,
+                  '&:hover': {
+                    bgcolor: 'rgba(79, 70, 229, 0.04)',
+                    borderRadius: 1,
+                  },
+                }}
               />
             ))}
           </RadioGroup>
         </AccordionDetails>
       </Accordion>
 
-      <Divider />
+      <Divider sx={{ my: 2 }} />
 
       {/* Price Range */}
-      <Accordion defaultExpanded elevation={0}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography fontWeight={600}>Price Range</Typography>
+      <Accordion 
+        defaultExpanded 
+        elevation={0}
+        sx={{
+          '&:before': { display: 'none' },
+          bgcolor: 'transparent',
+        }}
+      >
+        <AccordionSummary 
+          expandIcon={<ExpandMoreIcon />}
+          sx={{
+            px: 0,
+            minHeight: 48,
+            '&.Mui-expanded': {
+              minHeight: 48,
+            },
+          }}
+        >
+          <Typography fontWeight={700} sx={{ color: '#1e293b' }}>
+            Price Range
+          </Typography>
         </AccordionSummary>
-        <AccordionDetails>
+        <AccordionDetails sx={{ px: 0, pt: 0 }}>
           <RadioGroup
             value={selectedPriceRange}
             onChange={(e) => setSelectedPriceRange(e.target.value)}
@@ -223,8 +294,36 @@ const Marketplace = () => {
               <FormControlLabel
                 key={range.value}
                 value={range.value}
-                control={<Radio size="small" />}
-                label={range.label}
+                control={
+                  <Radio 
+                    size="small"
+                    sx={{
+                      color: '#cbd5e1',
+                      '&.Mui-checked': {
+                        color: '#4f46e5',
+                      },
+                    }}
+                  />
+                }
+                label={
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: '#475569',
+                      fontWeight: selectedPriceRange === range.value ? 600 : 400,
+                    }}
+                  >
+                    {range.label}
+                  </Typography>
+                }
+                sx={{ 
+                  mb: 0.5,
+                  ml: 0,
+                  '&:hover': {
+                    bgcolor: 'rgba(79, 70, 229, 0.04)',
+                    borderRadius: 1,
+                  },
+                }}
               />
             ))}
           </RadioGroup>
@@ -236,7 +335,18 @@ const Marketplace = () => {
           fullWidth
           variant="outlined"
           onClick={clearFilters}
-          sx={{ mt: 2 }}
+          sx={{ 
+            mt: 3,
+            textTransform: 'none',
+            fontWeight: 600,
+            borderRadius: 2,
+            borderColor: 'divider',
+            color: 'text.primary',
+            '&:hover': {
+              borderColor: 'primary.main',
+              bgcolor: 'rgba(79, 70, 229, 0.04)',
+            },
+          }}
         >
           Clear All Filters
         </Button>
@@ -245,197 +355,329 @@ const Marketplace = () => {
   );
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Search and Controls */}
-      <Box sx={{ mb: 3 }}>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          sx={{ mb: 2 }}
-        >
-          <TextField
-            fullWidth
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <TextField
-            select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            sx={{ minWidth: { xs: '100%', sm: 200 } }}
+    <Box sx={{ bgcolor: '#f9fafb', minHeight: '100vh' }}>
+      <Container maxWidth="xl" sx={{ py: 1 }}>
+        {/* Page Header */}
+        <Box sx={{ mb: 4 }}>
+          <Typography 
+            variant="h4" 
+            fontWeight={700} 
+            sx={{ mb: 1, color: '#1e293b' }}
           >
-            {sortOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Stack>
+            Marketplace
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#64748b' }}>
+            Discover amazing products from merchants
+          </Typography>
+        </Box>
 
-        {/* Active Filters and View Toggle */}
-        <Stack
-          direction="row"
-          spacing={1}
-          alignItems="center"
-          flexWrap="wrap"
-          sx={{ gap: 1 }}
+        {/* Search and Controls */}
+        <Box 
+          sx={{ 
+            mb: 3,
+            p: 3,
+            bgcolor: 'white',
+            borderRadius: 2,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          }}
         >
-          {isMobile && (
-            <Button
-              variant="outlined"
-              startIcon={<FilterIcon />}
-              onClick={() => setFilterDrawerOpen(true)}
-            >
-              Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
-            </Button>
-          )}
-
-          {selectedCategory && selectedCategory !== 'All Categories' && (
-            <Chip
-              label={selectedCategory}
-              onDelete={() => setSelectedCategory('')}
-              color="primary"
-              variant="outlined"
-            />
-          )}
-          {selectedPriceRange && (
-            <Chip
-              label={priceRanges.find((r) => r.value === selectedPriceRange)?.label}
-              onDelete={() => setSelectedPriceRange('')}
-              color="primary"
-              variant="outlined"
-            />
-          )}
-
-          <Box sx={{ flexGrow: 1 }} />
-
-          {/* View Mode Toggle */}
-          <Stack direction="row" spacing={0.5}>
-            <IconButton
-              onClick={() => setViewMode('grid')}
-              color={viewMode === 'grid' ? 'primary' : 'default'}
-            >
-              <GridViewIcon />
-            </IconButton>
-            <IconButton
-              onClick={() => setViewMode('list')}
-              color={viewMode === 'list' ? 'primary' : 'default'}
-            >
-              <ListViewIcon />
-            </IconButton>
-          </Stack>
-        </Stack>
-      </Box>
-
-      {/* Main Content */}
-      <Box sx={{ display: 'flex', gap: 3 }}>
-        {/* Desktop Filter Sidebar */}
-        {!isMobile && (
-          <Box sx={{ width: 280, flexShrink: 0 }}>
-            <Box
-              sx={{
-                position: 'sticky',
-                top: 100,
-                bgcolor: 'background.paper',
-                borderRadius: 2,
-                p: 2,
-                border: 1,
-                borderColor: 'divider',
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            sx={{ mb: 2 }}
+          >
+            <TextField
+              fullWidth
+              placeholder="Search for products, brands, categories..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
               }}
-            >
-              <FilterSidebar />
-            </Box>
-          </Box>
-        )}
-
-        {/* Mobile Filter Drawer */}
-        <Drawer
-          anchor="left"
-          open={filterDrawerOpen}
-          onClose={() => setFilterDrawerOpen(false)}
-        >
-          <FilterSidebar />
-        </Drawer>
-
-        {/* Products Grid */}
-        <Box sx={{ flexGrow: 1 }}>
-          {loading ? (
-            <Box
               sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  sm: 'repeat(2, 1fr)',
-                  md: 'repeat(2, 1fr)',
-                  lg: 'repeat(3, 1fr)',
-                  xl: 'repeat(4, 1fr)',
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  '&:hover fieldset': {
+                    borderColor: 'primary.main',
+                  },
                 },
-                gap: 3,
+              }}
+            />
+            <TextField
+              select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              sx={{ 
+                minWidth: { xs: '100%', sm: 220 },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
               }}
             >
-              {[...Array(8)].map((_, index) => (
-                <ProductCard key={index} product={{} as any} loading />
+              {sortOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
               ))}
-            </Box>
-          ) : filteredProducts.length === 0 ? (
-            <Box
+            </TextField>
+          </Stack>
+
+          {/* Active Filters and View Toggle */}
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            flexWrap="wrap"
+            sx={{ gap: 1 }}
+          >
+            {isMobile && (
+              <Button
+                variant="outlined"
+                startIcon={<FilterIcon />}
+                onClick={() => setFilterDrawerOpen(true)}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderColor: 'divider',
+                  color: 'text.primary',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    bgcolor: 'rgba(79, 70, 229, 0.04)',
+                  },
+                }}
+              >
+                Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+              </Button>
+            )}
+
+            {selectedCategory && selectedCategory !== 'All Categories' && (
+              <Chip
+                label={selectedCategory}
+                onDelete={() => setSelectedCategory('')}
+                sx={{
+                  bgcolor: '#eff6ff',
+                  color: '#3b82f6',
+                  fontWeight: 600,
+                  '& .MuiChip-deleteIcon': {
+                    color: '#3b82f6',
+                  },
+                }}
+              />
+            )}
+            {selectedPriceRange && (
+              <Chip
+                label={priceRanges.find((r) => r.value === selectedPriceRange)?.label}
+                onDelete={() => setSelectedPriceRange('')}
+                sx={{
+                  bgcolor: '#eff6ff',
+                  color: '#3b82f6',
+                  fontWeight: 600,
+                  '& .MuiChip-deleteIcon': {
+                    color: '#3b82f6',
+                  },
+                }}
+              />
+            )}
+
+            <Box sx={{ flexGrow: 1 }} />
+
+            {/* View Mode Toggle */}
+            <Stack 
+              direction="row" 
+              spacing={0}
               sx={{
-                textAlign: 'center',
-                py: 8,
-                px: 2,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1.5,
+                p: 0.5,
+                bgcolor: '#f9fafb',
               }}
             >
-              <Typography variant="h5" gutterBottom>
-                No products found
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                Try adjusting your filters or search terms
-              </Typography>
-              <Button variant="contained" onClick={clearFilters}>
-                Clear Filters
-              </Button>
+              <IconButton
+                size="small"
+                onClick={() => setViewMode('grid')}
+                sx={{
+                  borderRadius: 1,
+                  bgcolor: viewMode === 'grid' ? 'white' : 'transparent',
+                  color: viewMode === 'grid' ? 'primary.main' : 'text.secondary',
+                  boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  '&:hover': {
+                    bgcolor: viewMode === 'grid' ? 'white' : 'rgba(0,0,0,0.04)',
+                  },
+                }}
+              >
+                <GridViewIcon fontSize="small" />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={() => setViewMode('list')}
+                sx={{
+                  borderRadius: 1,
+                  bgcolor: viewMode === 'list' ? 'white' : 'transparent',
+                  color: viewMode === 'list' ? 'primary.main' : 'text.secondary',
+                  boxShadow: viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  '&:hover': {
+                    bgcolor: viewMode === 'list' ? 'white' : 'rgba(0,0,0,0.04)',
+                  },
+                }}
+              >
+                <ListViewIcon fontSize="small" />
+              </IconButton>
+            </Stack>
+          </Stack>
+        </Box>
+
+        {/* Main Content */}
+        <Box sx={{ display: 'flex', gap: 3 }}>
+          {/* Desktop Filter Sidebar */}
+          {!isMobile && (
+            <Box sx={{ width: 280, flexShrink: 0 }}>
+              <Box
+                sx={{
+                  position: 'sticky',
+                  top: 100,
+                  bgcolor: 'white',
+                  borderRadius: 2,
+                  p: 2.5,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                }}
+              >
+                <Typography variant="h6" fontWeight={700} sx={{ mb: 2, color: '#1e293b' }}>
+                  Filters
+                </Typography>
+                <FilterSidebar />
+              </Box>
             </Box>
-          ) : (
-            <>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
-              </Typography>
+          )}
+
+          {/* Mobile Filter Drawer */}
+          <Drawer
+            anchor="left"
+            open={filterDrawerOpen}
+            onClose={() => setFilterDrawerOpen(false)}
+          >
+            <FilterSidebar />
+          </Drawer>
+
+          {/* Products Grid */}
+          <Box sx={{ flexGrow: 1 }}>
+            {loading ? (
               <Box
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: {
                     xs: '1fr',
                     sm: 'repeat(2, 1fr)',
-                    md: viewMode === 'grid' ? 'repeat(2, 1fr)' : '1fr',
-                    lg: viewMode === 'grid' ? 'repeat(3, 1fr)' : '1fr',
-                    xl: viewMode === 'grid' ? 'repeat(4, 1fr)' : '1fr',
+                    md: 'repeat(3, 1fr)',
+                    lg: 'repeat(4, 1fr)',
+                    xl: 'repeat(5, 1fr)',
                   },
-                  gap: 3,
+                  gap: 2,
                 }}
               >
-                {filteredProducts.map((product) => (
-                  <ProductCard
-                    key={product._id}
-                    product={product}
-                    onAddToCart={handleAddToCart}
-                    onToggleWishlist={toggleWishlist}
-                    isInWishlist={wishlist.includes(product._id)}
-                  />
+                {[...Array(10)].map((_, index) => (
+                  <ProductCard key={index} product={{} as any} loading />
                 ))}
               </Box>
-            </>
-          )}
+            ) : filteredProducts.length === 0 ? (
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  py: 10,
+                  px: 2,
+                  bgcolor: 'white',
+                  borderRadius: 3,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                }}
+              >
+                <Typography variant="h5" fontWeight={700} gutterBottom sx={{ color: '#1e293b' }}>
+                  No products found
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                  Try adjusting your filters or search terms
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  onClick={clearFilters}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    px: 4,
+                    py: 1.5,
+                    borderRadius: 2,
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              </Box>
+            ) : (
+              <>
+                <Box 
+                  sx={{ 
+                    mb: 3,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Typography 
+                    variant="body2" 
+                    fontWeight={600}
+                    sx={{ color: '#475569' }}
+                  >
+                    {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+                  </Typography>
+                  {activeFiltersCount > 0 && (
+                    <Button
+                      size="small"
+                      onClick={clearFilters}
+                      sx={{
+                        textTransform: 'none',
+                        color: '#3b82f6',
+                        fontWeight: 600,
+                        '&:hover': {
+                          bgcolor: '#eff6ff',
+                        },
+                      }}
+                    >
+                      Clear all filters
+                    </Button>
+                  )}
+                </Box>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: {
+                      xs: '1fr',
+                      sm: 'repeat(2, 1fr)',
+                      md: viewMode === 'grid' ? 'repeat(3, 1fr)' : '1fr',
+                      lg: viewMode === 'grid' ? 'repeat(3, 1fr)' : '1fr',
+                      xl: viewMode === 'grid' ? 'repeat(5, 1fr)' : '1fr',
+                    },
+                    gap: 2,
+                  }}
+                >
+                  {filteredProducts.map((product) => (
+                    <ProductCard
+                      key={product._id}
+                      product={product}
+                      onAddToCart={handleAddToCart}
+                      onToggleWishlist={toggleWishlist}
+                      isInWishlist={wishlist.includes(product._id)}
+                    />
+                  ))}
+                </Box>
+              </>
+            )}
+          </Box>
         </Box>
-      </Box>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 

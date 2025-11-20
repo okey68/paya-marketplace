@@ -1,0 +1,914 @@
+/* Shopify Integration Page Styles */
+
+.shopify-integration-page {
+  min-height: calc(100vh - 70px);
+  /* background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%); */
+  padding: 2rem;
+}
+
+.shopify-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
+}
+
+.loading-container p {
+  font-size: 1.1rem;
+  color: #6d7175;
+}
+
+/* Common Content Wrapper */
+.shopify-content {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header Section */
+.shopify-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.shopify-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  animation: fadeInDown 0.6s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.shopify-icon {
+  width: 120px;
+  height: 120px;
+  filter: drop-shadow(0 8px 24px rgba(149, 191, 71, 0.4));
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+.shopify-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1a202c;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #95bf47 0%, #5e8e3e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shopify-subtitle {
+  font-size: 1.25rem;
+  color: #4a5568;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Form Card */
+.shopify-form-card {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+  margin-bottom: 3rem;
+  border: 2px solid #e2e8f0;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+}
+
+/* Polaris TextField Styling */
+.form-section .Polaris-TextField {
+  width: 100%;
+}
+
+.form-section .Polaris-Label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #202223;
+  margin-bottom: 0.75rem;
+}
+
+.form-section .Polaris-TextField__Input {
+  height: 56px;
+  font-size: 1.1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0 1.25rem;
+  transition: all 0.3s ease;
+  background: #f7fafc;
+}
+
+.form-section .Polaris-TextField__Input:hover {
+  border-color: #cbd5e0;
+  background: white;
+}
+
+.form-section .Polaris-TextField__Input:focus {
+  border-color: #95bf47;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(149, 191, 71, 0.1);
+  outline: none;
+}
+
+.form-section .Polaris-TextField__Suffix {
+  font-size: 1rem;
+  color: #6d7175;
+  font-weight: 500;
+  padding-right: 1.25rem;
+}
+
+.form-section .Polaris-Text--subdued {
+  color: #6d7175;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.form-section .Polaris-TextField__Backdrop {
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.form-section .Polaris-TextField:hover .Polaris-TextField__Backdrop {
+  border-color: #cbd5e0;
+}
+
+.form-section .Polaris-TextField--focus .Polaris-TextField__Backdrop {
+  border-color: #95bf47;
+  box-shadow: 0 0 0 3px rgba(149, 191, 71, 0.1);
+}
+
+.connect-button-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.connect-button-wrapper .Polaris-Button {
+  min-width: 280px;
+  height: 56px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  border-radius: 14px;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 16px rgba(149, 191, 71, 0.3);
+  background: linear-gradient(135deg, #95bf47 0%, #7ea639 100%);
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.connect-button-wrapper .Polaris-Button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.connect-button-wrapper .Polaris-Button:hover::before {
+  left: 100%;
+}
+
+.connect-button-wrapper .Polaris-Button:hover:not([disabled]) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(149, 191, 71, 0.5);
+}
+
+.connect-button-wrapper .Polaris-Button:active:not([disabled]) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(149, 191, 71, 0.4);
+}
+
+.connect-button-wrapper .Polaris-Button--disabled {
+  background: #e2e8f0;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.connect-button-wrapper .Polaris-Button__Text {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* Features Grid */
+.shopify-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.feature-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2.5rem;
+  text-align: center;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #95bf47, #0ea5e9);
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+
+.feature-card:hover::before {
+  transform: scaleX(1);
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+  border-color: #95bf47;
+}
+
+.feature-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  display: inline-block;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+.feature-card:nth-child(1) .feature-icon {
+  animation-delay: 0s;
+}
+
+.feature-card:nth-child(2) .feature-icon {
+  animation-delay: 0.3s;
+}
+
+.feature-card:nth-child(3) .feature-icon {
+  animation-delay: 0.6s;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.feature-card h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 1rem;
+}
+
+.feature-card p {
+  font-size: 1rem;
+  color: #6d7175;
+  line-height: 1.6;
+}
+
+/* Info Grid */
+.shopify-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.info-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2.5rem;
+  transition: all 0.3s ease;
+}
+
+.info-card:hover {
+  border-color: #95bf47;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.info-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-list li {
+  font-size: 1rem;
+  color: #1a202c;
+  padding: 0.75rem 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border-left: 3px solid #95bf47;
+  transition: all 0.2s ease;
+}
+
+.info-list li:hover {
+  background: #edf2f7;
+  transform: translateX(4px);
+}
+
+.info-text {
+  font-size: 1rem;
+  color: #4a5568;
+  line-height: 1.8;
+}
+
+.info-text strong {
+  color: #95bf47;
+  font-weight: 700;
+}
+
+/* Steps Card */
+.steps-card {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-color: #bae6fd;
+}
+
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-size: 1rem;
+  color: #1a202c;
+  padding: 1rem 1.25rem;
+  background: white;
+  border-radius: 10px;
+  border: 2px solid #e0f2fe;
+  transition: all 0.3s ease;
+}
+
+.step-item:hover {
+  border-color: #0ea5e9;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
+  transform: translateX(4px);
+}
+
+.step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  color: white;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+}
+
+/* Connected View */
+.connected-view {
+  text-align: center;
+}
+
+.success-header {
+  margin-bottom: 3rem;
+}
+
+.success-icon-large {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5rem;
+  font-weight: bold;
+  box-shadow: 0 16px 48px rgba(16, 185, 129, 0.4);
+  animation: scaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin-bottom: 2rem;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.success-title-main {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1a202c;
+  margin-bottom: 0.75rem;
+}
+
+.success-store-name {
+  font-size: 1.25rem;
+  color: #6d7175;
+  font-weight: 500;
+}
+
+.connected-banner {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #86efac;
+  border-radius: 16px;
+  padding: 2.5rem;
+  margin-bottom: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  text-align: left;
+}
+
+.banner-icon {
+  font-size: 4rem;
+  flex-shrink: 0;
+}
+
+.banner-content h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #166534;
+  margin-bottom: 0.5rem;
+}
+
+.banner-content p {
+  font-size: 1.1rem;
+  color: #166534;
+  margin: 0;
+}
+
+/* Action Cards */
+.action-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.action-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.action-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+}
+
+.primary-action {
+  border-color: #95bf47;
+}
+
+.primary-action:hover {
+  border-color: #5e8e3e;
+  box-shadow: 0 16px 48px rgba(149, 191, 71, 0.3);
+}
+
+.secondary-action:hover {
+  border-color: #ef4444;
+}
+
+.action-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.action-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 0.75rem;
+}
+
+.action-card p {
+  font-size: 1rem;
+  color: #6d7175;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.action-card button {
+  min-width: 200px;
+  height: 48px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Style all Polaris Buttons */
+.action-card .Polaris-Button {
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.action-card .Polaris-Button--primary {
+  background: linear-gradient(135deg, #95bf47 0%, #7ea639 100%);
+  box-shadow: 0 4px 12px rgba(149, 191, 71, 0.3);
+}
+
+.action-card .Polaris-Button--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(149, 191, 71, 0.4);
+}
+
+.action-card .Polaris-Button--destructive {
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.action-card .Polaris-Button--destructive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+}
+
+/* Importing View */
+.importing-view {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.importing-animation {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 3rem;
+}
+
+.importing-dots {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.dot {
+  width: 16px;
+  height: 16px;
+  background: #95bf47;
+  border-radius: 50%;
+  animation: dotPulse 1.5s ease-in-out infinite;
+}
+
+.dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.8);
+    opacity: 0.4;
+  }
+}
+
+.importing-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1a202c;
+  margin-bottom: 1rem;
+}
+
+.importing-subtitle {
+  font-size: 1.25rem;
+  color: #6d7175;
+  margin-bottom: 2.5rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.importing-info-box {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2rem 3rem;
+  display: inline-block;
+  text-align: left;
+}
+
+.importing-info-box p {
+  font-size: 1.1rem;
+  color: #4a5568;
+  margin: 0.75rem 0;
+  font-weight: 500;
+}
+
+/* Success View */
+.success-view {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.success-animation-large {
+  margin-bottom: 2.5rem;
+}
+
+.checkmark-circle {
+  width: 140px;
+  height: 140px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 6rem;
+  font-weight: bold;
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.5);
+  animation: successPop 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes successPop {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.15) rotate(0deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.success-title-large {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1a202c;
+  margin-bottom: 3rem;
+}
+
+/* Import Stats Grid */
+.import-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s ease;
+  animation: slideUp 0.6s ease-out backwards;
+}
+
+.stat-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.stat-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.stat-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+.stat-imported {
+  border-top: 5px solid #10b981;
+}
+
+.stat-updated {
+  border-top: 5px solid #3b82f6;
+}
+
+.stat-failed {
+  border-top: 5px solid #ef4444;
+}
+
+.stat-number {
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 1rem;
+}
+
+.stat-imported .stat-number {
+  color: #10b981;
+}
+
+.stat-updated .stat-number {
+  color: #3b82f6;
+}
+
+.stat-failed .stat-number {
+  color: #ef4444;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: #6d7175;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.success-message-box {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #86efac;
+  border-radius: 16px;
+  padding: 2.5rem 3rem;
+  max-width: 600px;
+  margin: 0 auto 3rem;
+}
+
+.success-message-box p {
+  font-size: 1.15rem;
+  color: #166534;
+  margin: 0.5rem 0;
+  line-height: 1.8;
+  font-weight: 500;
+}
+
+.success-actions {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.success-actions button {
+  min-width: 200px;
+  height: 52px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Style success action buttons */
+.success-actions .Polaris-Button {
+  border-radius: 14px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.success-actions .Polaris-Button--primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+.success-actions .Polaris-Button--primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(16, 185, 129, 0.5);
+}
+
+.success-actions .Polaris-Button:not(.Polaris-Button--primary):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .shopify-integration-page {
+    padding: 1rem;
+  }
+
+  .shopify-title {
+    font-size: 2rem;
+  }
+
+  .shopify-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .shopify-form-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .shopify-features-grid,
+  .shopify-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .connected-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .action-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .import-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .success-actions {
+    flex-direction: column;
+  }
+
+  .success-actions button,
+  .action-card button,
+  .connect-button-wrapper button {
+    width: 100%;
+  }
+
+  .importing-info-box {
+    padding: 1.5rem;
+  }
+}

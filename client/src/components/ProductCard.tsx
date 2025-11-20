@@ -4,20 +4,18 @@ import {
   Card,
   CardMedia,
   CardContent,
-  CardActions,
   Typography,
   Button,
   IconButton,
-  Chip,
   Box,
   Skeleton,
 } from '@mui/material';
 import {
-  ShoppingCart as CartIcon,
   Favorite as FavoriteIcon,
   FavoriteBorder as FavoriteBorderIcon,
-  Store as StoreIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
+import { useCart } from '../context/CartContext';
 
 interface ProductCardProps {
   product: {
@@ -50,6 +48,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
+  const { items } = useCart();
+
+  // Check if product is in cart
+  const isInCart = items.some((item: any) => 
+    (item.id === product._id || item.product?._id === product._id)
+  );
 
   const formatPrice = (price: number, currency: string = 'KES') => {
     return new Intl.NumberFormat('en-KE', {
@@ -85,16 +89,26 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   if (loading) {
     return (
-      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <Skeleton variant="rectangular" height={240} />
-        <CardContent sx={{ flexGrow: 1 }}>
-          <Skeleton variant="text" height={32} />
-          <Skeleton variant="text" height={24} width="60%" />
-          <Skeleton variant="text" height={20} />
+      <Card 
+        sx={{ 
+          height: '100%', 
+          display: 'flex', 
+          flexDirection: 'column',
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: '#e2e8f0',
+          boxShadow: 'none',
+        }}
+      >
+        <Skeleton variant="rectangular" height={200} />
+        <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
+          <Skeleton variant="text" height={24} />
+          <Skeleton variant="text" height={20} width="60%" />
+          <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+            <Skeleton variant="rectangular" width={44} height={44} sx={{ borderRadius: 2 }} />
+            <Skeleton variant="rectangular" height={44} sx={{ flex: 1, borderRadius: 2 }} />
+          </Box>
         </CardContent>
-        <CardActions>
-          <Skeleton variant="rectangular" width="100%" height={36} />
-        </CardActions>
       </Card>
     );
   }
@@ -106,19 +120,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'all 0.2s ease',
         cursor: 'pointer',
-        borderRadius: 2,
+        borderRadius: 3,
         overflow: 'hidden',
         border: '1px solid',
-        borderColor: 'divider',
+        borderColor: '#e2e8f0',
+        bgcolor: 'white',
+        boxShadow: 'none',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 12px 24px rgba(102, 126, 234, 0.15)',
-          borderColor: 'primary.main',
-          '& .product-image': {
-            transform: 'scale(1.05)',
-          },
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+          borderColor: '#cbd5e1',
         },
       }}
       onClick={handleViewProduct}
@@ -127,77 +139,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <Box
         sx={{
           position: 'relative',
-          paddingTop: '75%', // 4:3 aspect ratio
-          bgcolor: 'grey.50',
+          paddingTop: '75%',
+          bgcolor: '#f1f5f9',
           overflow: 'hidden',
         }}
       >
-        {/* Wishlist Button */}
-        <IconButton
-          onClick={handleToggleWishlist}
-          sx={{
-            position: 'absolute',
-            top: 12,
-            right: 12,
-            bgcolor: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(8px)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            zIndex: 2,
-            transition: 'all 0.2s',
-            '&:hover': {
-              bgcolor: 'white',
-              transform: 'scale(1.1)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            },
-          }}
-          size="small"
-        >
-          {isInWishlist ? (
-            <FavoriteIcon sx={{ color: 'error.main', fontSize: 20 }} />
-          ) : (
-            <FavoriteBorderIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
-          )}
-        </IconButton>
-
-        {/* Stock Status Badge */}
-        {isOutOfStock && (
-          <Chip
-            label="Out of Stock"
-            size="small"
-            sx={{
-              position: 'absolute',
-              top: 12,
-              left: 12,
-              zIndex: 2,
-              bgcolor: 'error.main',
-              color: 'white',
-              fontWeight: 600,
-              fontSize: '0.75rem',
-            }}
-          />
-        )}
-
-        {/* Category Badge */}
-        {product.category && !isOutOfStock && (
-          <Chip
-            label={product.category}
-            size="small"
-            sx={{
-              position: 'absolute',
-              top: 12,
-              left: 12,
-              zIndex: 2,
-              bgcolor: 'rgba(102, 126, 234, 0.95)',
-              backdropFilter: 'blur(8px)',
-              color: 'white',
-              fontWeight: 600,
-              fontSize: '0.75rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}
-          />
-        )}
-
         {/* Product Image */}
         {hasImage && !imageError ? (
           <CardMedia
@@ -205,7 +151,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
             image={imageUrl}
             alt={product.name}
             onError={() => setImageError(true)}
-            className="product-image"
             sx={{
               position: 'absolute',
               top: 0,
@@ -213,12 +158,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           />
         ) : (
           <Box
-            className="product-image"
             sx={{
               position: 'absolute',
               top: 0,
@@ -230,120 +173,131 @@ const ProductCard: React.FC<ProductCardProps> = ({
               justifyContent: 'center',
               flexDirection: 'column',
               gap: 1,
-              bgcolor: 'grey.100',
+              bgcolor: '#f3f4f6',
             }}
           >
-            <Typography sx={{ fontSize: '4rem' }}>🛍️</Typography>
-            <Typography variant="caption" color="text.secondary">
-              No image available
+            <Typography sx={{ fontSize: '3rem' }}>🛍️</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+              No image
             </Typography>
           </Box>
         )}
       </Box>
 
       {/* Product Info */}
-      <CardContent sx={{ flexGrow: 1, p: 2.5, pb: 2 }}>
-        <Typography
-          variant="h6"
-          component="h3"
-          sx={{
-            fontWeight: 600,
-            fontSize: '1.1rem',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            minHeight: '3.3em',
-            lineHeight: 1.5,
-            mb: 1.5,
-            color: 'text.primary',
-          }}
-        >
-          {product.name}
-        </Typography>
-
-        {product.merchantName && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
-            <StoreIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-            <Typography 
-              variant="body2" 
-              color="text.secondary"
-              sx={{ fontSize: '0.875rem' }}
-            >
-              {product.merchantName}
-            </Typography>
-          </Box>
-        )}
-
-        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5, mb: 1 }}>
+      <CardContent sx={{ 
+        flexGrow: 1, 
+        p: 2, 
+        pb: 1.5,
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        {/* Title and Price Row */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'start', alignItems: 'start', mb: 0.5, gap: 0.5 }}>
           <Typography
-            variant="h5"
+            variant="h6"
+            component="h3"
+            sx={{
+              fontWeight: 600,
+              fontSize: '16px',
+              color: '#0f172a',
+              lineHeight: 1.3,
+              flex: 1,
+            }}
+          >
+            {product.name}
+          </Typography>
+          <Typography
+            variant="h6"
             component="div"
             sx={{ 
               fontWeight: 700,
-              color: 'primary.main',
-              fontSize: '1.5rem',
+              color: '#0f172a',
+              fontSize: '16px',
+              // ml: 1,
+              whiteSpace: 'nowrap',
             }}
           >
             {formatPrice(product.price, product.currency)}
           </Typography>
         </Box>
 
-        {product.inventory && product.inventory.quantity > 0 && product.inventory.quantity <= 10 && (
-          <Box
-            sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 0.5,
-              bgcolor: 'warning.lighter',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-              mt: 1,
-            }}
-          >
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                color: 'warning.dark',
-                fontWeight: 600,
-                fontSize: '0.75rem',
-              }}
-            >
-              Only {product.inventory.quantity} left
-            </Typography>
-          </Box>
-        )}
-      </CardContent>
-
-      {/* Actions */}
-      <CardActions sx={{ p: 2.5, pt: 0 }}>
-        <Button
-          fullWidth
-          variant="contained"
-          color="primary"
-          startIcon={<CartIcon />}
-          onClick={handleAddToCart}
-          disabled={isOutOfStock}
-          sx={{
-            py: 1.25,
-            fontWeight: 600,
-            fontSize: '0.95rem',
-            textTransform: 'none',
-            borderRadius: 1.5,
-            '&:hover': {
-              transform: 'translateY(-1px)',
-            },
-            '&:active': {
-              transform: 'translateY(0)',
-            },
-            transition: 'all 0.2s',
+        {/* Merchant Name as Description */}
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            fontSize: '0.8rem',
+            color: '#64748b',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            minHeight: '2.3em',
+            lineHeight: 1.35,
+            mb: 1.5,
           }}
         >
-          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-        </Button>
-      </CardActions>
+          {product.merchantName || 'Quality product from verified merchant'}
+        </Typography>
+
+        {/* Actions Row */}
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 1,
+          marginTop: 'auto',
+        }}>
+          {/* Wishlist Button */}
+          <IconButton
+            onClick={handleToggleWishlist}
+            sx={{
+              bgcolor: isInWishlist ? '#fce7f3' : '#f1f5f9',
+              width: 44,
+              height: 44,
+              borderRadius: 2,
+              flexShrink: 0,
+              '&:hover': {
+                bgcolor: isInWishlist ? '#fce7f3' : '#e2e8f0',
+              },
+            }}
+          >
+            {isInWishlist ? (
+              <FavoriteIcon sx={{ color: '#ec4899', fontSize: 20 }} />
+            ) : (
+              <FavoriteBorderIcon sx={{ fontSize: 20, color: '#64748b' }} />
+            )}
+          </IconButton>
+
+          {/* Add to Cart Button */}
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={handleAddToCart}
+            disabled={isOutOfStock || isInCart}
+            startIcon={isInCart ? <CheckCircleIcon /> : undefined}
+            sx={{
+              py: 1,
+              fontWeight: 600,
+              fontSize: '0.8125rem',
+              textTransform: 'none',
+              borderRadius: 2,
+              bgcolor: isInCart ? '#10b981' : '#5b21b6',
+              boxShadow: 'none',
+              '&:hover': {
+                bgcolor: isInCart ? '#059669' : '#4c1d95',
+                boxShadow: 'none',
+              },
+              '&:disabled': {
+                bgcolor: isInCart ? '#10b981' : '#e2e8f0',
+                color: isInCart ? 'white' : '#94a3b8',
+                opacity: isInCart ? 1 : 0.6,
+              },
+            }}
+          >
+            {isOutOfStock ? 'Out of Stock' : isInCart ? 'Added to cart' : 'Add to cart'}
+          </Button>
+        </Box>
+      </CardContent>
     </Card>
   );
 };

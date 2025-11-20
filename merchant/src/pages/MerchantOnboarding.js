@@ -893,7 +893,7 @@ const MerchantOnboarding = () => {
     <div className="container" style={{ padding: '2rem 0' }}>
       <div className="onboarding-container">
         <div className="onboarding-header">
-          <h1>Merchant Onboarding</h1>
+          <h1>Merchant Onboardingnnnn</h1>
           <div className="progress-bar">
             <div className={`progress-step ${currentStep >= 1 ? 'active' : ''}`}>
               <span>1</span>

@@ -3,6 +3,12 @@ import axios from 'axios';
 // API base URL - use environment variable or fallback to localhost
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
+// External API base URL
+const EXTERNAL_API_BASE_URL = 'https://dev.getpaya.com/api';
+
+// External API Key - should be stored in environment variable
+const EXTERNAL_API_KEY = process.env.REACT_APP_EXTERNAL_API_KEY || 'pk_live_your_api_key_here';
+
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -14,9 +20,18 @@ const api = axios.create({
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('merchantToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Check if this is an external API call
+    if (config.url && config.url.startsWith('/v1/external/')) {
+      // Use external API base URL
+      config.baseURL = EXTERNAL_API_BASE_URL;
+      // Add X-API-Key header for external API
+      config.headers['X-API-Key'] = EXTERNAL_API_KEY;
+    } else {
+      // For internal API calls, add Bearer token
+      const token = localStorage.getItem('merchantToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -39,4 +54,4 @@ api.interceptors.response.use(
 );
 
 export default api;
-export { API_BASE_URL };
+export { API_BASE_URL, EXTERNAL_API_BASE_URL, EXTERNAL_API_KEY };

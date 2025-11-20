@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import ShopifyIntegrationPolaris from '../components/ShopifyIntegrationPolaris';
-import { Button, AppProvider } from '@shopify/polaris';
+import { useNavigate } from 'react-router-dom';
 // Temporarily commented out to fix Netlify build - CSS calc() issue
 // import '@shopify/polaris/build/esm/styles.css';
 
 const MerchantProducts = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [showBulkUpload, setShowBulkUpload] = useState(false);
-  const [showShopifyIntegration, setShowShopifyIntegration] = useState(false);
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
@@ -166,24 +165,12 @@ const MerchantProducts = () => {
       <div className="products-header">
         <h1>My Products</h1>
         <div className="header-actions">
-          <AppProvider
-            i18n={{
-              Polaris: {
-                Common: {
-                  checkbox: 'checkbox',
-                },
-              },
-            }}
+          <button 
+            className="btn btn-shopify"
+            onClick={() => navigate('/shopify/integration')}
           >
-            <div style={{ display: 'inline-block' }}>
-              <Button
-                onClick={() => setShowShopifyIntegration(true)}
-                size="large"
-              >
-                Connect Shopify
-              </Button>
-            </div>
-          </AppProvider>
+            🛍️ Connect Shopify
+          </button>
           <button 
             className="btn btn-secondary"
             onClick={() => setShowBulkUpload(true)}
@@ -453,16 +440,6 @@ const MerchantProducts = () => {
         </div>
       )}
 
-      {/* Shopify Integration Modal */}
-      {showShopifyIntegration && (
-        <ShopifyIntegrationPolaris
-          onClose={() => setShowShopifyIntegration(false)}
-          onSuccess={() => {
-            setShowShopifyIntegration(false);
-            fetchProducts();
-          }}
-        />
-      )}
     </div>
   );
 };
