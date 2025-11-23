@@ -100,6 +100,9 @@ const MerchantOnboardingNew = () => {
     walletConnected: false,
   });
 
+  // Validation errors state
+  const [errors, setErrors] = useState({});
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -244,6 +247,210 @@ const MerchantOnboardingNew = () => {
 
   const handleBusinessDocChange = (docType, file) => {
     setBusinessDocs((prev) => ({ ...prev, [docType]: file }));
+    // Clear error when file is selected
+    if (file) {
+      setErrors((prev) => ({ ...prev, [docType]: null }));
+    }
+  };
+
+  // Validation functions
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone) => {
+    // Accept phone with or without country code
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    return phoneRegex.test(phone.replace(/\s/g, ''));
+  };
+
+  const validateKraPin = (pin) => {
+    // KRA PIN format: A001234567Z
+    const kraRegex = /^[A-Z][0-9]{9}[A-Z]$/;
+    return kraRegex.test(pin);
+  };
+
+  const validateStep1 = () => {
+    const newErrors = {};
+    
+    if (!ownerInfo.username || ownerInfo.username.trim() === '') {
+      newErrors.ownerUsername = 'Username is required';
+    }
+    
+    if (!ownerInfo.email || ownerInfo.email.trim() === '') {
+      newErrors.ownerEmail = 'Email is required';
+    } else if (!validateEmail(ownerInfo.email)) {
+      newErrors.ownerEmail = 'Please enter a valid email address';
+    }
+    
+    if (!ownerInfo.phone || ownerInfo.phone.trim() === '') {
+      newErrors.ownerPhone = 'Phone number is required';
+    } else if (!validatePhone(ownerInfo.phone)) {
+      newErrors.ownerPhone = 'Please enter a valid phone number';
+    }
+    
+    if (!ownerInfo.firstName || ownerInfo.firstName.trim() === '') {
+      newErrors.ownerFirstName = 'First name is required';
+    }
+    
+    if (!ownerInfo.lastName || ownerInfo.lastName.trim() === '') {
+      newErrors.ownerLastName = 'Last name is required';
+    }
+    
+    if (!ownerInfo.idNumber || ownerInfo.idNumber.trim() === '') {
+      newErrors.ownerIdNumber = 'ID number is required';
+    }
+    
+    if (!ownerInfo.kraPin || ownerInfo.kraPin.trim() === '') {
+      newErrors.ownerKraPin = 'KRA PIN is required';
+    } else if (!validateKraPin(ownerInfo.kraPin)) {
+      newErrors.ownerKraPin = 'Invalid KRA PIN format (e.g., A001234567Z)';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const newErrors = {};
+    
+    if (!businessInfo.companyNumber || businessInfo.companyNumber.trim() === '') {
+      newErrors.companyNumber = 'Company number is required';
+    }
+    
+    if (!businessInfo.registrationDate) {
+      newErrors.registrationDate = 'Registration date is required';
+    }
+    
+    if (!businessInfo.businessName || businessInfo.businessName.trim() === '') {
+      newErrors.businessName = 'Business name is required';
+    }
+    
+    if (!businessInfo.phoneNumber || businessInfo.phoneNumber.trim() === '') {
+      newErrors.phoneNumber = 'Phone number is required';
+    } else if (businessInfo.phoneNumber.length < 9) {
+      newErrors.phoneNumber = 'Please enter a valid phone number';
+    }
+    
+    if (!businessInfo.businessEmail || businessInfo.businessEmail.trim() === '') {
+      newErrors.businessEmail = 'Business email is required';
+    } else if (!validateEmail(businessInfo.businessEmail)) {
+      newErrors.businessEmail = 'Please enter a valid email address';
+    }
+    
+    if (!businessInfo.taxNumber || businessInfo.taxNumber.trim() === '') {
+      newErrors.taxNumber = 'Tax number is required';
+    } else if (!validateKraPin(businessInfo.taxNumber)) {
+      newErrors.taxNumber = 'Invalid KRA PIN format (e.g., A001234567Z)';
+    }
+    
+    if (!businessInfo.typeOfBusiness || businessInfo.typeOfBusiness === '') {
+      newErrors.typeOfBusiness = 'Type of business is required';
+    }
+    
+    if (!businessInfo.businessType || businessInfo.businessType === '') {
+      newErrors.businessType = 'Business type is required';
+    }
+    
+    // Address validation
+    if (!businessAddress.addressLine1 || businessAddress.addressLine1.trim() === '') {
+      newErrors.addressLine1 = 'Address line 1 is required';
+    }
+    
+    if (!businessAddress.city || businessAddress.city.trim() === '') {
+      newErrors.city = 'City is required';
+    }
+    
+    if (!businessAddress.county || businessAddress.county.trim() === '') {
+      newErrors.county = 'County/State is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep3 = () => {
+    const newErrors = {};
+    
+    if (!businessDocs.certificateOfIncorporation) {
+      newErrors.certificateOfIncorporation = 'Certificate of Incorporation is required';
+    }
+    
+    if (!businessDocs.kraPinCertificate) {
+      newErrors.kraPinCertificate = 'KRA PIN Certificate is required';
+    }
+    
+    if (!businessDocs.cr12) {
+      newErrors.cr12 = 'CR-12 document is required';
+    }
+    
+    if (!businessDocs.businessPermit) {
+      newErrors.businessPermit = 'Business Permit is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep4SubStep1 = () => {
+    const newErrors = {};
+    
+    if (!currentDirector.username || currentDirector.username.trim() === '') {
+      newErrors.directorUsername = 'Username is required';
+    }
+    
+    if (!currentDirector.email || currentDirector.email.trim() === '') {
+      newErrors.directorEmail = 'Email is required';
+    } else if (!validateEmail(currentDirector.email)) {
+      newErrors.directorEmail = 'Please enter a valid email address';
+    }
+    
+    if (!currentDirector.phone || currentDirector.phone.trim() === '') {
+      newErrors.directorPhone = 'Phone number is required';
+    } else if (!validatePhone(currentDirector.phone)) {
+      newErrors.directorPhone = 'Please enter a valid phone number';
+    }
+    
+    if (!currentDirector.firstName || currentDirector.firstName.trim() === '') {
+      newErrors.directorFirstName = 'First name is required';
+    }
+    
+    if (!currentDirector.lastName || currentDirector.lastName.trim() === '') {
+      newErrors.directorLastName = 'Last name is required';
+    }
+    
+    if (!currentDirector.idNumber || currentDirector.idNumber.trim() === '') {
+      newErrors.directorIdNumber = 'ID number is required';
+    }
+    
+    if (!currentDirector.kraPin || currentDirector.kraPin.trim() === '') {
+      newErrors.directorKraPin = 'KRA PIN is required';
+    } else if (!validateKraPin(currentDirector.kraPin)) {
+      newErrors.directorKraPin = 'Invalid KRA PIN format (e.g., A001234567Z)';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep4SubStep2 = () => {
+    const newErrors = {};
+    
+    if (!directorDocuments.photoIdFront) {
+      newErrors.photoIdFront = 'National ID (Front) is required';
+    }
+    
+    if (!directorDocuments.photoIdBack) {
+      newErrors.photoIdBack = 'National ID (Back) is required';
+    }
+    
+    if (!directorDocuments.selfie) {
+      newErrors.selfie = 'Facial Photo/Selfie is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   // Map UI document types to API document types
@@ -320,95 +527,46 @@ const MerchantOnboardingNew = () => {
   };
 
   const handleStepSubmit = async () => {
-    setLoading(true);
-
+    // Clear previous errors
+    setErrors({});
+    
     // Step-specific validation
     if (currentStep === 1) {
-      // Validate owner info
-      if (
-        !ownerInfo.username ||
-        !ownerInfo.email ||
-        !ownerInfo.phone ||
-        !ownerInfo.firstName ||
-        !ownerInfo.lastName ||
-        !ownerInfo.idNumber ||
-        !ownerInfo.kraPin
-      ) {
-        toast.error("Please fill in all required owner fields");
-        setLoading(false);
+      if (!validateStep1()) {
+        toast.error("Please fill in all required fields correctly");
         return;
       }
     }
-
+    
     if (currentStep === 2) {
-      // Validate organization info
-      if (
-        !businessInfo.companyNumber ||
-        !businessInfo.businessName ||
-        !businessInfo.phoneNumber ||
-        !businessInfo.businessEmail ||
-        !businessInfo.taxNumber ||
-        !businessInfo.typeOfBusiness ||
-        !businessInfo.businessType
-      ) {
-        toast.error("Please fill in all required business fields");
-        setLoading(false);
-        return;
-      }
-      if (
-        !businessAddress.addressLine1 ||
-        !businessAddress.city ||
-        !businessAddress.county
-      ) {
-        toast.error("Please fill in all required address fields");
-        setLoading(false);
+      if (!validateStep2()) {
+        toast.error("Please fill in all required fields correctly");
         return;
       }
     }
-
+    
     if (currentStep === 3) {
-      // Validate organization documents
-      if (
-        !businessDocs.certificateOfIncorporation ||
-        !businessDocs.kraPinCertificate ||
-        !businessDocs.cr12 ||
-        !businessDocs.businessPermit
-      ) {
-        toast.error("Please upload all required business documents");
-        setLoading(false);
+      if (!validateStep3()) {
+        toast.error("Please upload all required documents");
         return;
       }
     }
-
+    
     if (currentStep === 4 && directorSubStep === 1) {
-      // Validate director info
-      if (
-        !currentDirector.username ||
-        !currentDirector.email ||
-        !currentDirector.phone ||
-        !currentDirector.firstName ||
-        !currentDirector.lastName ||
-        !currentDirector.idNumber ||
-        !currentDirector.kraPin
-      ) {
-        toast.error("Please fill in all required director fields");
-        setLoading(false);
+      if (!validateStep4SubStep1()) {
+        toast.error("Please fill in all required director fields correctly");
         return;
       }
     }
-
+    
     if (currentStep === 4 && directorSubStep === 2) {
-      // Validate director documents
-      if (
-        !directorDocuments.photoIdFront ||
-        !directorDocuments.photoIdBack ||
-        !directorDocuments.selfie
-      ) {
+      if (!validateStep4SubStep2()) {
         toast.error("Please upload all required director documents");
-        setLoading(false);
         return;
       }
     }
+    
+    setLoading(true);
     try {
       // STEP 1: Create Organization Owner
       if (currentStep === 1) {
@@ -975,12 +1133,17 @@ const MerchantOnboardingNew = () => {
           <input
             type="text"
             value={ownerInfo.username}
-            onChange={(e) =>
-              setOwnerInfo((prev) => ({ ...prev, username: e.target.value }))
-            }
+            onChange={(e) => {
+              setOwnerInfo((prev) => ({ ...prev, username: e.target.value }));
+              if (errors.ownerUsername) {
+                setErrors((prev) => ({ ...prev, ownerUsername: null }));
+              }
+            }}
             placeholder="john_doe_corp"
+            className={errors.ownerUsername ? 'input-error' : ''}
             required
           />
+          {errors.ownerUsername && <span className="error-message">{errors.ownerUsername}</span>}
         </div>
 
         <div className="form-group">
@@ -988,12 +1151,17 @@ const MerchantOnboardingNew = () => {
           <input
             type="email"
             value={ownerInfo.email}
-            onChange={(e) =>
-              setOwnerInfo((prev) => ({ ...prev, email: e.target.value }))
-            }
+            onChange={(e) => {
+              setOwnerInfo((prev) => ({ ...prev, email: e.target.value }));
+              if (errors.ownerEmail) {
+                setErrors((prev) => ({ ...prev, ownerEmail: null }));
+              }
+            }}
             placeholder="john.doe@company.com"
+            className={errors.ownerEmail ? 'input-error' : ''}
             required
           />
+          {errors.ownerEmail && <span className="error-message">{errors.ownerEmail}</span>}
         </div>
 
         <div className="form-group">
@@ -1001,13 +1169,21 @@ const MerchantOnboardingNew = () => {
           <input
             type="tel"
             value={ownerInfo.phone}
-            onChange={(e) =>
-              setOwnerInfo((prev) => ({ ...prev, phone: e.target.value }))
-            }
+            onChange={(e) => {
+              setOwnerInfo((prev) => ({ ...prev, phone: e.target.value }));
+              if (errors.ownerPhone) {
+                setErrors((prev) => ({ ...prev, ownerPhone: null }));
+              }
+            }}
             placeholder="254712345678"
+            className={errors.ownerPhone ? 'input-error' : ''}
             required
           />
-          <small>Format: Country code + number (e.g., 254712345678)</small>
+          {errors.ownerPhone ? (
+            <span className="error-message">{errors.ownerPhone}</span>
+          ) : (
+            <small>Format: Country code + number (e.g., 254712345678)</small>
+          )}
         </div>
 
         <div className="form-group">
@@ -1015,12 +1191,17 @@ const MerchantOnboardingNew = () => {
           <input
             type="text"
             value={ownerInfo.firstName}
-            onChange={(e) =>
-              setOwnerInfo((prev) => ({ ...prev, firstName: e.target.value }))
-            }
+            onChange={(e) => {
+              setOwnerInfo((prev) => ({ ...prev, firstName: e.target.value }));
+              if (errors.ownerFirstName) {
+                setErrors((prev) => ({ ...prev, ownerFirstName: null }));
+              }
+            }}
             placeholder="John"
+            className={errors.ownerFirstName ? 'input-error' : ''}
             required
           />
+          {errors.ownerFirstName && <span className="error-message">{errors.ownerFirstName}</span>}
         </div>
 
         <div className="form-group">
@@ -1028,12 +1209,17 @@ const MerchantOnboardingNew = () => {
           <input
             type="text"
             value={ownerInfo.lastName}
-            onChange={(e) =>
-              setOwnerInfo((prev) => ({ ...prev, lastName: e.target.value }))
-            }
+            onChange={(e) => {
+              setOwnerInfo((prev) => ({ ...prev, lastName: e.target.value }));
+              if (errors.ownerLastName) {
+                setErrors((prev) => ({ ...prev, ownerLastName: null }));
+              }
+            }}
             placeholder="Doe"
+            className={errors.ownerLastName ? 'input-error' : ''}
             required
           />
+          {errors.ownerLastName && <span className="error-message">{errors.ownerLastName}</span>}
         </div>
 
         <div className="form-group">
@@ -1053,12 +1239,17 @@ const MerchantOnboardingNew = () => {
           <input
             type="text"
             value={ownerInfo.idNumber}
-            onChange={(e) =>
-              setOwnerInfo((prev) => ({ ...prev, idNumber: e.target.value }))
-            }
+            onChange={(e) => {
+              setOwnerInfo((prev) => ({ ...prev, idNumber: e.target.value }));
+              if (errors.ownerIdNumber) {
+                setErrors((prev) => ({ ...prev, ownerIdNumber: null }));
+              }
+            }}
             placeholder="12345678"
+            className={errors.ownerIdNumber ? 'input-error' : ''}
             required
           />
+          {errors.ownerIdNumber && <span className="error-message">{errors.ownerIdNumber}</span>}
         </div>
 
         <div className="form-group">
@@ -1066,12 +1257,18 @@ const MerchantOnboardingNew = () => {
           <input
             type="text"
             value={ownerInfo.kraPin}
-            onChange={(e) =>
-              setOwnerInfo((prev) => ({ ...prev, kraPin: e.target.value }))
-            }
+            onChange={(e) => {
+              const value = e.target.value.toUpperCase();
+              setOwnerInfo((prev) => ({ ...prev, kraPin: value }));
+              if (errors.ownerKraPin) {
+                setErrors((prev) => ({ ...prev, ownerKraPin: null }));
+              }
+            }}
             placeholder="A001234567Z"
+            className={errors.ownerKraPin ? 'input-error' : ''}
             required
           />
+          {errors.ownerKraPin && <span className="error-message">{errors.ownerKraPin}</span>}
         </div>
       </div>
     </div>
@@ -1093,15 +1290,20 @@ const MerchantOnboardingNew = () => {
           <input
             type="text"
             value={businessInfo.companyNumber}
-            onChange={(e) =>
+            onChange={(e) => {
               setBusinessInfo((prev) => ({
                 ...prev,
                 companyNumber: e.target.value,
-              }))
-            }
+              }));
+              if (errors.companyNumber) {
+                setErrors((prev) => ({ ...prev, companyNumber: null }));
+              }
+            }}
             placeholder="e.g., PVT-123456"
+            className={errors.companyNumber ? 'input-error' : ''}
             required
           />
+          {errors.companyNumber && <span className="error-message">{errors.companyNumber}</span>}
         </div>
 
         <div className="form-group">
@@ -1109,14 +1311,19 @@ const MerchantOnboardingNew = () => {
           <input
             type="date"
             value={businessInfo.registrationDate}
-            onChange={(e) =>
+            onChange={(e) => {
               setBusinessInfo((prev) => ({
                 ...prev,
                 registrationDate: e.target.value,
-              }))
-            }
+              }));
+              if (errors.registrationDate) {
+                setErrors((prev) => ({ ...prev, registrationDate: null }));
+              }
+            }}
+            className={errors.registrationDate ? 'input-error' : ''}
             required
           />
+          {errors.registrationDate && <span className="error-message">{errors.registrationDate}</span>}
         </div>
 
         <div className="form-group full-width">
@@ -1124,15 +1331,20 @@ const MerchantOnboardingNew = () => {
           <input
             type="text"
             value={businessInfo.businessName}
-            onChange={(e) =>
+            onChange={(e) => {
               setBusinessInfo((prev) => ({
                 ...prev,
                 businessName: e.target.value,
-              }))
-            }
+              }));
+              if (errors.businessName) {
+                setErrors((prev) => ({ ...prev, businessName: null }));
+              }
+            }}
             placeholder="Enter registered business name"
+            className={errors.businessName ? 'input-error' : ''}
             required
           />
+          {errors.businessName && <span className="error-message">{errors.businessName}</span>}
         </div>
 
         <div className="form-group">
@@ -1201,14 +1413,18 @@ const MerchantOnboardingNew = () => {
                       ...prev,
                       phoneNumber: value,
                     }));
+                    if (errors.phoneNumber) {
+                      setErrors((prev) => ({ ...prev, phoneNumber: null }));
+                    }
                   }
                 }}
                 placeholder="712345678"
-                className="phone-number-input"
+                className={`phone-number-input ${errors.phoneNumber ? 'input-error' : ''}`}
                 required
               />
             </div>
           </div>
+          {errors.phoneNumber && <span className="error-message">{errors.phoneNumber}</span>}
         </div>
 
         <div className="form-group">
@@ -1216,15 +1432,20 @@ const MerchantOnboardingNew = () => {
           <input
             type="email"
             value={businessInfo.businessEmail}
-            onChange={(e) =>
+            onChange={(e) => {
               setBusinessInfo((prev) => ({
                 ...prev,
                 businessEmail: e.target.value,
-              }))
-            }
+              }));
+              if (errors.businessEmail) {
+                setErrors((prev) => ({ ...prev, businessEmail: null }));
+              }
+            }}
             placeholder="business@example.com"
+            className={errors.businessEmail ? 'input-error' : ''}
             required
           />
+          {errors.businessEmail && <span className="error-message">{errors.businessEmail}</span>}
         </div>
 
         <div className="form-group">
@@ -1232,15 +1453,21 @@ const MerchantOnboardingNew = () => {
           <input
             type="text"
             value={businessInfo.taxNumber}
-            onChange={(e) =>
+            onChange={(e) => {
+              const value = e.target.value.toUpperCase();
               setBusinessInfo((prev) => ({
                 ...prev,
-                taxNumber: e.target.value,
-              }))
-            }
+                taxNumber: value,
+              }));
+              if (errors.taxNumber) {
+                setErrors((prev) => ({ ...prev, taxNumber: null }));
+              }
+            }}
             placeholder="A123456789X"
+            className={errors.taxNumber ? 'input-error' : ''}
             required
           />
+          {errors.taxNumber && <span className="error-message">{errors.taxNumber}</span>}
         </div>
 
         <div className="form-group">
@@ -1259,7 +1486,7 @@ const MerchantOnboardingNew = () => {
         </div>
 
         <div className="form-group">
-          <label>Industrial Classification</label>
+          <label>Industrial Classification *</label>
           <input
             type="text"
             value={businessInfo.industrialClassification}
@@ -1274,7 +1501,7 @@ const MerchantOnboardingNew = () => {
         </div>
 
         <div className="form-group">
-          <label>Industrial Sector</label>
+          <label>Industrial Sector *</label>
           <input
             type="text"
             value={businessInfo.industrialSector}
@@ -1292,12 +1519,16 @@ const MerchantOnboardingNew = () => {
           <label>Type of Business *</label>
           <select
             value={businessInfo.typeOfBusiness}
-            onChange={(e) =>
+            onChange={(e) => {
               setBusinessInfo((prev) => ({
                 ...prev,
                 typeOfBusiness: e.target.value,
-              }))
-            }
+              }));
+              if (errors.typeOfBusiness) {
+                setErrors((prev) => ({ ...prev, typeOfBusiness: null }));
+              }
+            }}
+            className={errors.typeOfBusiness ? 'input-error' : ''}
             required
           >
             <option value="">Select type</option>
@@ -1306,18 +1537,23 @@ const MerchantOnboardingNew = () => {
             <option value="Club">Club</option>
             <option value="Other">Other</option>
           </select>
+          {errors.typeOfBusiness && <span className="error-message">{errors.typeOfBusiness}</span>}
         </div>
 
         <div className="form-group">
           <label>Business Type *</label>
           <select
             value={businessInfo.businessType}
-            onChange={(e) =>
+            onChange={(e) => {
               setBusinessInfo((prev) => ({
                 ...prev,
                 businessType: e.target.value,
-              }))
-            }
+              }));
+              if (errors.businessType) {
+                setErrors((prev) => ({ ...prev, businessType: null }));
+              }
+            }}
+            className={errors.businessType ? 'input-error' : ''}
             required
           >
             <option value="">Select business type</option>
@@ -1327,6 +1563,7 @@ const MerchantOnboardingNew = () => {
             <option value="NGO">NGO</option>
             <option value="Other">Other</option>
           </select>
+          {errors.businessType && <span className="error-message">{errors.businessType}</span>}
         </div>
       </div>
 
@@ -1339,15 +1576,20 @@ const MerchantOnboardingNew = () => {
           <input
             type="text"
             value={businessAddress.addressLine1}
-            onChange={(e) =>
+            onChange={(e) => {
               setBusinessAddress((prev) => ({
                 ...prev,
                 addressLine1: e.target.value,
-              }))
-            }
+              }));
+              if (errors.addressLine1) {
+                setErrors((prev) => ({ ...prev, addressLine1: null }));
+              }
+            }}
             placeholder="Street address, P.O. Box, Building, etc."
+            className={errors.addressLine1 ? 'input-error' : ''}
             required
           />
+          {errors.addressLine1 && <span className="error-message">{errors.addressLine1}</span>}
         </div>
 
         <div className="form-group full-width">
@@ -1370,12 +1612,17 @@ const MerchantOnboardingNew = () => {
           <input
             type="text"
             value={businessAddress.city}
-            onChange={(e) =>
-              setBusinessAddress((prev) => ({ ...prev, city: e.target.value }))
-            }
+            onChange={(e) => {
+              setBusinessAddress((prev) => ({ ...prev, city: e.target.value }));
+              if (errors.city) {
+                setErrors((prev) => ({ ...prev, city: null }));
+              }
+            }}
             placeholder="Enter city"
+            className={errors.city ? 'input-error' : ''}
             required
           />
+          {errors.city && <span className="error-message">{errors.city}</span>}
         </div>
 
         <div className="form-group">
@@ -1383,15 +1630,20 @@ const MerchantOnboardingNew = () => {
           <input
             type="text"
             value={businessAddress.county}
-            onChange={(e) =>
+            onChange={(e) => {
               setBusinessAddress((prev) => ({
                 ...prev,
                 county: e.target.value,
-              }))
-            }
+              }));
+              if (errors.county) {
+                setErrors((prev) => ({ ...prev, county: null }));
+              }
+            }}
             placeholder="Enter county"
+            className={errors.county ? 'input-error' : ''}
             required
           />
+          {errors.county && <span className="error-message">{errors.county}</span>}
         </div>
 
         <div className="form-group">
@@ -1476,7 +1728,7 @@ const MerchantOnboardingNew = () => {
               />
               <label
                 htmlFor={doc.key}
-                className="file-upload-label"
+                className={`file-upload-label ${errors[doc.key] ? 'error' : ''}`}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
@@ -1506,6 +1758,7 @@ const MerchantOnboardingNew = () => {
                   </div>
                 )}
               </label>
+              {errors[doc.key] && <span className="error-message">{errors[doc.key]}</span>}
             </div>
           </div>
         ))}
@@ -1549,15 +1802,20 @@ const MerchantOnboardingNew = () => {
               <input
                 type="text"
                 value={currentDirector.username}
-                onChange={(e) =>
+                onChange={(e) => {
                   setCurrentDirector((prev) => ({
                     ...prev,
                     username: e.target.value,
-                  }))
-                }
+                  }));
+                  if (errors.directorUsername) {
+                    setErrors((prev) => ({ ...prev, directorUsername: null }));
+                  }
+                }}
                 placeholder="jane_smith_dir"
+                className={errors.directorUsername ? 'input-error' : ''}
                 required
               />
+              {errors.directorUsername && <span className="error-message">{errors.directorUsername}</span>}
             </div>
 
             <div className="form-group">
@@ -1565,15 +1823,20 @@ const MerchantOnboardingNew = () => {
               <input
                 type="email"
                 value={currentDirector.email}
-                onChange={(e) =>
+                onChange={(e) => {
                   setCurrentDirector((prev) => ({
                     ...prev,
                     email: e.target.value,
-                  }))
-                }
+                  }));
+                  if (errors.directorEmail) {
+                    setErrors((prev) => ({ ...prev, directorEmail: null }));
+                  }
+                }}
                 placeholder="jane.smith@company.com"
+                className={errors.directorEmail ? 'input-error' : ''}
                 required
               />
+              {errors.directorEmail && <span className="error-message">{errors.directorEmail}</span>}
             </div>
 
             <div className="form-group">
@@ -1581,16 +1844,24 @@ const MerchantOnboardingNew = () => {
               <input
                 type="tel"
                 value={currentDirector.phone}
-                onChange={(e) =>
+                onChange={(e) => {
                   setCurrentDirector((prev) => ({
                     ...prev,
                     phone: e.target.value,
-                  }))
-                }
+                  }));
+                  if (errors.directorPhone) {
+                    setErrors((prev) => ({ ...prev, directorPhone: null }));
+                  }
+                }}
                 placeholder="254723456789"
+                className={errors.directorPhone ? 'input-error' : ''}
                 required
               />
-              <small>Format: Country code + number (e.g., 254723456789)</small>
+              {errors.directorPhone ? (
+                <span className="error-message">{errors.directorPhone}</span>
+              ) : (
+                <small>Format: Country code + number (e.g., 254723456789)</small>
+              )}
             </div>
 
             <div className="form-group">
@@ -1598,15 +1869,20 @@ const MerchantOnboardingNew = () => {
               <input
                 type="text"
                 value={currentDirector.firstName}
-                onChange={(e) =>
+                onChange={(e) => {
                   setCurrentDirector((prev) => ({
                     ...prev,
                     firstName: e.target.value,
-                  }))
-                }
+                  }));
+                  if (errors.directorFirstName) {
+                    setErrors((prev) => ({ ...prev, directorFirstName: null }));
+                  }
+                }}
                 placeholder="Jane"
+                className={errors.directorFirstName ? 'input-error' : ''}
                 required
               />
+              {errors.directorFirstName && <span className="error-message">{errors.directorFirstName}</span>}
             </div>
 
             <div className="form-group">
@@ -1614,15 +1890,20 @@ const MerchantOnboardingNew = () => {
               <input
                 type="text"
                 value={currentDirector.lastName}
-                onChange={(e) =>
+                onChange={(e) => {
                   setCurrentDirector((prev) => ({
                     ...prev,
                     lastName: e.target.value,
-                  }))
-                }
+                  }));
+                  if (errors.directorLastName) {
+                    setErrors((prev) => ({ ...prev, directorLastName: null }));
+                  }
+                }}
                 placeholder="Smith"
+                className={errors.directorLastName ? 'input-error' : ''}
                 required
               />
+              {errors.directorLastName && <span className="error-message">{errors.directorLastName}</span>}
             </div>
 
             <div className="form-group">
@@ -1645,15 +1926,20 @@ const MerchantOnboardingNew = () => {
               <input
                 type="text"
                 value={currentDirector.idNumber}
-                onChange={(e) =>
+                onChange={(e) => {
                   setCurrentDirector((prev) => ({
                     ...prev,
                     idNumber: e.target.value,
-                  }))
-                }
+                  }));
+                  if (errors.directorIdNumber) {
+                    setErrors((prev) => ({ ...prev, directorIdNumber: null }));
+                  }
+                }}
                 placeholder="23456789"
+                className={errors.directorIdNumber ? 'input-error' : ''}
                 required
               />
+              {errors.directorIdNumber && <span className="error-message">{errors.directorIdNumber}</span>}
             </div>
 
             <div className="form-group">
@@ -1661,15 +1947,21 @@ const MerchantOnboardingNew = () => {
               <input
                 type="text"
                 value={currentDirector.kraPin}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const value = e.target.value.toUpperCase();
                   setCurrentDirector((prev) => ({
                     ...prev,
-                    kraPin: e.target.value,
-                  }))
-                }
+                    kraPin: value,
+                  }));
+                  if (errors.directorKraPin) {
+                    setErrors((prev) => ({ ...prev, directorKraPin: null }));
+                  }
+                }}
                 placeholder="A001234568Z"
+                className={errors.directorKraPin ? 'input-error' : ''}
                 required
               />
+              {errors.directorKraPin && <span className="error-message">{errors.directorKraPin}</span>}
             </div>
 
             <div className="form-group">
@@ -1739,36 +2031,47 @@ const MerchantOnboardingNew = () => {
                     type="file"
                     id={doc.key}
                     accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setDirectorDocuments((prev) => ({
                         ...prev,
                         [doc.key]: e.target.files[0],
-                      }))
-                    }
+                      }));
+                      if (errors[doc.key]) {
+                        setErrors((prev) => ({ ...prev, [doc.key]: null }));
+                      }
+                    }}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                       e.preventDefault();
                       const file = e.dataTransfer.files[0];
-                      if (file)
+                      if (file) {
                         setDirectorDocuments((prev) => ({
                           ...prev,
                           [doc.key]: file,
                         }));
+                        if (errors[doc.key]) {
+                          setErrors((prev) => ({ ...prev, [doc.key]: null }));
+                        }
+                      }
                     }}
                     className="file-input-hidden"
                   />
                   <label
                     htmlFor={doc.key}
-                    className="file-upload-label"
+                    className={`file-upload-label ${errors[doc.key] ? 'error' : ''}`}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                       e.preventDefault();
                       const file = e.dataTransfer.files[0];
-                      if (file)
+                      if (file) {
                         setDirectorDocuments((prev) => ({
                           ...prev,
                           [doc.key]: file,
                         }));
+                        if (errors[doc.key]) {
+                          setErrors((prev) => ({ ...prev, [doc.key]: null }));
+                        }
+                      }
                     }}
                   >
                     {directorDocuments[doc.key] ? (
@@ -1798,6 +2101,7 @@ const MerchantOnboardingNew = () => {
                       </div>
                     )}
                   </label>
+                  {errors[doc.key] && <span className="error-message">{errors[doc.key]}</span>}
                 </div>
               </div>
             ))}

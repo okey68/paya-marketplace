@@ -7,7 +7,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api
 const EXTERNAL_API_BASE_URL = 'https://dev.getpaya.com/api';
 
 // External API Key - should be stored in environment variable
-const EXTERNAL_API_KEY = process.env.REACT_APP_EXTERNAL_API_KEY || 'pk_live_your_api_key_here';
+const EXTERNAL_API_KEY = process.env.REACT_APP_EXTERNAL_API_KEY;
 
 // Create axios instance with base configuration
 const api = axios.create({

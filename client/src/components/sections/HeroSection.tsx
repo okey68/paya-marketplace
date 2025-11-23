@@ -4,9 +4,7 @@ import {
   Container,
   Box,
   Typography,
-  Button,
-  Avatar,
-  AvatarGroup,
+  Button
 } from "@mui/material";
 import { ArrowForward as ArrowForwardIcon } from "@mui/icons-material";
 
