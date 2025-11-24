@@ -81,16 +81,16 @@ const Cart = () => {
 
   if (getItemCount() === 0) {
     return (
-      <Container maxWidth="md" sx={{ pt: 12, pb: 8, textAlign: 'center' }}>
+      <Container maxWidth="md" sx={{ pt: 10, pb: 6, textAlign: 'center' }}>
         <Box
           sx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 3,
+            gap: 2,
           }}
         >
-          <Typography sx={{ fontSize: '6rem' }}>🛒</Typography>
+          <Typography sx={{ fontSize: '5rem' }}>🛒</Typography>
           <Typography variant="h4" fontWeight={700}>
             Your cart is empty
           </Typography>
@@ -103,7 +103,7 @@ const Cart = () => {
             variant="contained"
             color="primary"
             size="large"
-            sx={{ mt: 2 }}
+            sx={{ mt: 1.5 }}
           >
             Browse Products
           </Button>
@@ -113,20 +113,25 @@ const Cart = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ pt: 12, pb: 4 }}>
+    <Container maxWidth="lg" sx={{ marginTop: "-50px", pb: 3 }}>
+      {/* Shopping Cart Header */}
+      <Typography variant="h4" fontWeight={700} gutterBottom sx={{ mb: 3 }}>
+        Shopping Cart
+      </Typography>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Button
           component={RouterLink}
           to="/marketplace"
-          variant="outlined"
+          variant="text"
           startIcon={<ArrowBackIcon />}
-          size="large"
+          size="medium"
+          sx={{ color: 'text.secondary' }}
         >
           Continue Shopping
         </Button>
         <Button
-          variant="outlined"
+          variant="text"
           color="error"
           size="small"
           onClick={handleClearCart}
@@ -136,10 +141,10 @@ const Cart = () => {
         </Button>
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 6, mt: 6 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3, mt: 3 }}>
         {/* Cart Items */}
         <Box>
-          <Stack spacing={2}>
+          <Stack spacing={1.5}>
             {items.map((item: any) => (
               <Paper
                 key={item.id}
@@ -149,21 +154,28 @@ const Cart = () => {
                   border: 1,
                   borderColor: 'divider',
                   borderRadius: 2,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  },
                 }}
               >
                 <Box sx={{ display: 'flex', gap: 2 }}>
                   {/* Product Image */}
                   <Box
                     sx={{
-                      width: 100,
-                      height: 100,
+                      width: 90,
+                      height: 90,
                       flexShrink: 0,
-                      borderRadius: 1,
+                      borderRadius: 1.5,
                       overflow: 'hidden',
-                      bgcolor: 'grey.100',
+                      bgcolor: 'grey.50',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      border: 1,
+                      borderColor: 'divider',
                     }}
                   >
                     {item.image ? (
@@ -187,30 +199,31 @@ const Cart = () => {
 
                   {/* Product Details */}
                   <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom sx={{ mb: 0.5 }}>
                       {item.name}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
                       by {item.merchantName}
                     </Typography>
                     <Button
                       component={RouterLink}
                       to={`/product/${item.id}`}
                       size="small"
-                      sx={{ mt: 1 }}
+                      variant="text"
+                      sx={{ mt: 0.5, p: 0, minWidth: 'auto', textTransform: 'none', fontSize: '0.75rem' }}
                     >
-                      View Product
+                      View Details →
                     </Button>
                   </Box>
 
                   {/* Price and Quantity */}
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
                     <Typography variant="h6" color="primary.main" fontWeight={700}>
                       {formatCurrency(item.price * item.quantity)}
                     </Typography>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <ButtonGroup size="small" variant="outlined">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <ButtonGroup size="small" variant="outlined" sx={{ bgcolor: 'background.paper' }}>
                         <IconButton
                           onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                           disabled={item.quantity <= 1 || isUpdating}
@@ -254,21 +267,22 @@ const Cart = () => {
           <Paper
             elevation={0}
             sx={{
-              p: 3,
+              p: 2.5,
               border: 1,
               borderColor: 'divider',
               borderRadius: 2,
               position: 'sticky',
               top: 80,
+              bgcolor: 'grey.50',
             }}
           >
-            <Typography variant="h6" fontWeight={700} gutterBottom>
+            <Typography variant="h6" fontWeight={700} gutterBottom sx={{ mb: 1.5 }}>
               Order Summary
             </Typography>
 
-            <Divider sx={{ my: 2 }} />
+            <Divider sx={{ my: 1.5 }} />
 
-            <Stack spacing={1.5}>
+            <Stack spacing={1}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography variant="body2" color="text.secondary">
                   Subtotal ({getItemCount()} items)
@@ -297,9 +311,9 @@ const Cart = () => {
               </Box>
             </Stack>
 
-            <Divider sx={{ my: 2 }} />
+            <Divider sx={{ my: 1.5 }} />
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
               <Typography variant="h6" fontWeight={700}>
                 Total
               </Typography>
@@ -309,7 +323,7 @@ const Cart = () => {
             </Box>
 
             {shipping > 0 && (
-              <Alert severity="info" sx={{ mb: 2 }}>
+              <Alert severity="info" sx={{ mb: 1.5, py: 0.5 }}>
                 Add {formatCurrency(5000 - subtotal)} more for free shipping!
               </Alert>
             )}
@@ -320,27 +334,34 @@ const Cart = () => {
               color="primary"
               size="large"
               onClick={handleCheckout}
-              sx={{ mb: 3, py: 1.5 }}
+              sx={{ 
+                mb: 2, 
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontSize: '1rem',
+                fontWeight: 600,
+              }}
             >
               Proceed to Checkout
             </Button>
 
             {/* Security Badges */}
-            <Stack spacing={1.5}>
+            <Stack spacing={0.75} sx={{ pt: 1, borderTop: 1, borderColor: 'divider' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <SecurityIcon color="action" fontSize="small" />
+                <SecurityIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                 <Typography variant="caption" color="text.secondary">
                   Secure Checkout
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <ShippingIcon color="action" fontSize="small" />
+                <ShippingIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                 <Typography variant="caption" color="text.secondary">
                   Fast Delivery
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <ReturnIcon color="action" fontSize="small" />
+                <ReturnIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                 <Typography variant="caption" color="text.secondary">
                   Easy Returns
                 </Typography>

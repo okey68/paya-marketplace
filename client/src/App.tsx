@@ -17,6 +17,7 @@ import OrderComplete from './pages/OrderComplete';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Merchants from './pages/Merchants';
+import MerchantDetail from './pages/MerchantDetail';
 import MerchantOnboarding from './pages/MerchantOnboarding';
 import MerchantDashboard from './pages/MerchantDashboard';
 import './App.css';
@@ -42,7 +43,8 @@ function App() {
                   <Route path="/register" element={<Register />} />
                   <Route path="/merchants" element={<Merchants />} />
                   <Route path="/merchant-onboarding" element={<MerchantOnboarding />} />
-                  <Route path="/merchant" element={<MerchantDashboard />} />
+                  <Route path="/merchant/dashboard" element={<MerchantDashboard />} />
+                  <Route path="/merchants/:id" element={<MerchantDetail />} />
                 </Routes>
               </main>
               <Footer />

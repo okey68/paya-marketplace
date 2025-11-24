@@ -30,7 +30,7 @@ const Footer = () => {
     {
       title: 'For Merchants',
       links: [
-        { label: 'Become a Seller', path: '/merchant-onboarding' },
+        { label: 'Become a Seller', path: '/register?role=merchant' },
         { label: 'Seller Resources', path: '/seller-resources' },
         { label: 'Fee Structure', path: '/fees' },
         { label: 'Merchant Support', path: '/merchant-support' },
@@ -185,9 +185,9 @@ const Footer = () => {
           <Typography variant="body2" color="grey.500">
             © {new Date().getFullYear()} Paya Marketplace. All rights reserved.
           </Typography>
-          <Typography variant="body2" color="grey.500">
+          {/* <Typography variant="body2" color="grey.500">
             Made with ❤️ in Kenya
-          </Typography>
+          </Typography> */}
         </Box>
       </Container>
     </Box>
