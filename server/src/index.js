@@ -104,12 +104,14 @@ app.use(cookieParser());
 app.use(session({
   secret: process.env.SESSION_SECRET || 'paya-session-secret-change-in-production',
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: false, // Only save session when data is added
   cookie: {
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
     httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site for OAuth
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+  },
+  name: 'paya.sid' // Custom session name
 }));
 
 // Logging
@@ -130,6 +132,15 @@ mongoose.connect(mongoUri, {
 })
 .then(() => {
   console.log('Connected to MongoDB Atlas');
+
+  // Initialize Shopify scheduled sync after DB connection
+  if (process.env.SHOPIFY_API_KEY && process.env.SHOPIFY_API_SECRET) {
+    const { initializeScheduledSync } = require('./services/shopifyScheduledSync');
+    initializeScheduledSync();
+    console.log('✅ Shopify scheduled sync initialized');
+  } else {
+    console.log('⚠️  Shopify credentials not found - scheduled sync disabled');
+  }
 })
 .catch((error) => {
   console.error('MongoDB connection error:', error);
