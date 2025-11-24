@@ -10,11 +10,9 @@ const MerchantOnboardingNew = () => {
   const { user, updateUser, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [loadingOrgStatus, setLoadingOrgStatus] = useState(false);
   const dropdownRef = useRef(null);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const hasFetchedData = useRef(false);
-  const hasFetchedStep5Data = useRef(false);
 
   // Redux state and actions (auto-persisted)
   const {
@@ -46,8 +44,8 @@ const MerchantOnboardingNew = () => {
     saveCurrentDirectorId,
     saveDirectorDocuments,
     addNewDirector,
-    saveOrganizationStatus,
-    saveApprovalStatus,
+    setOrganizationStatus: saveOrganizationStatus,
+    updateApprovalStatus: saveApprovalStatus,
     saveErrors,
     removeError,
     removeAllErrors,
@@ -106,19 +104,16 @@ const MerchantOnboardingNew = () => {
 
   // Fetch organization status from external API
   const fetchOrganizationStatus = async (organizationId) => {
-    console.log("fetchOrganizationStatus called with ID:", organizationId);
-    setLoadingOrgStatus(true);
     try {
       const response = await api.get(
         `/v1/external/organizations/${organizationId}`
       );
       const orgData = response.data;
 
-      console.log("✅ Fetched organization data:", orgData);
+      console.log("Fetched organization data:", orgData);
 
       // Set the organization status for rendering
       saveOrganizationStatus(orgData);
-      console.log("✅ Saved organization status to Redux");
 
       // Update approval status based on organization data
       // You can customize this based on your backend's approval logic
@@ -129,17 +124,15 @@ const MerchantOnboardingNew = () => {
       };
 
       saveApprovalStatus(newStatus);
-      console.log("✅ Saved approval status to Redux:", newStatus);
-      setLoadingOrgStatus(false);
       return orgData;
     } catch (error) {
-      console.error("❌ Failed to fetch organization status:", error);
-      console.error("Error details:", error.response?.data);
-      setLoadingOrgStatus(false);
+      console.error("Failed to fetch organization status:", error);
       // Fallback to user profile if external API fails
       await fetchUserData();
     }
-  }; // Check authentication
+  };
+
+  // Check authentication
   useEffect(() => {
     const token = localStorage.getItem("merchantToken");
     if (!authLoading && !token) {
@@ -177,58 +170,28 @@ const MerchantOnboardingNew = () => {
     }
   }, [authLoading, user, currentStep, goToStep, getInitialStep]);
 
-  // Fetch fresh data only once when reaching step 5
+  // Fetch fresh data whenever we're on step 5
   useEffect(() => {
-    console.log(
-      "Step 5 useEffect - currentStep:",
-      currentStep,
-      "authLoading:",
-      authLoading,
-      "user:",
-      !!user,
-      "hasFetched:",
-      hasFetchedStep5Data.current
-    );
+    if (!authLoading && user && currentStep === 5) {
+      console.log("Fetching data for step 5");
 
-    if (
-      !authLoading &&
-      user &&
-      currentStep === 5 &&
-      !hasFetchedStep5Data.current
-    ) {
-      console.log("🔄 Fetching data for step 5");
-      hasFetchedStep5Data.current = true;
+      // Try to get organization ID from user data
+      const organizationId =
+        user.businessInfo?.organizationId ||
+        localStorage.getItem("merchantOrganizationId");
 
-      // Try to get organization ID from Redux state or localStorage
-      const orgId =
-        organizationId || localStorage.getItem("merchantOrganizationId");
-
-      console.log("Organization ID from Redux:", organizationId);
-      console.log(
-        "Organization ID from localStorage:",
-        localStorage.getItem("merchantOrganizationId")
-      );
-      console.log("Using organization ID:", orgId);
-
-      if (orgId) {
+      if (organizationId) {
         // Fetch from external API if we have organization ID
-        console.log("📡 Calling fetchOrganizationStatus with ID:", orgId);
-        fetchOrganizationStatus(orgId);
+        fetchOrganizationStatus(organizationId);
       } else {
         // Fallback to user profile endpoint
-        console.log(
-          "⚠️ No organization ID found, falling back to user profile"
-        );
         fetchUserData();
       }
     }
-
-    // Reset flag when leaving step 5
-    if (currentStep !== 5) {
-      hasFetchedStep5Data.current = false;
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, authLoading, user]); // Save current step to localStorage whenever it changes
+  }, [currentStep, authLoading, user]);
+
+  // Save current step to localStorage whenever it changes
   useEffect(() => {
     if (currentStep >= 1 && currentStep <= 5) {
       localStorage.setItem("merchantOnboardingStep", currentStep.toString());
@@ -252,7 +215,7 @@ const MerchantOnboardingNew = () => {
   const validatePhone = (phone) => {
     // Accept phone with or without country code
     const phoneRegex = /^\+?[0-9]{10,15}$/;
-    return phoneRegex.test(phone.replace(/\s/g, ""));
+    return phoneRegex.test(phone.replace(/\s/g, ''));
   };
 
   const validateKraPin = (pin) => {
@@ -263,193 +226,183 @@ const MerchantOnboardingNew = () => {
 
   const validateStep1 = () => {
     const newErrors = {};
-
-    if (!ownerInfo.username || ownerInfo.username.trim() === "") {
-      newErrors.ownerUsername = "Username is required";
+    
+    if (!ownerInfo.username || ownerInfo.username.trim() === '') {
+      newErrors.ownerUsername = 'Username is required';
     }
-
-    if (!ownerInfo.email || ownerInfo.email.trim() === "") {
-      newErrors.ownerEmail = "Email is required";
+    
+    if (!ownerInfo.email || ownerInfo.email.trim() === '') {
+      newErrors.ownerEmail = 'Email is required';
     } else if (!validateEmail(ownerInfo.email)) {
-      newErrors.ownerEmail = "Please enter a valid email address";
+      newErrors.ownerEmail = 'Please enter a valid email address';
     }
-
-    if (!ownerInfo.phone || ownerInfo.phone.trim() === "") {
-      newErrors.ownerPhone = "Phone number is required";
+    
+    if (!ownerInfo.phone || ownerInfo.phone.trim() === '') {
+      newErrors.ownerPhone = 'Phone number is required';
     } else if (!validatePhone(ownerInfo.phone)) {
-      newErrors.ownerPhone = "Please enter a valid phone number";
+      newErrors.ownerPhone = 'Please enter a valid phone number';
     }
-
-    if (!ownerInfo.firstName || ownerInfo.firstName.trim() === "") {
-      newErrors.ownerFirstName = "First name is required";
+    
+    if (!ownerInfo.firstName || ownerInfo.firstName.trim() === '') {
+      newErrors.ownerFirstName = 'First name is required';
     }
-
-    if (!ownerInfo.lastName || ownerInfo.lastName.trim() === "") {
-      newErrors.ownerLastName = "Last name is required";
+    
+    if (!ownerInfo.lastName || ownerInfo.lastName.trim() === '') {
+      newErrors.ownerLastName = 'Last name is required';
     }
-
-    if (!ownerInfo.idNumber || ownerInfo.idNumber.trim() === "") {
-      newErrors.ownerIdNumber = "ID number is required";
+    
+    if (!ownerInfo.idNumber || ownerInfo.idNumber.trim() === '') {
+      newErrors.ownerIdNumber = 'ID number is required';
     }
-
-    if (!ownerInfo.kraPin || ownerInfo.kraPin.trim() === "") {
-      newErrors.ownerKraPin = "KRA PIN is required";
+    
+    if (!ownerInfo.kraPin || ownerInfo.kraPin.trim() === '') {
+      newErrors.ownerKraPin = 'KRA PIN is required';
     } else if (!validateKraPin(ownerInfo.kraPin)) {
-      newErrors.ownerKraPin = "Invalid KRA PIN format (e.g., A001234567Z)";
+      newErrors.ownerKraPin = 'Invalid KRA PIN format (e.g., A001234567Z)';
     }
-
-    saveErrors(newErrors);
+    
+    setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validateStep2 = () => {
     const newErrors = {};
-
-    if (
-      !businessInfo.companyNumber ||
-      businessInfo.companyNumber.trim() === ""
-    ) {
-      newErrors.companyNumber = "Company number is required";
+    
+    if (!businessInfo.companyNumber || businessInfo.companyNumber.trim() === '') {
+      newErrors.companyNumber = 'Company number is required';
     }
-
+    
     if (!businessInfo.registrationDate) {
-      newErrors.registrationDate = "Registration date is required";
+      newErrors.registrationDate = 'Registration date is required';
     }
-
-    if (!businessInfo.businessName || businessInfo.businessName.trim() === "") {
-      newErrors.businessName = "Business name is required";
+    
+    if (!businessInfo.businessName || businessInfo.businessName.trim() === '') {
+      newErrors.businessName = 'Business name is required';
     }
-
-    if (!businessInfo.phoneNumber || businessInfo.phoneNumber.trim() === "") {
-      newErrors.phoneNumber = "Phone number is required";
+    
+    if (!businessInfo.phoneNumber || businessInfo.phoneNumber.trim() === '') {
+      newErrors.phoneNumber = 'Phone number is required';
     } else if (businessInfo.phoneNumber.length < 9) {
-      newErrors.phoneNumber = "Please enter a valid phone number";
+      newErrors.phoneNumber = 'Please enter a valid phone number';
     }
-
-    if (
-      !businessInfo.businessEmail ||
-      businessInfo.businessEmail.trim() === ""
-    ) {
-      newErrors.businessEmail = "Business email is required";
+    
+    if (!businessInfo.businessEmail || businessInfo.businessEmail.trim() === '') {
+      newErrors.businessEmail = 'Business email is required';
     } else if (!validateEmail(businessInfo.businessEmail)) {
-      newErrors.businessEmail = "Please enter a valid email address";
+      newErrors.businessEmail = 'Please enter a valid email address';
     }
-
-    if (!businessInfo.taxNumber || businessInfo.taxNumber.trim() === "") {
-      newErrors.taxNumber = "Tax number is required";
+    
+    if (!businessInfo.taxNumber || businessInfo.taxNumber.trim() === '') {
+      newErrors.taxNumber = 'Tax number is required';
     } else if (!validateKraPin(businessInfo.taxNumber)) {
-      newErrors.taxNumber = "Invalid KRA PIN format (e.g., A001234567Z)";
+      newErrors.taxNumber = 'Invalid KRA PIN format (e.g., A001234567Z)';
     }
-
-    if (!businessInfo.typeOfBusiness || businessInfo.typeOfBusiness === "") {
-      newErrors.typeOfBusiness = "Type of business is required";
+    
+    if (!businessInfo.typeOfBusiness || businessInfo.typeOfBusiness === '') {
+      newErrors.typeOfBusiness = 'Type of business is required';
     }
-
-    if (!businessInfo.businessType || businessInfo.businessType === "") {
-      newErrors.businessType = "Business type is required";
+    
+    if (!businessInfo.businessType || businessInfo.businessType === '') {
+      newErrors.businessType = 'Business type is required';
     }
-
+    
     // Address validation
-    if (
-      !businessAddress.addressLine1 ||
-      businessAddress.addressLine1.trim() === ""
-    ) {
-      newErrors.addressLine1 = "Address line 1 is required";
+    if (!businessAddress.addressLine1 || businessAddress.addressLine1.trim() === '') {
+      newErrors.addressLine1 = 'Address line 1 is required';
     }
-
-    if (!businessAddress.city || businessAddress.city.trim() === "") {
-      newErrors.city = "City is required";
+    
+    if (!businessAddress.city || businessAddress.city.trim() === '') {
+      newErrors.city = 'City is required';
     }
-
-    if (!businessAddress.county || businessAddress.county.trim() === "") {
-      newErrors.county = "County/State is required";
+    
+    if (!businessAddress.county || businessAddress.county.trim() === '') {
+      newErrors.county = 'County/State is required';
     }
-
+    
     saveErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validateStep3 = () => {
     const newErrors = {};
-
+    
     if (!businessDocs.certificateOfIncorporation) {
-      newErrors.certificateOfIncorporation =
-        "Certificate of Incorporation is required";
+      newErrors.certificateOfIncorporation = 'Certificate of Incorporation is required';
     }
-
+    
     if (!businessDocs.kraPinCertificate) {
-      newErrors.kraPinCertificate = "KRA PIN Certificate is required";
+      newErrors.kraPinCertificate = 'KRA PIN Certificate is required';
     }
-
+    
     if (!businessDocs.cr12) {
-      newErrors.cr12 = "CR-12 document is required";
+      newErrors.cr12 = 'CR-12 document is required';
     }
-
+    
     if (!businessDocs.businessPermit) {
-      newErrors.businessPermit = "Business Permit is required";
+      newErrors.businessPermit = 'Business Permit is required';
     }
-
+    
     saveErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validateStep4SubStep1 = () => {
     const newErrors = {};
-
-    if (!currentDirector.username || currentDirector.username.trim() === "") {
-      newErrors.directorUsername = "Username is required";
+    
+    if (!currentDirector.username || currentDirector.username.trim() === '') {
+      newErrors.directorUsername = 'Username is required';
     }
-
-    if (!currentDirector.email || currentDirector.email.trim() === "") {
-      newErrors.directorEmail = "Email is required";
+    
+    if (!currentDirector.email || currentDirector.email.trim() === '') {
+      newErrors.directorEmail = 'Email is required';
     } else if (!validateEmail(currentDirector.email)) {
-      newErrors.directorEmail = "Please enter a valid email address";
+      newErrors.directorEmail = 'Please enter a valid email address';
     }
-
-    if (!currentDirector.phone || currentDirector.phone.trim() === "") {
-      newErrors.directorPhone = "Phone number is required";
+    
+    if (!currentDirector.phone || currentDirector.phone.trim() === '') {
+      newErrors.directorPhone = 'Phone number is required';
     } else if (!validatePhone(currentDirector.phone)) {
-      newErrors.directorPhone = "Please enter a valid phone number";
+      newErrors.directorPhone = 'Please enter a valid phone number';
     }
-
-    if (!currentDirector.firstName || currentDirector.firstName.trim() === "") {
-      newErrors.directorFirstName = "First name is required";
+    
+    if (!currentDirector.firstName || currentDirector.firstName.trim() === '') {
+      newErrors.directorFirstName = 'First name is required';
     }
-
-    if (!currentDirector.lastName || currentDirector.lastName.trim() === "") {
-      newErrors.directorLastName = "Last name is required";
+    
+    if (!currentDirector.lastName || currentDirector.lastName.trim() === '') {
+      newErrors.directorLastName = 'Last name is required';
     }
-
-    if (!currentDirector.idNumber || currentDirector.idNumber.trim() === "") {
-      newErrors.directorIdNumber = "ID number is required";
+    
+    if (!currentDirector.idNumber || currentDirector.idNumber.trim() === '') {
+      newErrors.directorIdNumber = 'ID number is required';
     }
-
-    if (!currentDirector.kraPin || currentDirector.kraPin.trim() === "") {
-      newErrors.directorKraPin = "KRA PIN is required";
+    
+    if (!currentDirector.kraPin || currentDirector.kraPin.trim() === '') {
+      newErrors.directorKraPin = 'KRA PIN is required';
     } else if (!validateKraPin(currentDirector.kraPin)) {
-      newErrors.directorKraPin = "Invalid KRA PIN format (e.g., A001234567Z)";
+      newErrors.directorKraPin = 'Invalid KRA PIN format (e.g., A001234567Z)';
     }
-
+    
     saveErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validateStep4SubStep2 = () => {
     const newErrors = {};
-
+    
     if (!directorDocuments.photoIdFront) {
-      newErrors.photoIdFront = "National ID (Front) is required";
+      newErrors.photoIdFront = 'National ID (Front) is required';
     }
-
+    
     if (!directorDocuments.photoIdBack) {
-      newErrors.photoIdBack = "National ID (Back) is required";
+      newErrors.photoIdBack = 'National ID (Back) is required';
     }
-
+    
     if (!directorDocuments.selfie) {
-      newErrors.selfie = "Facial Photo/Selfie is required";
+      newErrors.selfie = 'Facial Photo/Selfie is required';
     }
-
-    saveErrors(newErrors);
+    
+    setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -528,8 +481,8 @@ const MerchantOnboardingNew = () => {
 
   const handleStepSubmit = async () => {
     // Clear previous errors
-    removeAllErrors();
-
+    setErrors({});
+    
     // Step-specific validation
     if (currentStep === 1) {
       if (!validateStep1()) {
@@ -537,35 +490,35 @@ const MerchantOnboardingNew = () => {
         return;
       }
     }
-
+    
     if (currentStep === 2) {
       if (!validateStep2()) {
         toast.error("Please fill in all required fields correctly");
         return;
       }
     }
-
+    
     if (currentStep === 3) {
       if (!validateStep3()) {
         toast.error("Please upload all required documents");
         return;
       }
     }
-
+    
     if (currentStep === 4 && directorSubStep === 1) {
       if (!validateStep4SubStep1()) {
         toast.error("Please fill in all required director fields correctly");
         return;
       }
     }
-
+    
     if (currentStep === 4 && directorSubStep === 2) {
       if (!validateStep4SubStep2()) {
         toast.error("Please upload all required director documents");
         return;
       }
     }
-
+    
     setLoading(true);
     try {
       // STEP 1: Create Organization Owner
@@ -587,10 +540,9 @@ const MerchantOnboardingNew = () => {
         );
         const createdOwner = response.data;
 
-        saveOwnerId(createdOwner.userId);
+        setOwnerId(createdOwner.userId);
         toast.success("Owner created successfully!");
-        goToStep(2);
-        markStepComplete(1);
+        setCurrentStep(2);
         return;
       }
 
@@ -598,7 +550,7 @@ const MerchantOnboardingNew = () => {
       if (currentStep === 2) {
         if (!ownerId) {
           toast.error("Owner ID not found. Please complete step 1 first.");
-          goToStep(1);
+          setCurrentStep(1);
           return;
         }
 
@@ -658,14 +610,13 @@ const MerchantOnboardingNew = () => {
         const response = await api.post("/v1/external/organizations", orgData);
         const createdOrg = response.data;
 
-        saveOrganizationId(createdOrg.organizationId);
+        setOrganizationId(createdOrg.organizationId);
         localStorage.setItem(
           "merchantOrganizationId",
           createdOrg.organizationId
         );
         toast.success("Organization created successfully!");
-        goToStep(3);
-        markStepComplete(2);
+        setCurrentStep(3);
         return;
       }
 
@@ -675,8 +626,7 @@ const MerchantOnboardingNew = () => {
           toast.error(
             "Organization ID not found. Please complete step 2 first."
           );
-          goToStep(2);
-          markStepComplete(1);
+          setCurrentStep(2);
           return;
         }
 
@@ -721,8 +671,7 @@ const MerchantOnboardingNew = () => {
 
         await Promise.all(uploadPromises);
         toast.success("Organization documents uploaded successfully!");
-        goToStep(4);
-        markStepComplete(3);
+        setCurrentStep(4);
         return;
       }
 
@@ -753,11 +702,11 @@ const MerchantOnboardingNew = () => {
         );
         const createdDirector = response.data;
 
-        saveCurrentDirectorId(createdDirector.directorId);
+        setCurrentDirectorId(createdDirector.directorId);
         toast.success(
           "Director created successfully! Now upload director documents."
         );
-        setSubStep(2);
+        setDirectorSubStep(2);
         return;
       }
 
@@ -824,11 +773,14 @@ const MerchantOnboardingNew = () => {
         await Promise.all(uploadPromises);
 
         // Add director to list
-        addNewDirector({ ...currentDirector, id: currentDirectorId });
+        setDirectors((prev) => [
+          ...prev,
+          { ...currentDirector, id: currentDirectorId },
+        ]);
         toast.success("Director documents uploaded successfully!");
 
         // Show option to add another director
-        setSubStep(3);
+        setDirectorSubStep(3);
         return;
       }
 
@@ -842,7 +794,7 @@ const MerchantOnboardingNew = () => {
         const response = await api.get(
           `/v1/external/organizations/${organizationId}`
         );
-        saveOrganizationStatus(response.data);
+        setOrganizationStatus(response.data);
         toast.success("Organization status retrieved!");
         return;
       }
@@ -880,8 +832,7 @@ const MerchantOnboardingNew = () => {
 
         // Store ownerId for next step
         localStorage.setItem("merchantOwnerId", ownerId);
-        goToStep(2);
-        markStepComplete(1);
+        setCurrentStep(2);
       } else if (currentStep === 2) {
         // Validate Step 2
         if (
@@ -952,10 +903,7 @@ const MerchantOnboardingNew = () => {
 
         // Store organizationId for next steps
         localStorage.setItem("merchantOrganizationId", organizationId);
-        saveOrganizationId(organizationId); // Save to Redux state too
-        console.log("✅ Saved organizationId to Redux and localStorage:", organizationId);
-        goToStep(3);
-        markStepComplete(2);
+        setCurrentStep(3);
       } else if (currentStep === 3) {
         // Step 3: Upload Organization Documents
         const organizationId = localStorage.getItem("merchantOrganizationId");
@@ -993,8 +941,7 @@ const MerchantOnboardingNew = () => {
 
         await Promise.all(uploadPromises);
         toast.success("Business documents uploaded successfully");
-        goToStep(4);
-        markStepComplete(3);
+        setCurrentStep(4);
       } else if (currentStep === 4) {
         // Step 4: Add Directors and Upload Their Documents
         const organizationId = localStorage.getItem("merchantOrganizationId");
@@ -1097,8 +1044,7 @@ const MerchantOnboardingNew = () => {
         localStorage.removeItem("merchantOwnerId");
         localStorage.removeItem("merchantOrganizationId");
 
-        goToStep(5);
-        markStepComplete(4);
+        setCurrentStep(5);
       }
     } catch (error) {
       console.error("Step submission error:", error);
@@ -1141,18 +1087,16 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={ownerInfo.username}
             onChange={(e) => {
-              saveOwnerInfo({ username: e.target.value });
+              setOwnerInfo((prev) => ({ ...prev, username: e.target.value }));
               if (errors.ownerUsername) {
-                removeError("ownerUsername");
+                setErrors((prev) => ({ ...prev, ownerUsername: null }));
               }
             }}
             placeholder="john_doe_corp"
-            className={errors.ownerUsername ? "input-error" : ""}
+            className={errors.ownerUsername ? 'input-error' : ''}
             required
           />
-          {errors.ownerUsername && (
-            <span className="error-message">{errors.ownerUsername}</span>
-          )}
+          {errors.ownerUsername && <span className="error-message">{errors.ownerUsername}</span>}
         </div>
 
         <div className="form-group">
@@ -1161,18 +1105,16 @@ const MerchantOnboardingNew = () => {
             type="email"
             value={ownerInfo.email}
             onChange={(e) => {
-              saveOwnerInfo({ email: e.target.value });
+              setOwnerInfo((prev) => ({ ...prev, email: e.target.value }));
               if (errors.ownerEmail) {
-                removeError("ownerEmail");
+                setErrors((prev) => ({ ...prev, ownerEmail: null }));
               }
             }}
             placeholder="john.doe@company.com"
-            className={errors.ownerEmail ? "input-error" : ""}
+            className={errors.ownerEmail ? 'input-error' : ''}
             required
           />
-          {errors.ownerEmail && (
-            <span className="error-message">{errors.ownerEmail}</span>
-          )}
+          {errors.ownerEmail && <span className="error-message">{errors.ownerEmail}</span>}
         </div>
 
         <div className="form-group">
@@ -1181,13 +1123,13 @@ const MerchantOnboardingNew = () => {
             type="tel"
             value={ownerInfo.phone}
             onChange={(e) => {
-              saveOwnerInfo({ phone: e.target.value });
+              setOwnerInfo((prev) => ({ ...prev, phone: e.target.value }));
               if (errors.ownerPhone) {
-                removeError("ownerPhone");
+                setErrors((prev) => ({ ...prev, ownerPhone: null }));
               }
             }}
             placeholder="254712345678"
-            className={errors.ownerPhone ? "input-error" : ""}
+            className={errors.ownerPhone ? 'input-error' : ''}
             required
           />
           {errors.ownerPhone ? (
@@ -1203,18 +1145,16 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={ownerInfo.firstName}
             onChange={(e) => {
-              saveOwnerInfo({ firstName: e.target.value });
+              setOwnerInfo((prev) => ({ ...prev, firstName: e.target.value }));
               if (errors.ownerFirstName) {
-                removeError("ownerFirstName");
+                setErrors((prev) => ({ ...prev, ownerFirstName: null }));
               }
             }}
             placeholder="John"
-            className={errors.ownerFirstName ? "input-error" : ""}
+            className={errors.ownerFirstName ? 'input-error' : ''}
             required
           />
-          {errors.ownerFirstName && (
-            <span className="error-message">{errors.ownerFirstName}</span>
-          )}
+          {errors.ownerFirstName && <span className="error-message">{errors.ownerFirstName}</span>}
         </div>
 
         <div className="form-group">
@@ -1223,18 +1163,16 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={ownerInfo.lastName}
             onChange={(e) => {
-              saveOwnerInfo({ lastName: e.target.value });
+              setOwnerInfo((prev) => ({ ...prev, lastName: e.target.value }));
               if (errors.ownerLastName) {
-                removeError("ownerLastName");
+                setErrors((prev) => ({ ...prev, ownerLastName: null }));
               }
             }}
             placeholder="Doe"
-            className={errors.ownerLastName ? "input-error" : ""}
+            className={errors.ownerLastName ? 'input-error' : ''}
             required
           />
-          {errors.ownerLastName && (
-            <span className="error-message">{errors.ownerLastName}</span>
-          )}
+          {errors.ownerLastName && <span className="error-message">{errors.ownerLastName}</span>}
         </div>
 
         <div className="form-group">
@@ -1242,7 +1180,9 @@ const MerchantOnboardingNew = () => {
           <input
             type="text"
             value={ownerInfo.middleName}
-            onChange={(e) => saveOwnerInfo({ middleName: e.target.value })}
+            onChange={(e) =>
+              setOwnerInfo((prev) => ({ ...prev, middleName: e.target.value }))
+            }
             placeholder="Michael"
           />
         </div>
@@ -1253,18 +1193,16 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={ownerInfo.idNumber}
             onChange={(e) => {
-              saveOwnerInfo({ idNumber: e.target.value });
+              setOwnerInfo((prev) => ({ ...prev, idNumber: e.target.value }));
               if (errors.ownerIdNumber) {
-                removeError("ownerIdNumber");
+                setErrors((prev) => ({ ...prev, ownerIdNumber: null }));
               }
             }}
             placeholder="12345678"
-            className={errors.ownerIdNumber ? "input-error" : ""}
+            className={errors.ownerIdNumber ? 'input-error' : ''}
             required
           />
-          {errors.ownerIdNumber && (
-            <span className="error-message">{errors.ownerIdNumber}</span>
-          )}
+          {errors.ownerIdNumber && <span className="error-message">{errors.ownerIdNumber}</span>}
         </div>
 
         <div className="form-group">
@@ -1274,18 +1212,16 @@ const MerchantOnboardingNew = () => {
             value={ownerInfo.kraPin}
             onChange={(e) => {
               const value = e.target.value.toUpperCase();
-              saveOwnerInfo({ kraPin: value });
+              setOwnerInfo((prev) => ({ ...prev, kraPin: value }));
               if (errors.ownerKraPin) {
-                removeError("ownerKraPin");
+                setErrors((prev) => ({ ...prev, ownerKraPin: null }));
               }
             }}
             placeholder="A001234567Z"
-            className={errors.ownerKraPin ? "input-error" : ""}
+            className={errors.ownerKraPin ? 'input-error' : ''}
             required
           />
-          {errors.ownerKraPin && (
-            <span className="error-message">{errors.ownerKraPin}</span>
-          )}
+          {errors.ownerKraPin && <span className="error-message">{errors.ownerKraPin}</span>}
         </div>
       </div>
     </div>
@@ -1308,20 +1244,19 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={businessInfo.companyNumber}
             onChange={(e) => {
-              saveBusinessInfo({
+              setBusinessInfo((prev) => ({
+                ...prev,
                 companyNumber: e.target.value,
-              });
+              }));
               if (errors.companyNumber) {
-                removeError("companyNumber");
+                setErrors((prev) => ({ ...prev, companyNumber: null }));
               }
             }}
             placeholder="e.g., PVT-123456"
-            className={errors.companyNumber ? "input-error" : ""}
+            className={errors.companyNumber ? 'input-error' : ''}
             required
           />
-          {errors.companyNumber && (
-            <span className="error-message">{errors.companyNumber}</span>
-          )}
+          {errors.companyNumber && <span className="error-message">{errors.companyNumber}</span>}
         </div>
 
         <div className="form-group">
@@ -1330,19 +1265,18 @@ const MerchantOnboardingNew = () => {
             type="date"
             value={businessInfo.registrationDate}
             onChange={(e) => {
-              saveBusinessInfo({
+              setBusinessInfo((prev) => ({
+                ...prev,
                 registrationDate: e.target.value,
-              });
+              }));
               if (errors.registrationDate) {
-                removeError("registrationDate");
+                setErrors((prev) => ({ ...prev, registrationDate: null }));
               }
             }}
-            className={errors.registrationDate ? "input-error" : ""}
+            className={errors.registrationDate ? 'input-error' : ''}
             required
           />
-          {errors.registrationDate && (
-            <span className="error-message">{errors.registrationDate}</span>
-          )}
+          {errors.registrationDate && <span className="error-message">{errors.registrationDate}</span>}
         </div>
 
         <div className="form-group full-width">
@@ -1351,20 +1285,19 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={businessInfo.businessName}
             onChange={(e) => {
-              saveBusinessInfo({
+              setBusinessInfo((prev) => ({
+                ...prev,
                 businessName: e.target.value,
-              });
+              }));
               if (errors.businessName) {
-                removeError("businessName");
+                setErrors((prev) => ({ ...prev, businessName: null }));
               }
             }}
             placeholder="Enter registered business name"
-            className={errors.businessName ? "input-error" : ""}
+            className={errors.businessName ? 'input-error' : ''}
             required
           />
-          {errors.businessName && (
-            <span className="error-message">{errors.businessName}</span>
-          )}
+          {errors.businessName && <span className="error-message">{errors.businessName}</span>}
         </div>
 
         <div className="form-group">
@@ -1399,10 +1332,11 @@ const MerchantOnboardingNew = () => {
                         key={country.code}
                         type="button"
                         onClick={() => {
-                          saveBusinessInfo({
+                          setBusinessInfo((prev) => ({
+                            ...prev,
                             phoneCountryCode: country.code,
                             phoneNumber: "",
-                          });
+                          }));
                           setShowCountryDropdown(false);
                         }}
                         className={`country-option ${
@@ -1428,25 +1362,22 @@ const MerchantOnboardingNew = () => {
                   const maxLength =
                     businessInfo.phoneCountryCode === "+1" ? 10 : 9;
                   if (value.length <= maxLength) {
-                    saveBusinessInfo({
+                    setBusinessInfo((prev) => ({
+                      ...prev,
                       phoneNumber: value,
-                    });
+                    }));
                     if (errors.phoneNumber) {
-                      removeError("phoneNumber");
+                      setErrors((prev) => ({ ...prev, phoneNumber: null }));
                     }
                   }
                 }}
                 placeholder="712345678"
-                className={`phone-number-input ${
-                  errors.phoneNumber ? "input-error" : ""
-                }`}
+                className={`phone-number-input ${errors.phoneNumber ? 'input-error' : ''}`}
                 required
               />
             </div>
           </div>
-          {errors.phoneNumber && (
-            <span className="error-message">{errors.phoneNumber}</span>
-          )}
+          {errors.phoneNumber && <span className="error-message">{errors.phoneNumber}</span>}
         </div>
 
         <div className="form-group">
@@ -1455,20 +1386,19 @@ const MerchantOnboardingNew = () => {
             type="email"
             value={businessInfo.businessEmail}
             onChange={(e) => {
-              saveBusinessInfo({
+              setBusinessInfo((prev) => ({
+                ...prev,
                 businessEmail: e.target.value,
-              });
+              }));
               if (errors.businessEmail) {
-                removeError("businessEmail");
+                setErrors((prev) => ({ ...prev, businessEmail: null }));
               }
             }}
             placeholder="business@example.com"
-            className={errors.businessEmail ? "input-error" : ""}
+            className={errors.businessEmail ? 'input-error' : ''}
             required
           />
-          {errors.businessEmail && (
-            <span className="error-message">{errors.businessEmail}</span>
-          )}
+          {errors.businessEmail && <span className="error-message">{errors.businessEmail}</span>}
         </div>
 
         <div className="form-group">
@@ -1478,20 +1408,19 @@ const MerchantOnboardingNew = () => {
             value={businessInfo.taxNumber}
             onChange={(e) => {
               const value = e.target.value.toUpperCase();
-              saveBusinessInfo({
+              setBusinessInfo((prev) => ({
+                ...prev,
                 taxNumber: value,
-              });
+              }));
               if (errors.taxNumber) {
-                removeError("taxNumber");
+                setErrors((prev) => ({ ...prev, taxNumber: null }));
               }
             }}
             placeholder="A123456789X"
-            className={errors.taxNumber ? "input-error" : ""}
+            className={errors.taxNumber ? 'input-error' : ''}
             required
           />
-          {errors.taxNumber && (
-            <span className="error-message">{errors.taxNumber}</span>
-          )}
+          {errors.taxNumber && <span className="error-message">{errors.taxNumber}</span>}
         </div>
 
         <div className="form-group">
@@ -1500,9 +1429,10 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={businessInfo.tradingName}
             onChange={(e) =>
-              saveBusinessInfo({
+              setBusinessInfo((prev) => ({
+                ...prev,
                 tradingName: e.target.value,
-              })
+              }))
             }
             placeholder="Enter trading name (if different)"
           />
@@ -1514,9 +1444,10 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={businessInfo.industrialClassification}
             onChange={(e) =>
-              saveBusinessInfo({
+              setBusinessInfo((prev) => ({
+                ...prev,
                 industrialClassification: e.target.value,
-              })
+              }))
             }
             placeholder="e.g., Retail Trade"
           />
@@ -1528,9 +1459,10 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={businessInfo.industrialSector}
             onChange={(e) =>
-              saveBusinessInfo({
+              setBusinessInfo((prev) => ({
+                ...prev,
                 industrialSector: e.target.value,
-              })
+              }))
             }
             placeholder="e.g., Technology, Agriculture"
           />
@@ -1541,14 +1473,15 @@ const MerchantOnboardingNew = () => {
           <select
             value={businessInfo.typeOfBusiness}
             onChange={(e) => {
-              saveBusinessInfo({
+              setBusinessInfo((prev) => ({
+                ...prev,
                 typeOfBusiness: e.target.value,
-              });
+              }));
               if (errors.typeOfBusiness) {
-                removeError("typeOfBusiness");
+                setErrors((prev) => ({ ...prev, typeOfBusiness: null }));
               }
             }}
-            className={errors.typeOfBusiness ? "input-error" : ""}
+            className={errors.typeOfBusiness ? 'input-error' : ''}
             required
           >
             <option value="">Select type</option>
@@ -1557,9 +1490,7 @@ const MerchantOnboardingNew = () => {
             <option value="Club">Club</option>
             <option value="Other">Other</option>
           </select>
-          {errors.typeOfBusiness && (
-            <span className="error-message">{errors.typeOfBusiness}</span>
-          )}
+          {errors.typeOfBusiness && <span className="error-message">{errors.typeOfBusiness}</span>}
         </div>
 
         <div className="form-group">
@@ -1567,14 +1498,15 @@ const MerchantOnboardingNew = () => {
           <select
             value={businessInfo.businessType}
             onChange={(e) => {
-              saveBusinessInfo({
+              setBusinessInfo((prev) => ({
+                ...prev,
                 businessType: e.target.value,
-              });
+              }));
               if (errors.businessType) {
-                removeError("businessType");
+                setErrors((prev) => ({ ...prev, businessType: null }));
               }
             }}
-            className={errors.businessType ? "input-error" : ""}
+            className={errors.businessType ? 'input-error' : ''}
             required
           >
             <option value="">Select business type</option>
@@ -1584,9 +1516,7 @@ const MerchantOnboardingNew = () => {
             <option value="NGO">NGO</option>
             <option value="Other">Other</option>
           </select>
-          {errors.businessType && (
-            <span className="error-message">{errors.businessType}</span>
-          )}
+          {errors.businessType && <span className="error-message">{errors.businessType}</span>}
         </div>
       </div>
 
@@ -1600,20 +1530,19 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={businessAddress.addressLine1}
             onChange={(e) => {
-              saveBusinessAddress({
+              setBusinessAddress((prev) => ({
+                ...prev,
                 addressLine1: e.target.value,
-              });
+              }));
               if (errors.addressLine1) {
-                removeError("addressLine1");
+                setErrors((prev) => ({ ...prev, addressLine1: null }));
               }
             }}
             placeholder="Street address, P.O. Box, Building, etc."
-            className={errors.addressLine1 ? "input-error" : ""}
+            className={errors.addressLine1 ? 'input-error' : ''}
             required
           />
-          {errors.addressLine1 && (
-            <span className="error-message">{errors.addressLine1}</span>
-          )}
+          {errors.addressLine1 && <span className="error-message">{errors.addressLine1}</span>}
         </div>
 
         <div className="form-group full-width">
@@ -1622,9 +1551,10 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={businessAddress.addressLine2}
             onChange={(e) =>
-              saveBusinessAddress({
+              setBusinessAddress((prev) => ({
+                ...prev,
                 addressLine2: e.target.value,
-              })
+              }))
             }
             placeholder="Floor, Office, Suite (optional)"
           />
@@ -1636,13 +1566,13 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={businessAddress.city}
             onChange={(e) => {
-              saveBusinessAddress({ city: e.target.value });
+              setBusinessAddress((prev) => ({ ...prev, city: e.target.value }));
               if (errors.city) {
-                removeError("city");
+                setErrors((prev) => ({ ...prev, city: null }));
               }
             }}
             placeholder="Enter city"
-            className={errors.city ? "input-error" : ""}
+            className={errors.city ? 'input-error' : ''}
             required
           />
           {errors.city && <span className="error-message">{errors.city}</span>}
@@ -1654,20 +1584,19 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={businessAddress.county}
             onChange={(e) => {
-              saveBusinessAddress({
+              setBusinessAddress((prev) => ({
+                ...prev,
                 county: e.target.value,
-              });
+              }));
               if (errors.county) {
-                removeError("county");
+                setErrors((prev) => ({ ...prev, county: null }));
               }
             }}
             placeholder="Enter county"
-            className={errors.county ? "input-error" : ""}
+            className={errors.county ? 'input-error' : ''}
             required
           />
-          {errors.county && (
-            <span className="error-message">{errors.county}</span>
-          )}
+          {errors.county && <span className="error-message">{errors.county}</span>}
         </div>
 
         <div className="form-group">
@@ -1676,9 +1605,10 @@ const MerchantOnboardingNew = () => {
             type="text"
             value={businessAddress.postalCode}
             onChange={(e) =>
-              saveBusinessAddress({
+              setBusinessAddress((prev) => ({
+                ...prev,
                 postalCode: e.target.value,
-              })
+              }))
             }
             placeholder="00100"
           />
@@ -1689,9 +1619,10 @@ const MerchantOnboardingNew = () => {
           <select
             value={businessAddress.country}
             onChange={(e) =>
-              saveBusinessAddress({
+              setBusinessAddress((prev) => ({
+                ...prev,
                 country: e.target.value,
-              })
+              }))
             }
             required
           >
@@ -1750,9 +1681,7 @@ const MerchantOnboardingNew = () => {
               />
               <label
                 htmlFor={doc.key}
-                className={`file-upload-label ${
-                  errors[doc.key] ? "error" : ""
-                }`}
+                className={`file-upload-label ${errors[doc.key] ? 'error' : ''}`}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
@@ -1782,9 +1711,7 @@ const MerchantOnboardingNew = () => {
                   </div>
                 )}
               </label>
-              {errors[doc.key] && (
-                <span className="error-message">{errors[doc.key]}</span>
-              )}
+              {errors[doc.key] && <span className="error-message">{errors[doc.key]}</span>}
             </div>
           </div>
         ))}
@@ -1829,20 +1756,19 @@ const MerchantOnboardingNew = () => {
                 type="text"
                 value={currentDirector.username}
                 onChange={(e) => {
-                  saveCurrentDirector({
+                  setCurrentDirector((prev) => ({
+                    ...prev,
                     username: e.target.value,
-                  });
+                  }));
                   if (errors.directorUsername) {
-                    removeError("directorUsername");
+                    setErrors((prev) => ({ ...prev, directorUsername: null }));
                   }
                 }}
                 placeholder="jane_smith_dir"
-                className={errors.directorUsername ? "input-error" : ""}
+                className={errors.directorUsername ? 'input-error' : ''}
                 required
               />
-              {errors.directorUsername && (
-                <span className="error-message">{errors.directorUsername}</span>
-              )}
+              {errors.directorUsername && <span className="error-message">{errors.directorUsername}</span>}
             </div>
 
             <div className="form-group">
@@ -1851,20 +1777,19 @@ const MerchantOnboardingNew = () => {
                 type="email"
                 value={currentDirector.email}
                 onChange={(e) => {
-                  saveCurrentDirector({
+                  setCurrentDirector((prev) => ({
+                    ...prev,
                     email: e.target.value,
-                  });
+                  }));
                   if (errors.directorEmail) {
-                    removeError("directorEmail");
+                    setErrors((prev) => ({ ...prev, directorEmail: null }));
                   }
                 }}
                 placeholder="jane.smith@company.com"
-                className={errors.directorEmail ? "input-error" : ""}
+                className={errors.directorEmail ? 'input-error' : ''}
                 required
               />
-              {errors.directorEmail && (
-                <span className="error-message">{errors.directorEmail}</span>
-              )}
+              {errors.directorEmail && <span className="error-message">{errors.directorEmail}</span>}
             </div>
 
             <div className="form-group">
@@ -1873,23 +1798,22 @@ const MerchantOnboardingNew = () => {
                 type="tel"
                 value={currentDirector.phone}
                 onChange={(e) => {
-                  saveCurrentDirector({
+                  setCurrentDirector((prev) => ({
+                    ...prev,
                     phone: e.target.value,
-                  });
+                  }));
                   if (errors.directorPhone) {
-                    removeError("directorPhone");
+                    setErrors((prev) => ({ ...prev, directorPhone: null }));
                   }
                 }}
                 placeholder="254723456789"
-                className={errors.directorPhone ? "input-error" : ""}
+                className={errors.directorPhone ? 'input-error' : ''}
                 required
               />
               {errors.directorPhone ? (
                 <span className="error-message">{errors.directorPhone}</span>
               ) : (
-                <small>
-                  Format: Country code + number (e.g., 254723456789)
-                </small>
+                <small>Format: Country code + number (e.g., 254723456789)</small>
               )}
             </div>
 
@@ -1899,22 +1823,19 @@ const MerchantOnboardingNew = () => {
                 type="text"
                 value={currentDirector.firstName}
                 onChange={(e) => {
-                  saveCurrentDirector({
+                  setCurrentDirector((prev) => ({
+                    ...prev,
                     firstName: e.target.value,
-                  });
+                  }));
                   if (errors.directorFirstName) {
-                    removeError("directorFirstName");
+                    setErrors((prev) => ({ ...prev, directorFirstName: null }));
                   }
                 }}
                 placeholder="Jane"
-                className={errors.directorFirstName ? "input-error" : ""}
+                className={errors.directorFirstName ? 'input-error' : ''}
                 required
               />
-              {errors.directorFirstName && (
-                <span className="error-message">
-                  {errors.directorFirstName}
-                </span>
-              )}
+              {errors.directorFirstName && <span className="error-message">{errors.directorFirstName}</span>}
             </div>
 
             <div className="form-group">
@@ -1923,20 +1844,19 @@ const MerchantOnboardingNew = () => {
                 type="text"
                 value={currentDirector.lastName}
                 onChange={(e) => {
-                  saveCurrentDirector({
+                  setCurrentDirector((prev) => ({
+                    ...prev,
                     lastName: e.target.value,
-                  });
+                  }));
                   if (errors.directorLastName) {
-                    removeError("directorLastName");
+                    setErrors((prev) => ({ ...prev, directorLastName: null }));
                   }
                 }}
                 placeholder="Smith"
-                className={errors.directorLastName ? "input-error" : ""}
+                className={errors.directorLastName ? 'input-error' : ''}
                 required
               />
-              {errors.directorLastName && (
-                <span className="error-message">{errors.directorLastName}</span>
-              )}
+              {errors.directorLastName && <span className="error-message">{errors.directorLastName}</span>}
             </div>
 
             <div className="form-group">
@@ -1945,9 +1865,10 @@ const MerchantOnboardingNew = () => {
                 type="text"
                 value={currentDirector.middleName}
                 onChange={(e) =>
-                  saveCurrentDirector({
+                  setCurrentDirector((prev) => ({
+                    ...prev,
                     middleName: e.target.value,
-                  })
+                  }))
                 }
                 placeholder="Elizabeth"
               />
@@ -1959,20 +1880,19 @@ const MerchantOnboardingNew = () => {
                 type="text"
                 value={currentDirector.idNumber}
                 onChange={(e) => {
-                  saveCurrentDirector({
+                  setCurrentDirector((prev) => ({
+                    ...prev,
                     idNumber: e.target.value,
-                  });
+                  }));
                   if (errors.directorIdNumber) {
-                    removeError("directorIdNumber");
+                    setErrors((prev) => ({ ...prev, directorIdNumber: null }));
                   }
                 }}
                 placeholder="23456789"
-                className={errors.directorIdNumber ? "input-error" : ""}
+                className={errors.directorIdNumber ? 'input-error' : ''}
                 required
               />
-              {errors.directorIdNumber && (
-                <span className="error-message">{errors.directorIdNumber}</span>
-              )}
+              {errors.directorIdNumber && <span className="error-message">{errors.directorIdNumber}</span>}
             </div>
 
             <div className="form-group">
@@ -1982,20 +1902,19 @@ const MerchantOnboardingNew = () => {
                 value={currentDirector.kraPin}
                 onChange={(e) => {
                   const value = e.target.value.toUpperCase();
-                  saveCurrentDirector({
+                  setCurrentDirector((prev) => ({
+                    ...prev,
                     kraPin: value,
-                  });
+                  }));
                   if (errors.directorKraPin) {
-                    removeError("directorKraPin");
+                    setErrors((prev) => ({ ...prev, directorKraPin: null }));
                   }
                 }}
                 placeholder="A001234568Z"
-                className={errors.directorKraPin ? "input-error" : ""}
+                className={errors.directorKraPin ? 'input-error' : ''}
                 required
               />
-              {errors.directorKraPin && (
-                <span className="error-message">{errors.directorKraPin}</span>
-              )}
+              {errors.directorKraPin && <span className="error-message">{errors.directorKraPin}</span>}
             </div>
 
             <div className="form-group">
@@ -2003,9 +1922,10 @@ const MerchantOnboardingNew = () => {
               <select
                 value={currentDirector.position}
                 onChange={(e) =>
-                  saveCurrentDirector({
+                  setCurrentDirector((prev) => ({
+                    ...prev,
                     position: e.target.value,
-                  })
+                  }))
                 }
                 required
               >
@@ -2065,11 +1985,12 @@ const MerchantOnboardingNew = () => {
                     id={doc.key}
                     accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => {
-                      saveDirectorDocuments({
+                      setDirectorDocuments((prev) => ({
+                        ...prev,
                         [doc.key]: e.target.files[0],
-                      });
+                      }));
                       if (errors[doc.key]) {
-                        saveErrors({ [doc.key]: null });
+                        setErrors((prev) => ({ ...prev, [doc.key]: null }));
                       }
                     }}
                     onDragOver={(e) => e.preventDefault()}
@@ -2077,11 +1998,12 @@ const MerchantOnboardingNew = () => {
                       e.preventDefault();
                       const file = e.dataTransfer.files[0];
                       if (file) {
-                        saveDirectorDocuments({
+                        setDirectorDocuments((prev) => ({
+                          ...prev,
                           [doc.key]: file,
-                        });
+                        }));
                         if (errors[doc.key]) {
-                          saveErrors({ [doc.key]: null });
+                          setErrors((prev) => ({ ...prev, [doc.key]: null }));
                         }
                       }
                     }}
@@ -2089,19 +2011,18 @@ const MerchantOnboardingNew = () => {
                   />
                   <label
                     htmlFor={doc.key}
-                    className={`file-upload-label ${
-                      errors[doc.key] ? "error" : ""
-                    }`}
+                    className={`file-upload-label ${errors[doc.key] ? 'error' : ''}`}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                       e.preventDefault();
                       const file = e.dataTransfer.files[0];
                       if (file) {
-                        saveDirectorDocuments({
+                        setDirectorDocuments((prev) => ({
+                          ...prev,
                           [doc.key]: file,
-                        });
+                        }));
                         if (errors[doc.key]) {
-                          saveErrors({ [doc.key]: null });
+                          setErrors((prev) => ({ ...prev, [doc.key]: null }));
                         }
                       }
                     }}
@@ -2133,9 +2054,7 @@ const MerchantOnboardingNew = () => {
                       </div>
                     )}
                   </label>
-                  {errors[doc.key] && (
-                    <span className="error-message">{errors[doc.key]}</span>
-                  )}
+                  {errors[doc.key] && <span className="error-message">{errors[doc.key]}</span>}
                 </div>
               </div>
             ))}
@@ -2179,7 +2098,7 @@ const MerchantOnboardingNew = () => {
               className="btn btn-secondary"
               onClick={() => {
                 // Reset form and go back to substep 1
-                saveCurrentDirector({
+                setCurrentDirector({
                   username: "",
                   email: "",
                   phone: "",
@@ -2190,15 +2109,15 @@ const MerchantOnboardingNew = () => {
                   kraPin: "",
                   position: "DIRECTOR",
                 });
-                saveCurrentDirectorId(null);
-                saveDirectorDocuments({
+                setCurrentDirectorId(null);
+                setDirectorDocuments({
                   photoIdFront: null,
                   photoIdBack: null,
                   kraCertificate: null,
                   proofOfAddress: null,
                   selfie: null,
                 });
-                setSubStep(1);
+                setDirectorSubStep(1);
               }}
               style={{ marginRight: "1rem" }}
             >
@@ -2207,8 +2126,7 @@ const MerchantOnboardingNew = () => {
             <button
               className="btn btn-primary"
               onClick={() => {
-                goToStep(5);
-                markStepComplete(4);
+                setCurrentStep(5);
               }}
             >
               Continue to Review →
@@ -2220,61 +2138,11 @@ const MerchantOnboardingNew = () => {
   };
 
   const renderStep5 = () => {
-    console.log("==================== RENDER STEP 5 ====================");
-    console.log("renderStep5 - organizationStatus:", organizationStatus);
-    console.log("renderStep5 - organizationStatus.name:", organizationStatus?.name);
-    console.log("renderStep5 - approvalStatus:", approvalStatus);
-    console.log("renderStep5 - loadingOrgStatus:", loadingOrgStatus);
-    console.log("=======================================================");
-
-    // Show loading state while fetching data
-    if (loadingOrgStatus) {
+    if (!organizationStatus) {
       return (
         <div className="onboarding-step">
           <h2>Loading Organization Status...</h2>
           <div className="loading-spinner">Loading...</div>
-          <p style={{ marginTop: "1rem", color: "#666" }}>
-            Fetching your organization details...
-          </p>
-        </div>
-      );
-    }
-
-    // Show error/retry state if data is missing after loading completes
-    if (!organizationStatus || !organizationStatus.name) {
-      const orgId =
-        organizationId || localStorage.getItem("merchantOrganizationId");
-
-      return (
-        <div className="onboarding-step">
-          <h2>Unable to Load Organization Status</h2>
-          <p style={{ marginTop: "1rem", color: "#666" }}>
-            We couldn't fetch your organization details.
-          </p>
-          {orgId && (
-            <button
-              onClick={() => {
-                console.log("Manual fetch triggered with ID:", orgId);
-                fetchOrganizationStatus(orgId);
-              }}
-              style={{
-                marginTop: "1rem",
-                padding: "0.5rem 1rem",
-                background: "#007bff",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Retry Loading Data
-            </button>
-          )}
-          {!orgId && (
-            <p style={{ color: "red", marginTop: "1rem" }}>
-              No organization ID found. Please complete steps 1-4 first.
-            </p>
-          )}
         </div>
       );
     }
@@ -2288,49 +2156,24 @@ const MerchantOnboardingNew = () => {
           <h3>Organization Details</h3>
           <div style={{ marginTop: "1rem" }}>
             <p>
-              <strong>Name:</strong> {organizationStatus.name || "N/A"}
+              <strong>Name:</strong> {organizationStatus.name}
             </p>
             <p>
               <strong>Company Number:</strong>{" "}
-              {organizationStatus.companyNumber || "N/A"}
+              {organizationStatus.companyNumber}
             </p>
             <p>
-              <strong>Email:</strong> {organizationStatus.email || "N/A"}
+              <strong>Email:</strong> {organizationStatus.email}
             </p>
             <p>
-              <strong>Phone:</strong> {organizationStatus.phone || "N/A"}
+              <strong>Phone:</strong> {organizationStatus.phone}
             </p>
             <p>
-              <strong>Type:</strong> {organizationStatus.type || "N/A"}
+              <strong>Type:</strong> {organizationStatus.type}
             </p>
             <p>
-              <strong>Business Type:</strong>{" "}
-              {organizationStatus.businessType
-                ? organizationStatus.businessType.replace(/_/g, " ")
-                : "N/A"}
+              <strong>Business Type:</strong> {organizationStatus.businessType}
             </p>
-            {organizationStatus.taxNumber && (
-              <p>
-                <strong>Tax Number:</strong> {organizationStatus.taxNumber}
-              </p>
-            )}
-            {organizationStatus.tradingName && (
-              <p>
-                <strong>Trading Name:</strong> {organizationStatus.tradingName}
-              </p>
-            )}
-            {organizationStatus.businessRegistrationDate && (
-              <p>
-                <strong>Registration Date:</strong>{" "}
-                {new Date(
-                  organizationStatus.businessRegistrationDate
-                ).toLocaleDateString()}
-              </p>
-            )}
-            {/* <p>
-              <strong>Organization ID:</strong>{" "}
-              {organizationStatus.organizationId || organizationStatus.astraOrganizationId || "N/A"}
-            </p> */}
           </div>
         </div>
 
@@ -2339,24 +2182,17 @@ const MerchantOnboardingNew = () => {
             <h3>Owner Information</h3>
             <div style={{ marginTop: "1rem" }}>
               <p>
-                <strong>Name:</strong> {organizationStatus.owner.firstName || ""}{" "}
-                {organizationStatus.owner.lastName || ""}
+                <strong>Name:</strong> {organizationStatus.owner.firstName}{" "}
+                {organizationStatus.owner.lastName}
               </p>
               <p>
-                <strong>Email:</strong> {organizationStatus.owner.email || "N/A"}
+                <strong>Email:</strong> {organizationStatus.owner.email}
               </p>
               <p>
-                <strong>Phone:</strong> {organizationStatus.owner.phone || "N/A"}
+                <strong>Position:</strong> {organizationStatus.owner.position}
               </p>
               <p>
-                <strong>Position:</strong> {organizationStatus.owner.position || "OWNER"}
-              </p>
-              <p>
-                <strong>Identity Verified:</strong>{" "}
-                {organizationStatus.owner.isIdentityVerified ? "✅ Yes" : "⏳ Pending"}
-              </p>
-              <p>
-                <strong>Account Verified:</strong>{" "}
+                <strong>Verified:</strong>{" "}
                 {organizationStatus.owner.isVerified ? "✅ Yes" : "⏳ Pending"}
               </p>
             </div>
@@ -2380,27 +2216,18 @@ const MerchantOnboardingNew = () => {
                   >
                     <p>
                       <strong>
-                        {director.firstName || ""} {director.lastName || ""}
+                        {director.firstName} {director.lastName}
                       </strong>
                     </p>
                     <p>
-                      <small>Email: {director.email || "N/A"}</small>
+                      <small>Email: {director.email}</small>
                     </p>
                     <p>
-                      <small>Phone: {director.phone || "N/A"}</small>
-                    </p>
-                    <p>
-                      <small>Position: {director.position || "N/A"}</small>
+                      <small>Position: {director.position}</small>
                     </p>
                     <p>
                       <small>
-                        Identity Verified:{" "}
-                        {director.isIdentityVerified ? "✅ Yes" : "⏳ Pending"}
-                      </small>
-                    </p>
-                    <p>
-                      <small>
-                        Account Verified:{" "}
+                        Verified:{" "}
                         {director.isVerified ? "✅ Yes" : "⏳ Pending"}
                       </small>
                     </p>
@@ -2412,81 +2239,28 @@ const MerchantOnboardingNew = () => {
 
         {organizationStatus.documents &&
           organizationStatus.documents.length > 0 && (
-            <>
-              <div className="review-info-box" style={{ marginTop: "1.5rem" }}>
-                <h3>Business Documents</h3>
-                <ul style={{ marginTop: "1rem" }}>
-                  {organizationStatus.documents
-                    .filter((doc) =>
-                      [
-                        "CERT_OF_INCORP",
-                        "TAX",
-                        "BUSINESS_LICENSE",
-                        "BUSINESS_CERTIFICATE",
-                      ].includes(doc.name)
-                    )
-                    .map((doc, idx) => (
-                      <li key={idx} style={{ marginBottom: "0.5rem" }}>
-                        <strong>{doc.name.replace(/_/g, " ")}</strong>
-                        {doc.url && (
-                          <a
-                            href={doc.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ marginLeft: "1rem", color: "#007bff" }}
-                          >
-                            View Document
-                          </a>
-                        )}
-                      </li>
-                    ))}
-                </ul>
-              </div>
-
-              {organizationStatus.documents.some(
-                (doc) =>
-                  ![
-                    "CERT_OF_INCORP",
-                    "TAX",
-                    "BUSINESS_LICENSE",
-                    "BUSINESS_CERTIFICATE",
-                  ].includes(doc.name)
-              ) && (
-                <div
-                  className="review-info-box"
-                  style={{ marginTop: "1.5rem" }}
-                >
-                  <h3>Director Documents</h3>
-                  <ul style={{ marginTop: "1rem" }}>
-                    {organizationStatus.documents
-                      .filter(
-                        (doc) =>
-                          ![
-                            "CERT_OF_INCORP",
-                            "TAX",
-                            "BUSINESS_LICENSE",
-                            "BUSINESS_CERTIFICATE",
-                          ].includes(doc.name)
-                      )
-                      .map((doc, idx) => (
-                        <li key={idx} style={{ marginBottom: "0.5rem" }}>
-                          <strong>{doc.name.replace(/_/g, " ")}</strong>
-                          {doc.url && (
-                            <a
-                              href={doc.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ marginLeft: "1rem", color: "#007bff" }}
-                            >
-                              View Document
-                            </a>
-                          )}
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              )}
-            </>
+            <div className="review-info-box" style={{ marginTop: "1.5rem" }}>
+              <h3>
+                Uploaded Documents ({organizationStatus.documents.length})
+              </h3>
+              <ul style={{ marginTop: "1rem" }}>
+                {organizationStatus.documents.map((doc, idx) => (
+                  <li key={idx} style={{ marginBottom: "0.5rem" }}>
+                    <strong>{doc.name}</strong>
+                    {doc.url && (
+                      <a
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ marginLeft: "1rem", color: "#007bff" }}
+                      >
+                        View Document
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
         {organizationStatus.address && (
@@ -2499,12 +2273,8 @@ const MerchantOnboardingNew = () => {
               )}
               <p>
                 {organizationStatus.address.city},{" "}
-                {organizationStatus.address.state}
+                {organizationStatus.address.country}
               </p>
-              <p>{organizationStatus.address.country}</p>
-              {organizationStatus.address.postalCode && (
-                <p>Postal Code: {organizationStatus.address.postalCode}</p>
-              )}
             </div>
           </div>
         )}
@@ -2673,9 +2443,9 @@ const MerchantOnboardingNew = () => {
               className="btn btn-secondary"
               onClick={() => {
                 if (currentStep === 4 && directorSubStep === 2) {
-                  setSubStep(1);
+                  setDirectorSubStep(1);
                 } else {
-                  goToStep(currentStep - 1);
+                  setCurrentStep(currentStep - 1);
                 }
               }}
               disabled={loading}
