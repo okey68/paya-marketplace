@@ -537,35 +537,30 @@ const MerchantOnboardingNew = () => {
         return;
       }
     }
-
     if (currentStep === 2) {
       if (!validateStep2()) {
         toast.error("Please fill in all required fields correctly");
         return;
       }
     }
-
     if (currentStep === 3) {
       if (!validateStep3()) {
         toast.error("Please upload all required documents");
         return;
       }
     }
-
     if (currentStep === 4 && directorSubStep === 1) {
       if (!validateStep4SubStep1()) {
         toast.error("Please fill in all required director fields correctly");
         return;
       }
     }
-
     if (currentStep === 4 && directorSubStep === 2) {
       if (!validateStep4SubStep2()) {
         toast.error("Please upload all required director documents");
         return;
       }
     }
-
     setLoading(true);
     try {
       // STEP 1: Create Organization Owner
