@@ -145,8 +145,28 @@ const productSchema = new mongoose.Schema({
   // Shopify Integration Data
   shopifyData: {
     shopifyId: { type: String },
-    shopifyVariantId: { type: String },
-    lastSyncedAt: { type: Date }
+    shopifyVariantId: { type: String }, // Primary variant ID
+    shopifyVariants: [{
+      variantId: { type: String },
+      title: { type: String },
+      price: { type: Number },
+      compareAtPrice: { type: Number },
+      inventoryQuantity: { type: Number },
+      sku: { type: String },
+      option1: { type: String },
+      option2: { type: String },
+      option3: { type: String },
+      inventoryItemId: { type: String },
+      weight: { type: Number },
+      weightUnit: { type: String }
+    }],
+    lastSyncedAt: { type: Date },
+    syncStatus: {
+      type: String,
+      enum: ['synced', 'pending', 'error'],
+      default: 'synced'
+    },
+    syncError: { type: String }
   },
   
   // Timestamps

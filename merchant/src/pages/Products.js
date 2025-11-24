@@ -15,27 +15,38 @@ const MerchantProducts = () => {
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [isShopifyConnected, setIsShopifyConnected] = useState(false);
 
   useEffect(() => {
     fetchProducts();
-    
+    checkShopifyConnection();
+
     // Check for Shopify connection status in URL
     const urlParams = new URLSearchParams(window.location.search);
     const shopifyStatus = urlParams.get('shopify');
-    
+
     if (shopifyStatus === 'connected') {
-      toast.success('Shopify store connected! Click "Connect Shopify" to import products.');
+      toast.success('Shopify store connected! Go to Shopify Integration page to import products.');
       // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (shopifyStatus === 'error') {
       const reason = urlParams.get('reason');
-      const message = reason === 'session_expired' 
-        ? 'Session expired. Please try connecting again.' 
+      const message = reason === 'session_expired'
+        ? 'Session expired. Please try connecting again.'
         : 'Failed to connect Shopify store. Please try again.';
       toast.error(message);
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
+
+  const checkShopifyConnection = async () => {
+    try {
+      const response = await api.get('/integrations/shopify/status');
+      setIsShopifyConnected(response.data.connected);
+    } catch (error) {
+      console.log('Could not check Shopify status');
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -165,19 +176,19 @@ const MerchantProducts = () => {
       <div className="products-header">
         <h1>My Products</h1>
         <div className="header-actions">
-          <button 
+          <button
             className="btn btn-shopify"
             onClick={() => navigate('/shopify/integration')}
           >
-            🛍️ Connect Shopify
+            {isShopifyConnected ? '🛍️ Import from Shopify' : '🛍️ Connect Shopify'}
           </button>
-          <button 
+          <button
             className="btn btn-secondary"
             onClick={() => setShowBulkUpload(true)}
           >
             📤 Bulk Upload
           </button>
-          <button 
+          <button
             className="btn btn-primary"
             onClick={() => window.location.href = '/products/add'}
           >
@@ -260,11 +271,30 @@ const MerchantProducts = () => {
               <div className="col-product">
                 <div className="product-image-small">
                   {product.images && product.images.length > 0 ? (
-                    <img 
-                      src={`/api/uploads/${product.images[0]}`} 
+                    <img
+                      src={(() => {
+                        const firstImage = product.images[0];
+                        // Handle different image formats
+                        if (typeof firstImage === 'string') {
+                          // Simple string path
+                          return firstImage.startsWith('http')
+                            ? firstImage  // External URL
+                            : `/api${firstImage}`;  // Local path
+                        } else if (firstImage?.path) {
+                          // Object with path property
+                          const path = firstImage.path;
+                          return path.startsWith('http')
+                            ? path  // External URL
+                            : path.startsWith('/uploads')
+                            ? `/api${path}`  // Local GridFS path
+                            : path;  // Use as-is
+                        }
+                        return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNFNUU3RUIiLz48dGV4dCB4PSI1MCIgeT0iNTUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI0MCIgZmlsbD0iIzlDQTNCOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+8J+TpjwvdGV4dD48L3N2Zz4=';
+                      })()}
                       alt={product.name}
                       onError={(e) => {
-                        e.target.src = '/placeholder-product.png';
+                        e.target.onerror = null; // Prevent infinite loop
+                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNFNUU3RUIiLz48dGV4dCB4PSI1MCIgeT0iNTUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI0MCIgZmlsbD0iIzlDQTNCOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+8J+TpjwvdGV4dD48L3N2Zz4=';
                       }}
                     />
                   ) : (
