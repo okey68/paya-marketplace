@@ -78,6 +78,11 @@ const shopifyIntegrationSchema = new mongoose.Schema({
       enum: ['idle', 'syncing', 'error'],
       default: 'idle'
     }
+  },
+  // Default category when Shopify product_type is empty
+  defaultCategory: {
+    type: String,
+    default: 'Uncategorized'
   }
 }, {
   timestamps: true,

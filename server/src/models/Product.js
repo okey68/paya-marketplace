@@ -40,19 +40,11 @@ const productSchema = new mongoose.Schema({
     min: [0, 'Shipping cost cannot be negative']
   },
   
-  // Category
+  // Category - accepts any value (including Shopify product_type)
   category: {
     type: String,
     required: [true, 'Product category is required'],
-    enum: [
-      'Electronics',
-      'Appliances', 
-      'Clothing',
-      'Cosmetics',
-      'Medical Care',
-      'Services',
-      'Other'
-    ]
+    trim: true
   },
   subcategory: {
     type: String,
@@ -160,6 +152,12 @@ const productSchema = new mongoose.Schema({
       weight: { type: Number },
       weightUnit: { type: String }
     }],
+    originalProductType: { type: String },
+    categorySource: {
+      type: String,
+      enum: ['product_type', 'collection', 'tag', 'title', 'merchant_mapping', 'default'],
+      default: 'default'
+    },
     lastSyncedAt: { type: Date },
     syncStatus: {
       type: String,
