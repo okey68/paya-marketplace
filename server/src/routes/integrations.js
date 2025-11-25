@@ -8,6 +8,7 @@ const ShopifyIntegration = require('../models/ShopifyIntegration');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { downloadProductImages } = require('../services/shopifyImageService');
 const { triggerManualSync } = require('../services/shopifyScheduledSync');
+const shopifyCategoryService = require('../services/shopifyCategoryService');
 require('@shopify/shopify-api/adapters/node');
 
 // Initialize Shopify API (only if credentials are provided)
@@ -239,7 +240,7 @@ router.post('/shopify/import-products', protect, merchantOnly, async (req, res) 
           imported++;
         }
       } catch (error) {
-        console.error(`Failed to import product ${shopifyProduct.id}:`, error);
+        console.error(`Failed to import product ${shopifyProduct.id}:`, error.message);
         failed++;
       }
     }
@@ -695,35 +696,36 @@ async function mapShopifyToPayaProduct(shopifyProduct, merchantId, downloadImage
       const imageUrls = shopifyProduct.images.map(img => img.src);
       const imageObjects = await downloadProductImages(imageUrls, shopifyProduct.title);
       // Use the full image objects returned from download
+      // Ensure all fields have correct types for Mongoose schema validation
       images = imageObjects.map((img, index) => ({
-        filename: img.filename || `shopify_image_${index}.jpg`,
-        originalName: img.originalName || shopifyProduct.images[index]?.alt || 'product_image.jpg',
-        path: img.path,
-        size: img.size || 0,
+        filename: String(img.filename || `shopify_image_${index}.jpg`),
+        originalName: String(img.originalName || shopifyProduct.images[index]?.alt || 'product_image.jpg'),
+        path: String(img.path || ''),
+        size: Number(img.size) || 0,
         uploadDate: new Date(),
-        isPrimary: index === 0
+        isPrimary: Boolean(index === 0)
       }));
     } catch (error) {
       console.error('Failed to download images, using URLs:', error.message);
       // Fallback to URLs as image objects
       images = shopifyProduct.images.map((img, index) => ({
-        filename: img.src.split('/').pop() || `shopify_image_${index}.jpg`,
-        originalName: img.alt || 'product_image.jpg',
-        path: img.src,
+        filename: String(img.src.split('/').pop() || `shopify_image_${index}.jpg`),
+        originalName: String(img.alt || 'product_image.jpg'),
+        path: String(img.src || ''),
         size: 0,
         uploadDate: new Date(),
-        isPrimary: index === 0
+        isPrimary: Boolean(index === 0)
       }));
     }
   } else {
     // Use URLs directly as image objects (for webhook quick sync)
     images = shopifyProduct.images ? shopifyProduct.images.map((img, index) => ({
-      filename: img.src.split('/').pop() || `shopify_image_${index}.jpg`,
-      originalName: img.alt || 'product_image.jpg',
-      path: img.src,
+      filename: String(img.src.split('/').pop() || `shopify_image_${index}.jpg`),
+      originalName: String(img.alt || 'product_image.jpg'),
+      path: String(img.src || ''),
       size: 0,
       uploadDate: new Date(),
-      isPrimary: index === 0
+      isPrimary: Boolean(index === 0)
     })) : [];
   }
 
@@ -771,29 +773,16 @@ async function mapShopifyToPayaProduct(shopifyProduct, merchantId, downloadImage
       shopifyId: shopifyProduct.id.toString(),
       shopifyVariantId: variant.id.toString(),
       shopifyVariants: shopifyVariants,
+      originalProductType: shopifyProduct.product_type || '',
       lastSyncedAt: new Date(),
       syncStatus: 'synced'
     }
   };
 }
 
-// Helper: Map Shopify categories to Paya categories
+// Helper: Map Shopify categories to Paya categories (uses expanded category service)
 function mapCategory(shopifyType) {
-  const categoryMap = {
-    'Electronics': 'Electronics',
-    'Clothing': 'Clothing',
-    'Fashion': 'Clothing',
-    'Apparel': 'Clothing',
-    'Appliances': 'Appliances',
-    'Home & Garden': 'Appliances',
-    'Beauty': 'Cosmetics',
-    'Cosmetics': 'Cosmetics',
-    'Health': 'Medical Care',
-    'Medical': 'Medical Care',
-    'Services': 'Services'
-  };
-  
-  return categoryMap[shopifyType] || 'Other';
+  return shopifyCategoryService.mapCategory(shopifyType);
 }
 
 // HMAC Verification for Webhooks
@@ -1145,6 +1134,301 @@ router.post('/shopify/webhooks/inventory/update', express.raw({ type: 'applicati
   } catch (error) {
     console.error('Error processing inventory update webhook:', error);
     res.status(500).send('Internal server error');
+  }
+});
+
+// ==========================================
+// CATEGORY MAPPING ENDPOINTS
+// ==========================================
+
+// @route   GET /shopify/category-sources
+// @desc    Fetch available product types, collections, and tags from Shopify
+// @access  Private (Merchant)
+router.get('/shopify/category-sources', protect, merchantOnly, async (req, res) => {
+  try {
+    const integration = await ShopifyIntegration.findOne({ merchant: req.user._id });
+
+    if (!integration) {
+      return res.status(404).json({ message: 'Shopify integration not found' });
+    }
+
+    const { shop, accessToken } = integration;
+
+    // Check if we have cached sources (less than 1 hour old)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    if (integration.shopifySources?.lastFetchedAt > oneHourAgo) {
+      return res.json({
+        productTypes: integration.shopifySources.productTypes || [],
+        collections: integration.shopifySources.collections || [],
+        tags: integration.shopifySources.tags || [],
+        cachedAt: integration.shopifySources.lastFetchedAt
+      });
+    }
+
+    // Fetch fresh data from Shopify
+    const [productTypes, collections, tags] = await Promise.all([
+      shopifyCategoryService.fetchShopifyProductTypes(shop, accessToken),
+      shopifyCategoryService.fetchShopifyCollections(shop, accessToken),
+      shopifyCategoryService.fetchShopifyTags(shop, accessToken)
+    ]);
+
+    // Cache the results
+    integration.shopifySources = {
+      productTypes,
+      collections,
+      tags,
+      lastFetchedAt: new Date()
+    };
+    await integration.save();
+
+    res.json({
+      productTypes,
+      collections,
+      tags,
+      cachedAt: new Date()
+    });
+  } catch (error) {
+    console.error('Error fetching category sources:', error);
+    res.status(500).json({ message: 'Failed to fetch category sources', error: error.message });
+  }
+});
+
+// @route   GET /shopify/category-mappings
+// @desc    Get merchant's current category mappings
+// @access  Private (Merchant)
+router.get('/shopify/category-mappings', protect, merchantOnly, async (req, res) => {
+  try {
+    const integration = await ShopifyIntegration.findOne({ merchant: req.user._id });
+
+    if (!integration) {
+      return res.status(404).json({ message: 'Shopify integration not found' });
+    }
+
+    res.json({
+      mappings: integration.categoryMappings || [],
+      defaultCategory: integration.defaultCategory || 'Other',
+      payaCategories: shopifyCategoryService.PAYA_CATEGORIES
+    });
+  } catch (error) {
+    console.error('Error fetching category mappings:', error);
+    res.status(500).json({ message: 'Failed to fetch category mappings', error: error.message });
+  }
+});
+
+// @route   POST /shopify/category-mappings
+// @desc    Save category mappings (replaces all existing mappings)
+// @access  Private (Merchant)
+router.post('/shopify/category-mappings', protect, merchantOnly, async (req, res) => {
+  try {
+    const { mappings, defaultCategory } = req.body;
+
+    const integration = await ShopifyIntegration.findOne({ merchant: req.user._id });
+
+    if (!integration) {
+      return res.status(404).json({ message: 'Shopify integration not found' });
+    }
+
+    // Validate mappings
+    if (mappings && Array.isArray(mappings)) {
+      const validMappings = mappings.filter(m =>
+        m.sourceType && m.sourceValue && m.payaCategory &&
+        ['product_type', 'collection', 'tag'].includes(m.sourceType) &&
+        shopifyCategoryService.PAYA_CATEGORIES.includes(m.payaCategory)
+      );
+
+      integration.categoryMappings = validMappings.map((m, index) => ({
+        sourceType: m.sourceType,
+        sourceValue: m.sourceValue,
+        payaCategory: m.payaCategory,
+        priority: m.priority !== undefined ? m.priority : index,
+        createdAt: new Date()
+      }));
+    }
+
+    // Validate default category
+    if (defaultCategory && shopifyCategoryService.PAYA_CATEGORIES.includes(defaultCategory)) {
+      integration.defaultCategory = defaultCategory;
+    }
+
+    await integration.save();
+
+    res.json({
+      message: 'Category mappings saved successfully',
+      mappings: integration.categoryMappings,
+      defaultCategory: integration.defaultCategory
+    });
+  } catch (error) {
+    console.error('Error saving category mappings:', error);
+    res.status(500).json({ message: 'Failed to save category mappings', error: error.message });
+  }
+});
+
+// @route   DELETE /shopify/category-mappings/:index
+// @desc    Remove a specific category mapping by index
+// @access  Private (Merchant)
+router.delete('/shopify/category-mappings/:index', protect, merchantOnly, async (req, res) => {
+  try {
+    const { index } = req.params;
+    const mappingIndex = parseInt(index, 10);
+
+    const integration = await ShopifyIntegration.findOne({ merchant: req.user._id });
+
+    if (!integration) {
+      return res.status(404).json({ message: 'Shopify integration not found' });
+    }
+
+    if (isNaN(mappingIndex) || mappingIndex < 0 || mappingIndex >= integration.categoryMappings.length) {
+      return res.status(400).json({ message: 'Invalid mapping index' });
+    }
+
+    integration.categoryMappings.splice(mappingIndex, 1);
+    await integration.save();
+
+    res.json({
+      message: 'Category mapping removed successfully',
+      mappings: integration.categoryMappings
+    });
+  } catch (error) {
+    console.error('Error removing category mapping:', error);
+    res.status(500).json({ message: 'Failed to remove category mapping', error: error.message });
+  }
+});
+
+// @route   GET /shopify/category-preview
+// @desc    Preview how products would be categorized with current mappings
+// @access  Private (Merchant)
+router.get('/shopify/category-preview', protect, merchantOnly, async (req, res) => {
+  try {
+    const integration = await ShopifyIntegration.findOne({ merchant: req.user._id });
+
+    if (!integration) {
+      return res.status(404).json({ message: 'Shopify integration not found' });
+    }
+
+    const { shop, accessToken } = integration;
+
+    // Fetch a sample of products from Shopify
+    const response = await axios.get(
+      `https://${shop}/admin/api/2024-01/products.json?limit=50&fields=id,title,product_type,tags`,
+      {
+        headers: {
+          'X-Shopify-Access-Token': accessToken,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const products = response.data.products || [];
+
+    // Preview categorization for each product
+    const preview = products.map(product => {
+      const result = shopifyCategoryService.determineCategory(
+        product,
+        integration.categoryMappings || [],
+        integration.defaultCategory || 'Other'
+      );
+
+      return {
+        id: product.id,
+        title: product.title,
+        productType: product.product_type || '(none)',
+        tags: product.tags || '',
+        assignedCategory: result.category,
+        categorySource: result.source
+      };
+    });
+
+    // Summary statistics
+    const categoryCounts = {};
+    const sourceCounts = {};
+
+    preview.forEach(p => {
+      categoryCounts[p.assignedCategory] = (categoryCounts[p.assignedCategory] || 0) + 1;
+      sourceCounts[p.categorySource] = (sourceCounts[p.categorySource] || 0) + 1;
+    });
+
+    res.json({
+      preview,
+      summary: {
+        total: preview.length,
+        byCategory: categoryCounts,
+        bySource: sourceCounts
+      }
+    });
+  } catch (error) {
+    console.error('Error generating category preview:', error);
+    res.status(500).json({ message: 'Failed to generate category preview', error: error.message });
+  }
+});
+
+// @route   POST /shopify/rematch-categories
+// @desc    Re-categorize existing products based on current mappings
+// @access  Private (Merchant)
+router.post('/shopify/rematch-categories', protect, merchantOnly, async (req, res) => {
+  try {
+    const Product = require('../models/Product');
+
+    const integration = await ShopifyIntegration.findOne({ merchant: req.user._id });
+
+    if (!integration) {
+      return res.status(404).json({ message: 'Shopify integration not found' });
+    }
+
+    // Find all products from this merchant that were imported from Shopify
+    const products = await Product.find({
+      merchant: req.user._id,
+      'shopifyData.shopifyId': { $exists: true }
+    });
+
+    let updated = 0;
+    let unchanged = 0;
+    const changes = [];
+
+    for (const product of products) {
+      // We need to reconstruct the Shopify product data for categorization
+      const shopifyProductData = {
+        product_type: product.shopifyData?.originalProductType || '',
+        tags: product.tags?.join(',') || '',
+        title: product.name
+      };
+
+      const result = shopifyCategoryService.determineCategory(
+        shopifyProductData,
+        integration.categoryMappings || [],
+        integration.defaultCategory || 'Other'
+      );
+
+      if (product.category !== result.category) {
+        const oldCategory = product.category;
+        product.category = result.category;
+        product.shopifyData.categorySource = result.source;
+        await product.save();
+
+        changes.push({
+          productId: product._id,
+          name: product.name,
+          oldCategory,
+          newCategory: result.category,
+          source: result.source
+        });
+        updated++;
+      } else {
+        unchanged++;
+      }
+    }
+
+    res.json({
+      message: `Re-categorization complete`,
+      summary: {
+        total: products.length,
+        updated,
+        unchanged
+      },
+      changes
+    });
+  } catch (error) {
+    console.error('Error re-matching categories:', error);
+    res.status(500).json({ message: 'Failed to re-match categories', error: error.message });
   }
 });
 

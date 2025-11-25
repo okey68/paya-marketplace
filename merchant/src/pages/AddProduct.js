@@ -142,10 +142,16 @@ const AddEditProduct = () => {
     }
   };
 
-  const handleRemoveImage = (imageId) => {
+  const handleRemoveImage = (imageKey) => {
     setProduct(prev => ({
       ...prev,
-      images: prev.images.filter(id => id !== imageId)
+      images: prev.images.filter(image => {
+        // Handle both string IDs and object format
+        if (typeof image === 'string') {
+          return image !== imageKey;
+        }
+        return (image._id || image.filename) !== imageKey;
+      })
     }));
   };
 
@@ -414,24 +420,46 @@ const AddEditProduct = () => {
             {uploadingImages && <p>Uploading images...</p>}
             
             <div className="uploaded-images">
-              {product.images.map(imageId => (
-                <div key={imageId} className="image-preview">
-                  <img 
-                    src={`/api/uploads/${imageId}`} 
-                    alt="Product"
-                    onError={(e) => {
-                      e.target.src = '/placeholder-product.png';
-                    }}
-                  />
-                  <button 
-                    type="button" 
-                    className="remove-image"
-                    onClick={() => handleRemoveImage(imageId)}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+              {product.images.map((image, index) => {
+                // Handle both string IDs (manual uploads) and object format (Shopify imports)
+                const imageKey = typeof image === 'string' ? image : (image._id || image.filename || index);
+                const imageSrc = (() => {
+                  if (typeof image === 'string') {
+                    // Manual upload - image is just an ID/filename
+                    return `/api/uploads/${image}`;
+                  } else if (image.path) {
+                    // Shopify import - image is an object with path
+                    const path = image.path;
+                    if (path.startsWith('/uploads/')) {
+                      // GridFS path - extract ObjectId and use API route
+                      const objectId = path.replace('/uploads/', '');
+                      return `/api/uploads/${objectId}`;
+                    }
+                    return path.startsWith('http') ? path : `/api${path}`;
+                  }
+                  return '';
+                })();
+
+                return (
+                  <div key={imageKey} className="image-preview">
+                    <img
+                      src={imageSrc}
+                      alt="Product"
+                      onError={(e) => {
+                        e.target.onerror = null; // Prevent infinite loop
+                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNFNUU3RUIiLz48dGV4dCB4PSI1MCIgeT0iNTUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI0MCIgZmlsbD0iIzlDQTNCOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+8J+TpjwvdGV4dD48L3N2Zz4=';
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="remove-image"
+                      onClick={() => handleRemoveImage(typeof image === 'string' ? image : imageKey)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

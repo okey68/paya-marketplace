@@ -9,6 +9,7 @@ const ShopifyIntegration = require('../models/ShopifyIntegration');
 const Product = require('../models/Product');
 const axios = require('axios');
 const { downloadProductImages } = require('./shopifyImageService');
+const shopifyCategoryService = require('./shopifyCategoryService');
 
 // Track if sync is in progress to prevent overlaps
 let syncInProgress = false;
@@ -105,6 +106,7 @@ function mapShopifyProduct(shopifyProduct, merchantId) {
       shopifyId: shopifyProduct.id.toString(),
       shopifyVariantId: variant.id.toString(),
       shopifyVariants: shopifyVariants,
+      originalProductType: shopifyProduct.product_type || '',
       lastSyncedAt: new Date(),
       syncStatus: 'synced'
     }
@@ -112,24 +114,10 @@ function mapShopifyProduct(shopifyProduct, merchantId) {
 }
 
 /**
- * Helper: Map Shopify categories to Paya categories
+ * Helper: Map Shopify categories to Paya categories (uses expanded category service)
  */
 function mapCategory(shopifyType) {
-  const categoryMap = {
-    'Electronics': 'Electronics',
-    'Clothing': 'Clothing',
-    'Fashion': 'Clothing',
-    'Apparel': 'Clothing',
-    'Appliances': 'Appliances',
-    'Home & Garden': 'Appliances',
-    'Beauty': 'Cosmetics',
-    'Cosmetics': 'Cosmetics',
-    'Health': 'Medical Care',
-    'Medical': 'Medical Care',
-    'Services': 'Services'
-  };
-
-  return categoryMap[shopifyType] || 'Other';
+  return shopifyCategoryService.mapCategory(shopifyType);
 }
 
 /**

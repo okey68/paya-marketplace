@@ -132,15 +132,23 @@ function AppContent() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/shopify/publishing" 
+          <Route
+            path="/shopify/publishing"
             element={
               <ProtectedRoute>
                 <ShopifyPublishing />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
+          <Route
+            path="/shopify"
+            element={
+              <ProtectedRoute>
+                <ShopifyIntegration />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/onboarding" 
             element={<MerchantOnboarding />} 
           />

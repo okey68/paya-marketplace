@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const mongoose = require('mongoose');
 const { authenticateToken } = require('../middleware/auth');
 const User = require('../models/User');
 
@@ -105,14 +106,61 @@ router.post('/product-image', authenticateToken, upload.single('image'), async (
   }
 });
 
-// @route   GET /api/uploads/:filename
-// @desc    Get uploaded file
-// @access  Private
-router.get('/:filename', authenticateToken, async (req, res) => {
+// @route   GET /api/uploads/:id
+// @desc    Get file from GridFS by ObjectId (for Shopify images)
+// @access  Public (images should be publicly accessible)
+router.get('/:id', async (req, res) => {
   try {
-    const { filename } = req.params;
-    const filePath = path.join(uploadsDir, filename);
-    
+    const { id } = req.params;
+
+    // Check if it looks like a MongoDB ObjectId (24 hex characters)
+    if (mongoose.Types.ObjectId.isValid(id) && /^[a-f0-9]{24}$/i.test(id)) {
+      // Try to serve from GridFS
+      const db = mongoose.connection.db;
+
+      if (!db) {
+        return res.status(503).json({ message: 'Database connection not ready' });
+      }
+
+      const bucket = new mongoose.mongo.GridFSBucket(db, {
+        bucketName: 'uploads'
+      });
+
+      try {
+        const files = await bucket.find({ _id: new mongoose.Types.ObjectId(id) }).toArray();
+
+        if (!files || files.length === 0) {
+          return res.status(404).json({ message: 'Image not found in GridFS' });
+        }
+
+        const file = files[0];
+
+        // Set appropriate headers
+        res.set('Content-Type', file.contentType || 'image/jpeg');
+        res.set('Content-Disposition', `inline; filename="${file.filename}"`);
+        res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+
+        // Stream the file from GridFS to response
+        const downloadStream = bucket.openDownloadStream(new mongoose.Types.ObjectId(id));
+
+        downloadStream.on('error', (err) => {
+          console.error('GridFS download stream error:', err);
+          if (!res.headersSent) {
+            res.status(500).json({ message: 'Error streaming file' });
+          }
+        });
+
+        downloadStream.pipe(res);
+        return;
+      } catch (gridfsError) {
+        console.error('GridFS error:', gridfsError);
+        // Fall through to filesystem check
+      }
+    }
+
+    // If not a valid ObjectId or not found in GridFS, try filesystem
+    const filePath = path.join(uploadsDir, id);
+
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ message: 'File not found' });
     }

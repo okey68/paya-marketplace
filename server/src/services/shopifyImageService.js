@@ -55,29 +55,70 @@ async function downloadAndStoreImage(imageUrl, productName, index = 0) {
       }
     });
 
-    // Pipe the download to GridFS
-    await pipeline(response.data, uploadStream);
+    // Wrap the upload in a Promise that waits for the 'finish' event
+    const uploadResult = await new Promise((resolve, reject) => {
+      let uploadedFileId;
+      let uploadedSize = 0;
 
-    console.log(`✅ Image downloaded and stored: ${filename}`);
+      uploadStream.on('finish', () => {
+        uploadedFileId = uploadStream.id;
+        uploadedSize = uploadStream.length || 0;
 
-    return {
-      filename: uploadStream.filename,
-      originalName: originalFilename,
-      path: `/uploads/${uploadStream.id}`,
-      size: uploadStream.length,
-      gridfsId: uploadStream.id
-    };
+        // Give GridFS a moment to commit the metadata
+        setTimeout(() => {
+          resolve({
+            filename: String(filename),
+            originalName: String(originalFilename || filename), // Fallback to filename if originalFilename is undefined
+            path: `/uploads/${uploadedFileId}`,
+            size: Number(uploadedSize) || 0,
+            gridfsId: uploadedFileId
+          });
+        }, 100); // 100ms delay to ensure GridFS metadata is committed
+      });
+
+      uploadStream.on('error', (error) => {
+        reject(new Error(`GridFS upload failed: ${error.message}`));
+      });
+
+      // Pipe the download to GridFS
+      pipeline(response.data, uploadStream).catch(reject);
+    });
+
+    // Image downloaded and stored successfully
+
+    return uploadResult;
   } catch (error) {
     console.error(`❌ Failed to download image from ${imageUrl}:`, error.message);
 
     // Return URL as fallback
+    const fallbackFilename = imageUrl.split('/').pop() || `image_${index}.jpg`;
     return {
-      filename: imageUrl.split('/').pop(),
-      originalName: imageUrl.split('/').pop(),
-      path: imageUrl, // Store original URL as fallback
+      filename: String(fallbackFilename),
+      originalName: String(fallbackFilename),
+      path: String(imageUrl), // Store original URL as fallback
       size: 0,
       downloadError: true
     };
+  }
+}
+
+/**
+ * Verify that an image exists in GridFS
+ * @param {string} gridfsId - The GridFS file ID
+ * @returns {boolean}
+ */
+async function verifyImageExists(gridfsId) {
+  try {
+    const db = mongoose.connection.db;
+    const bucket = new mongoose.mongo.GridFSBucket(db, {
+      bucketName: 'uploads'
+    });
+
+    const files = await bucket.find({ _id: new mongoose.Types.ObjectId(gridfsId) }).toArray();
+    return files.length > 0;
+  } catch (error) {
+    console.error(`Failed to verify image ${gridfsId}:`, error.message);
+    return false;
   }
 }
 
@@ -97,13 +138,29 @@ async function downloadProductImages(imageUrls, productName) {
   );
 
   try {
-    // Download all images in parallel (but limit to prevent overload)
+    // Download all images in parallel
     const images = await Promise.all(downloadPromises);
 
-    // Filter out failed downloads (optional - you might want to keep URLs as fallback)
-    return images.filter(img => !img.downloadError);
+    // Filter out failed downloads
+    const successfulImages = images.filter(img => !img.downloadError);
+
+    if (successfulImages.length === 0) {
+      return [];
+    }
+
+    // Verify all images exist in GridFS
+    const verificationPromises = successfulImages.map(async (img) => {
+      if (img.gridfsId) {
+        const exists = await verifyImageExists(img.gridfsId);
+        return exists ? img : null;
+      }
+      return null;
+    });
+
+    const verifiedImages = await Promise.all(verificationPromises);
+    return verifiedImages.filter(img => img !== null);
   } catch (error) {
-    console.error('Error downloading product images:', error);
+    console.error('Error downloading product images:', error.message);
 
     // Return URLs as fallback
     return imageUrls.map((url, index) => ({
