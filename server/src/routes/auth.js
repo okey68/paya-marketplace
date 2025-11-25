@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const slackService = require('../../services/slackService');
+const otpService = require('../../services/otpService');
+const { generateOTP, getOTPExpiration } = require('../utils/otpGenerator');
 const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
@@ -34,7 +36,7 @@ router.post('/register', [
       });
     }
 
-    const { firstName, lastName, email, password, phone, role } = req.body;
+    const { firstName, lastName, email, password, phone, role, phoneNumber, phoneCountryCode } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -49,8 +51,10 @@ router.post('/register', [
       email,
       password,
       role,
-      phoneNumber: phone,
-      isActive: true
+      phoneNumber: phoneNumber || phone,
+      phoneCountryCode: phoneCountryCode || '+254',
+      isActive: true,
+      isVerified: role === 'merchant' ? false : true // Merchants need email verification
     };
 
     // If merchant, set pending approval status
@@ -61,17 +65,47 @@ router.post('/register', [
     }
 
     const user = new User(userData);
-    await user.save();
+
+    // Generate and send OTP for merchants
+    if (role === 'merchant') {
+      const otp = generateOTP();
+      user.otp = {
+        code: otp,
+        expiresAt: getOTPExpiration(),
+        attempts: 0
+      };
+      
+      await user.save();
+
+      // Send OTP via email
+      try {
+        await otpService.sendOTP(email, otp, 'email');
+        console.log('OTP sent successfully to:', email);
+      } catch (otpError) {
+        console.error('OTP sending failed:', otpError.message);
+        // Continue with registration even if OTP fails
+      }
+
+      // Send Slack notification for new merchant application
+      try {
+        await slackService.notifyMerchantApplication(user);
+      } catch (slackError) {
+        console.error('Slack notification failed:', slackError.message);
+      }
+    } else {
+      await user.save();
+    }
 
     // Generate token
     const token = generateToken(user._id);
 
     res.status(201).json({
       message: role === 'merchant' 
-        ? 'Merchant account created successfully. Please complete your profile.' 
+        ? 'Merchant account created successfully. Please verify your email with the OTP sent.' 
         : 'Account created successfully',
       token,
-      user: user.toSafeObject()
+      user: user.toSafeObject(),
+      requiresVerification: role === 'merchant'
     });
 
   } catch (error) {
@@ -190,6 +224,7 @@ router.post('/register/merchant', [
       role: 'merchant',
       phoneNumber,
       address: address || {},
+      isVerified: false, // Set to false until email is verified
       businessInfo: {
         businessName,
         businessEmail,
@@ -199,7 +234,23 @@ router.post('/register/merchant', [
       }
     });
 
+    // Generate OTP
+    const otp = generateOTP();
+    user.otp = {
+      code: otp,
+      expiresAt: getOTPExpiration(),
+      attempts: 0
+    };
+
     await user.save();
+
+    // Send OTP via email
+    try {
+      await otpService.sendOTP(email, otp, 'email');
+    } catch (otpError) {
+      console.error('OTP sending failed:', otpError.message);
+      // Continue with registration even if OTP fails
+    }
 
     // Send Slack notification for new merchant application
     await slackService.notifyMerchantApplication(user);
@@ -208,9 +259,10 @@ router.post('/register/merchant', [
     const token = generateToken(user._id);
 
     res.status(201).json({
-      message: 'Merchant account created successfully. Pending approval.',
+      message: 'Merchant account created successfully. Please verify your email with the OTP sent.',
       token,
-      user: user.toSafeObject()
+      user: user.toSafeObject(),
+      requiresVerification: true
     });
 
   } catch (error) {
@@ -323,6 +375,349 @@ router.get('/verify', authenticateToken, (req, res) => {
     valid: true, 
     user: req.user.toSafeObject() 
   });
+});
+
+// Verify OTP
+router.post('/verify-otp', [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Validation errors', 
+        errors: errors.array() 
+      });
+    }
+
+    const { email, otp } = req.body;
+
+    // Find user
+    const user = await User.findOne({ email, isActive: true });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if already verified
+    if (user.isVerified) {
+      return res.status(400).json({ message: 'User is already verified' });
+    }
+
+    // Check if OTP exists
+    if (!user.otp || !user.otp.code) {
+      return res.status(400).json({ message: 'No OTP found. Please request a new one.' });
+    }
+
+    // Check OTP expiration
+    if (new Date() > user.otp.expiresAt) {
+      return res.status(400).json({ message: 'OTP has expired. Please request a new one.' });
+    }
+
+    // Check OTP attempts
+    if (user.otp.attempts >= 5) {
+      return res.status(400).json({ message: 'Too many failed attempts. Please request a new OTP.' });
+    }
+
+    // Verify OTP
+    if (user.otp.code !== otp) {
+      user.otp.attempts += 1;
+      await user.save();
+      return res.status(400).json({ 
+        message: 'Invalid OTP', 
+        attemptsRemaining: 5 - user.otp.attempts 
+      });
+    }
+
+    // OTP is valid - verify user
+    user.isVerified = true;
+    user.otp = undefined; // Clear OTP data
+    await user.save();
+
+    res.json({
+      message: 'Email verified successfully',
+      user: user.toSafeObject()
+    });
+
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    res.status(500).json({ message: 'Verification failed', error: error.message });
+  }
+});
+
+// Resend OTP
+router.post('/resend-otp', [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Validation errors', 
+        errors: errors.array() 
+      });
+    }
+
+    const { email } = req.body;
+
+    // Find user
+    const user = await User.findOne({ email, isActive: true });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if already verified
+    if (user.isVerified) {
+      return res.status(400).json({ message: 'User is already verified' });
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    user.otp = {
+      code: otp,
+      expiresAt: getOTPExpiration(),
+      attempts: 0
+    };
+
+    await user.save();
+
+    // Send OTP via email
+    try {
+      await otpService.sendOTP(email, otp, 'email');
+      res.json({ message: 'OTP sent successfully to your email' });
+    } catch (otpError) {
+      console.error('OTP sending failed:', otpError.message);
+      res.status(500).json({ message: 'Failed to send OTP. Please try again.' });
+    }
+
+  } catch (error) {
+    console.error('Resend OTP error:', error);
+    res.status(500).json({ message: 'Failed to resend OTP', error: error.message });
+  }
+});
+
+// Customer: Add personal info and send OTP via SMS
+router.post('/customer/add-info', [
+  body('firstName').trim().isLength({ min: 1 }).withMessage('First name is required'),
+  body('lastName').trim().isLength({ min: 1 }).withMessage('Last name is required'),
+  body('dateOfBirth').isISO8601().withMessage('Valid date of birth is required'),
+  body('companyEmail').isEmail().normalizeEmail().withMessage('Valid company email is required'),
+  body('phoneCountryCode').trim().isLength({ min: 1 }).withMessage('Phone country code is required'),
+  body('phoneNumber').trim().isLength({ min: 1 }).withMessage('Phone number is required'),
+  body('kraPin').trim().isLength({ min: 1 }).withMessage('KRA PIN is required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Validation errors', 
+        errors: errors.array() 
+      });
+    }
+
+    const { 
+      firstName, 
+      lastName, 
+      dateOfBirth, 
+      companyEmail, 
+      phoneCountryCode, 
+      phoneNumber,
+      kraPin 
+    } = req.body;
+
+    // Check if user already exists with this email
+    let user = await User.findOne({ email: companyEmail });
+    
+    if (user) {
+      // User exists - update their info and send new OTP
+      user.firstName = firstName;
+      user.lastName = lastName;
+      user.dateOfBirth = new Date(dateOfBirth);
+      user.phoneCountryCode = phoneCountryCode;
+      user.phoneNumber = phoneNumber;
+      user.kraPin = kraPin.toUpperCase();
+    } else {
+      // Create new customer user (without password - will be set later)
+      user = new User({
+        firstName,
+        lastName,
+        email: companyEmail,
+        dateOfBirth: new Date(dateOfBirth),
+        phoneCountryCode,
+        phoneNumber,
+        kraPin: kraPin.toUpperCase(),
+        role: 'customer',
+        isVerified: false,
+        isActive: true,
+        password: Math.random().toString(36).slice(-8) + 'Temp123!' // Temporary password
+      });
+    }
+
+    // Generate OTP
+    const otp = generateOTP();
+    user.otp = {
+      code: otp,
+      expiresAt: getOTPExpiration(),
+      attempts: 0
+    };
+
+    await user.save();
+
+    // Format phone number for SMS (combine country code + number)
+    const fullPhoneNumber = `${phoneCountryCode}${phoneNumber}`;
+
+    // Send OTP via SMS
+    try {
+      await otpService.sendOTP(fullPhoneNumber, otp, 'sms');
+      console.log('SMS OTP sent successfully to:', fullPhoneNumber);
+    } catch (otpError) {
+      console.error('SMS OTP sending failed:', otpError.message);
+      // Continue even if SMS fails - for development
+    }
+
+    res.status(200).json({
+      message: 'Customer information saved. OTP sent via SMS.',
+      otp: otp, // Include OTP in response for development/testing
+      customerInfo: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phoneNumber: fullPhoneNumber
+      }
+    });
+
+  } catch (error) {
+    console.error('Customer add-info error:', error);
+    res.status(500).json({ message: 'Failed to save customer information', error: error.message });
+  }
+});
+
+// Customer: Verify OTP from SMS
+router.post('/customer/verify-otp', [
+  body('companyEmail').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Validation errors', 
+        errors: errors.array() 
+      });
+    }
+
+    const { companyEmail, otp } = req.body;
+
+    // Find user
+    const user = await User.findOne({ email: companyEmail, isActive: true });
+    if (!user) {
+      return res.status(404).json({ message: 'Customer not found. Please add your information first.' });
+    }
+
+    // Check if already verified
+    if (user.isVerified) {
+      return res.status(400).json({ message: 'Phone number already verified' });
+    }
+
+    // Check if OTP exists
+    if (!user.otp || !user.otp.code) {
+      return res.status(400).json({ message: 'No OTP found. Please request a new one.' });
+    }
+
+    // Check OTP expiration
+    if (new Date() > user.otp.expiresAt) {
+      return res.status(400).json({ message: 'OTP has expired. Please request a new one.' });
+    }
+
+    // Check OTP attempts
+    if (user.otp.attempts >= 5) {
+      return res.status(400).json({ message: 'Too many failed attempts. Please request a new OTP.' });
+    }
+
+    // Verify OTP
+    if (user.otp.code !== otp) {
+      user.otp.attempts += 1;
+      await user.save();
+      return res.status(400).json({ 
+        message: 'Invalid OTP', 
+        attemptsRemaining: 5 - user.otp.attempts 
+      });
+    }
+
+    // OTP is valid - verify user
+    user.isVerified = true;
+    user.otp = undefined; // Clear OTP data
+    await user.save();
+
+    res.json({
+      message: 'Phone number verified successfully',
+      customerInfo: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phoneNumber: `${user.phoneCountryCode}${user.phoneNumber}`,
+        isVerified: user.isVerified
+      }
+    });
+
+  } catch (error) {
+    console.error('Customer OTP verification error:', error);
+    res.status(500).json({ message: 'Verification failed', error: error.message });
+  }
+});
+
+// Customer: Resend OTP via SMS
+router.post('/customer/resend-otp', [
+  body('companyEmail').isEmail().normalizeEmail().withMessage('Valid email is required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Validation errors', 
+        errors: errors.array() 
+      });
+    }
+
+    const { companyEmail } = req.body;
+
+    // Find user
+    const user = await User.findOne({ email: companyEmail, isActive: true });
+    if (!user) {
+      return res.status(404).json({ message: 'Customer not found. Please add your information first.' });
+    }
+
+    // Check if already verified
+    if (user.isVerified) {
+      return res.status(400).json({ message: 'Phone number already verified' });
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    user.otp = {
+      code: otp,
+      expiresAt: getOTPExpiration(),
+      attempts: 0
+    };
+
+    await user.save();
+
+    // Format phone number for SMS
+    const fullPhoneNumber = `${user.phoneCountryCode}${user.phoneNumber}`;
+
+    // Send OTP via SMS
+    try {
+      await otpService.sendOTP(fullPhoneNumber, otp, 'sms');
+      res.json({ message: 'OTP sent successfully via SMS' });
+    } catch (otpError) {
+      console.error('SMS OTP sending failed:', otpError.message);
+      res.status(500).json({ message: 'Failed to send OTP. Please try again.' });
+    }
+
+  } catch (error) {
+    console.error('Resend customer OTP error:', error);
+    res.status(500).json({ message: 'Failed to resend OTP', error: error.message });
+  }
 });
 
 module.exports = router;
