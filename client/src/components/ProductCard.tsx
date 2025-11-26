@@ -281,7 +281,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               fontSize: '0.8125rem',
               textTransform: 'none',
               borderRadius: 2,
-              bgcolor: isInCart ? '#10b981' : '#5b21b6',
+              bgcolor: isInCart ? '#10b981' : '#4f46e5',
               boxShadow: 'none',
               '&:hover': {
                 bgcolor: isInCart ? '#059669' : '#4c1d95',

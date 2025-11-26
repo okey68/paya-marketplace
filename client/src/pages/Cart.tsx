@@ -390,9 +390,9 @@ const Cart = () => {
                 variant="h6"
                 fontWeight={700}
                 sx={
-                  // #5b21b6
+                  // #4f46e5
                   {
-                    color: "#5b21b6",
+                    color: "#4f46e5",
                   }
                 }
               >
@@ -409,7 +409,7 @@ const Cart = () => {
             <Button
               fullWidth
               variant="contained"
-              // color="#5b21b6"
+              // color="#4f46e5"
               size="large"
               onClick={handleCheckout}
               sx={{
@@ -419,9 +419,9 @@ const Cart = () => {
                 textTransform: "none",
                 fontSize: "1rem",
                 fontWeight: 600,
-                bgcolor: "#5b21b6",
+                bgcolor: "#4f46e5",
                 "&:hover": {
-                  bgcolor: "#4c1d95",
+                  bgcolor: "##4f46e5",
                 },
               }}
             >

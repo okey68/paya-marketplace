@@ -449,7 +449,7 @@ const Merchants = () => {
                     textTransform: "none",
                     fontWeight: 600,
                     borderRadius: 2,
-                    bgcolor: "#5b21b6",
+                    bgcolor: "#4f46e5",
                     boxShadow: "none",
                     "&:hover": {
                       bgcolor: "#4c1d95",
@@ -498,7 +498,7 @@ const Merchants = () => {
                 textTransform: "none",
                 fontWeight: 600,
                 borderRadius: 2,
-                bgcolor: "#5b21b6",
+                bgcolor: "#4f46e5",
                 boxShadow: "none",
                 "&:hover": {
                   bgcolor: "#4c1d95",
@@ -538,7 +538,7 @@ const Merchants = () => {
               borderRadius: 2,
               px: 4,
               py: 1.5,
-              bgcolor: "#5b21b6",
+              bgcolor: "#4f46e5",
               boxShadow: "none",
               "&:hover": {
                 bgcolor: "#4c1d95",
