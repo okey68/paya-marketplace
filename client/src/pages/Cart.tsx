@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
   Container,
   Box,
@@ -13,7 +13,7 @@ import {
   ButtonGroup,
   Card,
   CardContent,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Delete as DeleteIcon,
   Add as AddIcon,
@@ -23,12 +23,19 @@ import {
   Security as SecurityIcon,
   Autorenew as ReturnIcon,
   ArrowBack as ArrowBackIcon,
-} from '@mui/icons-material';
-import { useCart } from '../context/CartContext';
-import toast from 'react-hot-toast';
+} from "@mui/icons-material";
+import { useCart } from "../context/CartContext";
+import toast from "react-hot-toast";
 
 const Cart = () => {
-  const { items, getItemCount, getTotal, updateQuantity, removeFromCart, clearCart } = useCart();
+  const {
+    items,
+    getItemCount,
+    getTotal,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+  } = useCart();
   const navigate = useNavigate();
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -37,9 +44,9 @@ const Cart = () => {
   }, []);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES',
+    return new Intl.NumberFormat("en-KE", {
+      style: "currency",
+      currency: "KES",
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -50,9 +57,9 @@ const Cart = () => {
     setIsUpdating(true);
     try {
       updateQuantity(itemId, newQuantity);
-      toast.success('Cart updated');
+      toast.success("Cart updated");
     } catch (error) {
-      toast.error('Failed to update cart');
+      toast.error("Failed to update cart");
     } finally {
       setIsUpdating(false);
     }
@@ -64,14 +71,14 @@ const Cart = () => {
   };
 
   const handleClearCart = () => {
-    if (window.confirm('Are you sure you want to clear your cart?')) {
+    if (window.confirm("Are you sure you want to clear your cart?")) {
       clearCart();
-      toast.success('Cart cleared');
+      toast.success("Cart cleared");
     }
   };
 
   const handleCheckout = () => {
-    navigate('/checkout');
+    navigate("/checkout");
   };
 
   const subtotal = getTotal();
@@ -81,16 +88,16 @@ const Cart = () => {
 
   if (getItemCount() === 0) {
     return (
-      <Container maxWidth="md" sx={{ pt: 10, pb: 6, textAlign: 'center' }}>
+      <Container maxWidth="md" sx={{ pt: 10, pb: 6, textAlign: "center" }}>
         <Box
           sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
             gap: 2,
           }}
         >
-          <Typography sx={{ fontSize: '5rem' }}>🛒</Typography>
+          <Typography sx={{ fontSize: "5rem" }}>🛒</Typography>
           <Typography variant="h4" fontWeight={700}>
             Your cart is empty
           </Typography>
@@ -119,14 +126,21 @@ const Cart = () => {
         Shopping Cart
       </Typography>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
         <Button
           component={RouterLink}
           to="/marketplace"
           variant="text"
           startIcon={<ArrowBackIcon />}
           size="medium"
-          sx={{ color: 'text.secondary' }}
+          sx={{ color: "text.secondary" }}
         >
           Continue Shopping
         </Button>
@@ -141,7 +155,14 @@ const Cart = () => {
         </Button>
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3, mt: 3 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "2fr 1fr" },
+          gap: 3,
+          mt: 3,
+        }}
+      >
         {/* Cart Items */}
         <Box>
           <Stack spacing={1.5}>
@@ -152,16 +173,16 @@ const Cart = () => {
                 sx={{
                   p: 2,
                   border: 1,
-                  borderColor: 'divider',
+                  borderColor: "divider",
                   borderRadius: 2,
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                   },
                 }}
               >
-                <Box sx={{ display: 'flex', gap: 2 }}>
+                <Box sx={{ display: "flex", gap: 2 }}>
                   {/* Product Image */}
                   <Box
                     sx={{
@@ -169,13 +190,13 @@ const Cart = () => {
                       height: 90,
                       flexShrink: 0,
                       borderRadius: 1.5,
-                      overflow: 'hidden',
-                      bgcolor: 'grey.50',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      overflow: "hidden",
+                      bgcolor: "grey.50",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                       border: 1,
-                      borderColor: 'divider',
+                      borderColor: "divider",
                     }}
                   >
                     {item.image ? (
@@ -184,25 +205,35 @@ const Cart = () => {
                         src={`/api/uploads/${item.image}`}
                         alt={item.name}
                         onError={(e: any) => {
-                          e.target.style.display = 'none';
+                          e.target.style.display = "none";
                         }}
                         sx={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
                         }}
                       />
                     ) : (
-                      <Typography sx={{ fontSize: '3rem' }}>🛍️</Typography>
+                      <Typography sx={{ fontSize: "3rem" }}>🛍️</Typography>
                     )}
                   </Box>
 
                   {/* Product Details */}
                   <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="subtitle1" fontWeight={600} gutterBottom sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight={600}
+                      gutterBottom
+                      sx={{ mb: 0.5 }}
+                    >
                       {item.name}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      sx={{ mb: 0.5 }}
+                    >
                       by {item.merchantName}
                     </Typography>
                     <Button
@@ -210,22 +241,47 @@ const Cart = () => {
                       to={`/product/${item.id}`}
                       size="small"
                       variant="text"
-                      sx={{ mt: 0.5, p: 0, minWidth: 'auto', textTransform: 'none', fontSize: '0.75rem' }}
+                      sx={{
+                        mt: 0.5,
+                        p: 0,
+                        minWidth: "auto",
+                        textTransform: "none",
+                        fontSize: "0.75rem",
+                      }}
                     >
                       View Details →
                     </Button>
                   </Box>
 
                   {/* Price and Quantity */}
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-                    <Typography variant="h6" color="primary.main" fontWeight={700}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-end",
+                      gap: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      color="primary.main"
+                      fontWeight={700}
+                    >
                       {formatCurrency(item.price * item.quantity)}
                     </Typography>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <ButtonGroup size="small" variant="outlined" sx={{ bgcolor: 'background.paper' }}>
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                    >
+                      <ButtonGroup
+                        size="small"
+                        variant="outlined"
+                        sx={{ bgcolor: "background.paper" }}
+                      >
                         <IconButton
-                          onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                          onClick={() =>
+                            handleQuantityChange(item.id, item.quantity - 1)
+                          }
                           disabled={item.quantity <= 1 || isUpdating}
                           size="small"
                         >
@@ -235,7 +291,9 @@ const Cart = () => {
                           {item.quantity}
                         </Button>
                         <IconButton
-                          onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                          onClick={() =>
+                            handleQuantityChange(item.id, item.quantity + 1)
+                          }
                           disabled={isUpdating}
                           size="small"
                         >
@@ -269,21 +327,26 @@ const Cart = () => {
             sx={{
               p: 2.5,
               border: 1,
-              borderColor: 'divider',
+              borderColor: "divider",
               borderRadius: 2,
-              position: 'sticky',
+              position: "sticky",
               top: 80,
-              bgcolor: 'grey.50',
+              bgcolor: "grey.50",
             }}
           >
-            <Typography variant="h6" fontWeight={700} gutterBottom sx={{ mb: 1.5 }}>
+            <Typography
+              variant="h6"
+              fontWeight={700}
+              gutterBottom
+              sx={{ mb: 1.5 }}
+            >
               Order Summary
             </Typography>
 
             <Divider sx={{ my: 1.5 }} />
 
             <Stack spacing={1}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="body2" color="text.secondary">
                   Subtotal ({getItemCount()} items)
                 </Typography>
@@ -292,16 +355,20 @@ const Cart = () => {
                 </Typography>
               </Box>
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="body2" color="text.secondary">
                   Shipping
                 </Typography>
-                <Typography variant="body2" fontWeight={600} color={shipping === 0 ? 'success.main' : 'text.primary'}>
-                  {shipping === 0 ? 'Free' : formatCurrency(shipping)}
+                <Typography
+                  variant="body2"
+                  fontWeight={600}
+                  color={shipping === 0 ? "success.main" : "text.primary"}
+                >
+                  {shipping === 0 ? "Free" : formatCurrency(shipping)}
                 </Typography>
               </Box>
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="body2" color="text.secondary">
                   VAT (16%)
                 </Typography>
@@ -313,11 +380,22 @@ const Cart = () => {
 
             <Divider sx={{ my: 1.5 }} />
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}
+            >
               <Typography variant="h6" fontWeight={700}>
                 Total
               </Typography>
-              <Typography variant="h6" fontWeight={700} color="primary.main">
+              <Typography
+                variant="h6"
+                fontWeight={700}
+                sx={
+                  // #5b21b6
+                  {
+                    color: "#5b21b6",
+                  }
+                }
+              >
                 {formatCurrency(total)}
               </Typography>
             </Box>
@@ -331,37 +409,44 @@ const Cart = () => {
             <Button
               fullWidth
               variant="contained"
-              color="primary"
+              // color="#5b21b6"
               size="large"
               onClick={handleCheckout}
-              sx={{ 
-                mb: 2, 
+              sx={{
+                mb: 2,
                 py: 1.5,
                 borderRadius: 2,
-                textTransform: 'none',
-                fontSize: '1rem',
+                textTransform: "none",
+                fontSize: "1rem",
                 fontWeight: 600,
+                bgcolor: "#5b21b6",
+                "&:hover": {
+                  bgcolor: "#4c1d95",
+                },
               }}
             >
               Proceed to Checkout
             </Button>
 
             {/* Security Badges */}
-            <Stack spacing={0.75} sx={{ pt: 1, borderTop: 1, borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <SecurityIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+            <Stack
+              spacing={0.75}
+              sx={{ pt: 1, borderTop: 1, borderColor: "divider" }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <SecurityIcon sx={{ fontSize: 16, color: "text.secondary" }} />
                 <Typography variant="caption" color="text.secondary">
                   Secure Checkout
                 </Typography>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <ShippingIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <ShippingIcon sx={{ fontSize: 16, color: "text.secondary" }} />
                 <Typography variant="caption" color="text.secondary">
                   Fast Delivery
                 </Typography>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <ReturnIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <ReturnIcon sx={{ fontSize: 16, color: "text.secondary" }} />
                 <Typography variant="caption" color="text.secondary">
                   Easy Returns
                 </Typography>

@@ -97,6 +97,13 @@ const userSchema = new mongoose.Schema({
     default: false
   },
   
+  // OTP for email verification
+  otp: {
+    code: { type: String },
+    expiresAt: { type: Date },
+    attempts: { type: Number, default: 0 }
+  },
+  
   // Merchant-specific fields (populated when role is merchant)
   businessInfo: {
     // Basic Business Information
