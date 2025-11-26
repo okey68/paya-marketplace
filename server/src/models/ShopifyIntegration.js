@@ -61,6 +61,28 @@ const shopifyIntegrationSchema = new mongoose.Schema({
   },
   lastSyncedAt: {
     type: Date
+  },
+  webhooks: [{
+    topic: { type: String, required: true },
+    webhookId: { type: String },
+    address: { type: String },
+    registeredAt: { type: Date, default: Date.now }
+  }],
+  syncStatus: {
+    lastSyncAt: { type: Date },
+    lastError: { type: String },
+    productsCount: { type: Number, default: 0 },
+    failedProducts: [{ type: String }],
+    status: {
+      type: String,
+      enum: ['idle', 'syncing', 'error'],
+      default: 'idle'
+    }
+  },
+  // Default category when Shopify product_type is empty
+  defaultCategory: {
+    type: String,
+    default: 'Uncategorized'
   }
 }, {
   timestamps: true,
