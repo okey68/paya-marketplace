@@ -111,7 +111,7 @@ const Cart = () => {
             variant="contained"
             // color="primary"
             size="large"
-            sx={{ mt: 1.5 , bgcolor: "#4f46e5", '&:hover': {bgcolor: "#4338ca"} }}
+            sx={{ mt: 1.5, bgcolor: "#4f46e5", '&:hover': { bgcolor: "#4338ca" } }}
           >
             Browse Products
           </Button>
@@ -203,7 +203,20 @@ const Cart = () => {
                     {item.image ? (
                       <Box
                         component="img"
-                        src={getImageUrl(typeof item.image === 'string' ? item.image : item.image?.filename || item.image?.path)}
+                        src={(() => {
+                          const image = item.image;
+                          // Handle different image formats
+                          if (typeof image === 'string') {
+                            return getImageUrl(image);
+                          }
+                          // If it's an object, extract the path
+                          if (typeof image === 'object') {
+                            if (image.path) return getImageUrl(image.path);
+                            if (image.filename) return getImageUrl(image.filename);
+                            if (image._id) return getImageUrl(image._id);
+                          }
+                          return '';
+                        })()}
                         alt={item.name}
                         onError={(e: any) => {
                           e.target.style.display = "none";
