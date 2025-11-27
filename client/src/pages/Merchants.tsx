@@ -452,7 +452,7 @@ const Merchants = () => {
                     bgcolor: "#4f46e5",
                     boxShadow: "none",
                     "&:hover": {
-                      bgcolor: "#4c1d95",
+                      bgcolor: "#4f46e5",
                       boxShadow: "none",
                     },
                   }}
@@ -501,7 +501,7 @@ const Merchants = () => {
                 bgcolor: "#4f46e5",
                 boxShadow: "none",
                 "&:hover": {
-                  bgcolor: "#4c1d95",
+                  bgcolor: "#4f46e5",
                   boxShadow: "none",
                 },
               }}
@@ -541,7 +541,7 @@ const Merchants = () => {
               bgcolor: "#4f46e5",
               boxShadow: "none",
               "&:hover": {
-                bgcolor: "#4c1d95",
+                bgcolor: "#4f46e5",
                 boxShadow: "none",
               },
             }}

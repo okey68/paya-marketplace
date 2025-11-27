@@ -284,7 +284,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               bgcolor: isInCart ? '#10b981' : '#4f46e5',
               boxShadow: 'none',
               '&:hover': {
-                bgcolor: isInCart ? '#059669' : '#4c1d95',
+                bgcolor: isInCart ? '#059669' : '#4f46e5',
                 boxShadow: 'none',
               },
               '&:disabled': {

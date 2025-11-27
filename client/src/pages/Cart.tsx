@@ -247,6 +247,7 @@ const Cart = () => {
                         minWidth: "auto",
                         textTransform: "none",
                         fontSize: "0.75rem",
+                        color: "#4f46e5",
                       }}
                     >
                       View Details →
@@ -264,7 +265,7 @@ const Cart = () => {
                   >
                     <Typography
                       variant="h6"
-                      color="primary.main"
+                      color="#4f46e5"
                       fontWeight={700}
                     >
                       {formatCurrency(item.price * item.quantity)}
