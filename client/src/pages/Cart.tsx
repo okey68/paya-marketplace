@@ -25,6 +25,7 @@ import {
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
 import { useCart } from "../context/CartContext";
+import { getImageUrl } from "../utils/api";
 import toast from "react-hot-toast";
 
 const Cart = () => {
@@ -202,7 +203,7 @@ const Cart = () => {
                     {item.image ? (
                       <Box
                         component="img"
-                        src={`/api/uploads/${item.image}`}
+                        src={getImageUrl(typeof item.image === 'string' ? item.image : item.image?.filename || item.image?.path)}
                         alt={item.name}
                         onError={(e: any) => {
                           e.target.style.display = "none";

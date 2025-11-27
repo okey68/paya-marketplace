@@ -25,7 +25,7 @@ import {
   ArrowBack as ArrowBackIcon,
   ShoppingCart as ShoppingCartIcon,
 } from "@mui/icons-material";
-import api from "../utils/api";
+import api, { getImageUrl } from "../utils/api";
 import toast from "react-hot-toast";
 
 interface Product {
@@ -33,14 +33,14 @@ interface Product {
   name: string;
   description: string;
   price: number;
-  images?: string[];
+  images?: any[];
   category?: string;
   inventory?: {
     quantity: number;
     lowStockThreshold: number;
     trackInventory: boolean;
   };
-  primaryImage?: string | null;
+  primaryImage?: any;
   stockStatus?: string;
   isAvailable?: boolean;
 }
@@ -227,7 +227,7 @@ const MerchantDetail = () => {
           >
             {merchant.businessInfo?.logo ? (
               <Avatar
-                src={merchant.businessInfo.logo}
+                src={getImageUrl(merchant.businessInfo.logo)}
                 alt={merchant.businessInfo?.businessName}
                 sx={{ width: 120, height: 120 }}
               />
@@ -406,28 +406,34 @@ const MerchantDetail = () => {
                   },
                 }}
               >
-                {product.primaryImage ||
-                (product.images && product.images.length > 0) ? (
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={product.primaryImage || product.images?.[0]}
-                    alt={product.name}
-                    sx={{ objectFit: "cover" }}
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      height: 200,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: "#f1f5f9",
-                    }}
-                  >
-                    <ShoppingCartIcon sx={{ fontSize: 80, color: "#cbd5e1" }} />
-                  </Box>
-                )}
+
+
+                {(() => {
+                  const img = product.primaryImage || product.images?.[0];
+                  const imgPath = typeof img === 'string' ? img : img?.filename || img?.path;
+
+                  return imgPath ? (
+                    <CardMedia
+                      component="img"
+                      height="200"
+                      image={getImageUrl(imgPath)}
+                      alt={product.name}
+                      sx={{ objectFit: "cover" }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        height: 200,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: "#f1f5f9",
+                      }}
+                    >
+                      <ShoppingCartIcon sx={{ fontSize: 80, color: "#cbd5e1" }} />
+                    </Box>
+                  );
+                })()}
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography
                     variant="h6"
