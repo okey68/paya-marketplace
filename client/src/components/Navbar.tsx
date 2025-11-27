@@ -73,7 +73,7 @@ const Navbar = () => {
           justifyContent: "center",
         }}
       >
-        <Typography variant="h6" color="#5b21b6" fontWeight="bold">
+        <Typography variant="h6" color="#4f46e5" fontWeight="bold">
           Paya Marketplace
         </Typography>
       </Box>

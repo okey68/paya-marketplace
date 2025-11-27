@@ -182,10 +182,11 @@ const Support = () => {
           <Button
             type="submit"
             variant="contained"
-            color="primary"
+            // color="primary"
             size="large"
             fullWidth
             disabled={submitting}
+            sx={{bgcolor:"#4f46e5", '&:hover': {bgcolor: "#4338ca"} }}
           >
             {submitting ? 'Submitting...' : 'Submit Ticket'}
           </Button>
@@ -204,13 +205,13 @@ const Support = () => {
                 width: 40,
                 height: 40,
                 borderRadius: '50%',
-                bgcolor: 'primary.light',
+                bgcolor: '#4f46e5',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <EmailIcon color="primary" />
+              <EmailIcon sx={{ color: "white" }} />
             </Box>
             <Box>
               <Typography variant="body2" color="text.secondary">
@@ -228,13 +229,13 @@ const Support = () => {
                 width: 40,
                 height: 40,
                 borderRadius: '50%',
-                bgcolor: 'primary.light',
+                bgcolor: '#4f46e5',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <PhoneIcon color="primary" />
+              <PhoneIcon sx={{ color: "white" }} />
             </Box>
             <Box>
               <Typography variant="body2" color="text.secondary">
@@ -252,13 +253,13 @@ const Support = () => {
                 width: 40,
                 height: 40,
                 borderRadius: '50%',
-                bgcolor: 'primary.light',
+                bgcolor: '#4f46e5',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <ScheduleIcon color="primary" />
+              <ScheduleIcon sx={{ color: "white" }} />
             </Box>
             <Box>
               <Typography variant="body2" color="text.secondary">

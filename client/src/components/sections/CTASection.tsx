@@ -75,7 +75,7 @@ const CTASection: React.FC = () => {
               fontSize: "1.1rem",
               fontWeight: 600,
               borderRadius: 2,
-              bgcolor: "#5b21b6",
+              bgcolor: "#4f46e5",
               boxShadow: "0 4px 14px rgba(102, 126, 234, 0.5)",
               "&:hover": {
                 transform: "translateY(-2px)",

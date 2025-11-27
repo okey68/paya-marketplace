@@ -145,11 +145,11 @@ const Register = () => {
                 width: 56,
                 height: 56,
                 borderRadius: '50%',
-                bgcolor: 'primary.light',
+                bgcolor: '#4f46e5',
                 mb: 2,
               }}
             >
-              <PersonAddIcon sx={{ color: 'primary.main', fontSize: 28 }} />
+              <PersonAddIcon sx={{ color: 'white', fontSize: 28 }} />
             </Box>
             <Typography variant="h4" fontWeight={700} color="text.primary" gutterBottom>
               Create Your Account
@@ -361,7 +361,7 @@ const Register = () => {
               variant="contained"
               size="large"
               disabled={loading}
-              sx={{ mt: 3 }}
+              sx={{ mt: 3, mb: 2, bgcolor: "#4f46e5" }}
             >
               {loading ? (
                 <CircularProgress size={24} color="inherit" />
@@ -384,6 +384,7 @@ const Register = () => {
               to="/login"
               variant="outlined"
               fullWidth
+              sx={{ borderColor: '#4f46e5', color: '#4f46e5' }}
             >
               Sign In
             </Button>
