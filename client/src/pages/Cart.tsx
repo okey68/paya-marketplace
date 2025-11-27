@@ -108,9 +108,9 @@ const Cart = () => {
             component={RouterLink}
             to="/marketplace"
             variant="contained"
-            color="primary"
+            // color="primary"
             size="large"
-            sx={{ mt: 1.5 }}
+            sx={{ mt: 1.5 , bgcolor: "#4f46e5", '&:hover': {bgcolor: "#4338ca"} }}
           >
             Browse Products
           </Button>
