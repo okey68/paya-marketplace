@@ -12,65 +12,82 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [items, setItems] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Load cart from localStorage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
+    console.log('Loading cart from localStorage:', savedCart);
     if (savedCart) {
       try {
-        setItems(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart);
+        console.log('Parsed cart:', parsedCart);
+        setItems(parsedCart);
       } catch (error) {
         console.error('Failed to parse cart from localStorage:', error);
       }
     }
+    // Mark as initialized after loading
+    setIsInitialized(true);
   }, []);
 
-  // Save cart to localStorage whenever items change
+  // Save cart to localStorage whenever items change (but not on initial mount)
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
-  }, [items]);
+    if (isInitialized) {
+      console.log('Saving cart to localStorage:', items);
+      localStorage.setItem('cart', JSON.stringify(items));
+    }
+  }, [items, isInitialized]);
 
   const addItem = (product, quantity = 1) => {
-    setItems(currentItems => {
-      const existingItem = currentItems.find(item => item.product._id === product._id);
-      
+    setItems((currentItems) => {
+      const existingItem = currentItems.find(
+        (item) => item.product._id === product._id
+      );
+
       if (existingItem) {
-        return currentItems.map(item =>
+        return currentItems.map((item) =>
           item.product._id === product._id
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      
+
       return [...currentItems, { product, quantity }];
     });
   };
 
   // Simplified addToCart function for easier use
   const addToCart = (item) => {
-    setItems(currentItems => {
-      const existingItem = currentItems.find(cartItem => cartItem.id === item.id);
-      
+    setItems((currentItems) => {
+      const existingItem = currentItems.find(
+        (cartItem) => cartItem.id === item.id
+      );
+
       if (existingItem) {
-        return currentItems.map(cartItem =>
+        return currentItems.map((cartItem) =>
           cartItem.id === item.id
             ? { ...cartItem, quantity: cartItem.quantity + 1 }
             : cartItem
         );
       }
-      
+
       return [...currentItems, { ...item, quantity: 1 }];
     });
   };
 
   const removeItem = (productId) => {
-    setItems(currentItems => currentItems.filter(item => 
-      (item.product?._id || item.id) !== productId
-    ));
+    setItems((currentItems) =>
+      currentItems.filter(
+        (item) => (item.product?._id || item.id) !== productId
+      )
+    );
   };
 
   const removeFromCart = (itemId) => {
-    setItems(currentItems => currentItems.filter(item => item.id !== itemId));
+    setItems((currentItems) =>
+      currentItems.filter((item) => item.id !== itemId)
+    );
   };
 
   const updateQuantity = (productId, quantity) => {
@@ -78,9 +95,9 @@ export const CartProvider = ({ children }) => {
       removeFromCart(productId);
       return;
     }
-    
-    setItems(currentItems =>
-      currentItems.map(item => {
+
+    setItems((currentItems) =>
+      currentItems.map((item) => {
         const itemId = item.product?._id || item.id;
         return itemId === productId ? { ...item, quantity } : item;
       })
@@ -98,7 +115,7 @@ export const CartProvider = ({ children }) => {
   const getSubtotal = () => {
     return items.reduce((total, item) => {
       const price = item.product?.price || item.price || 0;
-      return total + (price * item.quantity);
+      return total + price * item.quantity;
     }, 0);
   };
 
@@ -111,14 +128,14 @@ export const CartProvider = ({ children }) => {
       const price = item.product?.price || item.price || 0;
       const itemSubtotal = price * item.quantity;
       const taxRate = item.product?.taxRate || item.taxRate || 0;
-      return total + (itemSubtotal * taxRate);
+      return total + itemSubtotal * taxRate;
     }, 0);
   };
 
   const getTotalShipping = () => {
     return items.reduce((total, item) => {
       const shippingCost = item.product?.shippingCost || item.shippingCost || 0;
-      return total + (shippingCost * item.quantity);
+      return total + shippingCost * item.quantity;
     }, 0);
   };
 
@@ -134,12 +151,8 @@ export const CartProvider = ({ children }) => {
     getSubtotal,
     getTotalTax,
     getTotalShipping,
-    getTotal
+    getTotal,
   };
 
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
