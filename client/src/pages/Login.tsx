@@ -89,11 +89,11 @@ const Login = () => {
                 width: 56,
                 height: 56,
                 borderRadius: '50%',
-                bgcolor: 'primary.light',
+                bgcolor: '#4f46e5',
                 mb: 2,
               }}
             >
-              <LockIcon sx={{ color: 'primary.main', fontSize: 28 }} />
+              <LockIcon sx={{ color: 'white', fontSize: 28 }} />
             </Box>
             <Typography variant="h4" fontWeight={700} color="text.primary" gutterBottom>
               Welcome Back
@@ -115,7 +115,7 @@ const Login = () => {
               required
               autoComplete="email"
               autoFocus
-              sx={{ mb: 2 }}
+              sx={{ mb: 2}}
             />
 
             <TextField
@@ -149,7 +149,7 @@ const Login = () => {
               variant="contained"
               size="large"
               disabled={loading}
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, bgcolor: "#4f46e5" }}
             >
               {loading ? (
                 <CircularProgress size={24} color="inherit" />
@@ -164,7 +164,7 @@ const Login = () => {
                 to="/forgot-password"
                 variant="body2"
                 underline="hover"
-                color="primary"
+                color="#4f46e5"
               >
                 Forgot password?
               </Link>
@@ -184,6 +184,7 @@ const Login = () => {
               to="/register"
               variant="outlined"
               fullWidth
+              sx={{ borderColor: '#4f46e5', color: '#4f46e5' }}
             >
               Create Account
             </Button>

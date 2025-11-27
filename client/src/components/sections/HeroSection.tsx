@@ -65,7 +65,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ user }) => {
                   variant="overline"
                   sx={{
                     fontWeight: 600,
-                    color: "primary.main",
+                    color: "#4f46e5",
                     letterSpacing: "0.1em",
                     fontSize: "0.85rem",
                   }}

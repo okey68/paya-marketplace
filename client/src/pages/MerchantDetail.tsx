@@ -175,8 +175,8 @@ const MerchantDetail = () => {
               textTransform: "none",
               fontWeight: 600,
               borderRadius: 2,
-              bgcolor: "#5b21b6",
-              "&:hover": { bgcolor: "#4c1d95" },
+              bgcolor: "#4f46e5",
+              "&:hover": { bgcolor: "#4f46e5" },
             }}
           >
             Back to Merchants
@@ -476,8 +476,8 @@ const MerchantDetail = () => {
                       textTransform: "none",
                       fontWeight: 600,
                       borderRadius: 2,
-                      bgcolor: "#5b21b6",
-                      "&:hover": { bgcolor: "#4c1d95" },
+                      bgcolor: "#4f46e5",
+                      "&:hover": { bgcolor: "#4f46e5" },
                     }}
                   >
                     View Details
