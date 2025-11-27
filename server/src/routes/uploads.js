@@ -19,92 +19,117 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
 });
 
 // File filter to accept images and PDFs
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|pdf|doc|docx/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
+  const allowedTypes = /jpeg|jpg|png|webp|pdf|doc|docx/;
+  const extname = allowedTypes.test(
+    path.extname(file.originalname).toLowerCase()
+  );
+  const mimetype = file.mimetype.match(
+    /^(image\/(jpeg|jpg|png|webp)|application\/(pdf|msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document))$/
+  );
 
   if (mimetype && extname) {
     return cb(null, true);
   } else {
-    cb(new Error('Only images (JPEG, PNG) and documents (PDF, DOC, DOCX) are allowed'));
+    cb(
+      new Error(
+        'Only images (JPEG, PNG, WebP) and documents (PDF, DOC, DOCX) are allowed'
+      )
+    );
   }
 };
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit
   },
-  fileFilter: fileFilter
+  fileFilter: fileFilter,
 });
 
 // @route   POST /api/uploads/business-doc
 // @desc    Upload business document
 // @access  Private (Merchant)
-router.post('/business-doc', authenticateToken, upload.single('document'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
+router.post(
+  '/business-doc',
+  authenticateToken,
+  upload.single('document'),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      const { documentType, category } = req.body;
+
+      console.log('Upload request:', {
+        documentType,
+        category,
+        filename: req.file.filename,
+      });
+
+      // Return file info without saving to database for now
+      // The frontend will handle saving during final submission
+      const fileInfo = {
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        path: `/uploads/${req.file.filename}`,
+        size: req.file.size,
+        uploadDate: new Date(),
+      };
+
+      res.json({
+        message: 'Document uploaded successfully',
+        file: fileInfo,
+      });
+    } catch (error) {
+      console.error('Business document upload error:', error);
+      console.error('Error stack:', error.stack);
+      res.status(500).json({
+        message: 'Server error during file upload',
+        error: error.message,
+      });
     }
-
-    const { documentType, category } = req.body;
-    
-    console.log('Upload request:', { documentType, category, filename: req.file.filename });
-    
-    // Return file info without saving to database for now
-    // The frontend will handle saving during final submission
-    const fileInfo = {
-      filename: req.file.filename,
-      originalName: req.file.originalname,
-      path: `/uploads/${req.file.filename}`,
-      size: req.file.size,
-      uploadDate: new Date()
-    };
-
-    res.json({
-      message: 'Document uploaded successfully',
-      file: fileInfo
-    });
-  } catch (error) {
-    console.error('Business document upload error:', error);
-    console.error('Error stack:', error.stack);
-    res.status(500).json({ 
-      message: 'Server error during file upload',
-      error: error.message 
-    });
   }
-});
+);
 
 // @route   POST /api/uploads/product-image
 // @desc    Upload product image
 // @access  Private (Merchant)
-router.post('/product-image', authenticateToken, upload.single('image'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-
-    res.json({
-      message: 'Product image uploaded successfully',
-      file: {
-        id: req.file.filename,
-        filename: req.file.filename,
-        originalName: req.file.originalname,
-        size: req.file.size
+router.post(
+  '/product-image',
+  authenticateToken,
+  upload.single('image'),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
       }
-    });
-  } catch (error) {
-    console.error('Product image upload error:', error);
-    res.status(500).json({ message: 'Server error during file upload' });
+
+      res.json({
+        message: 'Product image uploaded successfully',
+        file: {
+          id: req.file.filename,
+          filename: req.file.filename,
+          originalName: req.file.originalname,
+          size: req.file.size,
+        },
+      });
+    } catch (error) {
+      console.error('Product image upload error:', error);
+      res.status(500).json({ message: 'Server error during file upload' });
+    }
   }
-});
+);
 
 // @route   GET /api/uploads/:id
 // @desc    Get file from GridFS by ObjectId (for Shopify images)
@@ -113,21 +138,30 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Set CORS headers for images to allow cross-origin requests
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+
     // Check if it looks like a MongoDB ObjectId (24 hex characters)
     if (mongoose.Types.ObjectId.isValid(id) && /^[a-f0-9]{24}$/i.test(id)) {
       // Try to serve from GridFS
       const db = mongoose.connection.db;
 
       if (!db) {
-        return res.status(503).json({ message: 'Database connection not ready' });
+        return res
+          .status(503)
+          .json({ message: 'Database connection not ready' });
       }
 
       const bucket = new mongoose.mongo.GridFSBucket(db, {
-        bucketName: 'uploads'
+        bucketName: 'uploads',
       });
 
       try {
-        const files = await bucket.find({ _id: new mongoose.Types.ObjectId(id) }).toArray();
+        const files = await bucket
+          .find({ _id: new mongoose.Types.ObjectId(id) })
+          .toArray();
 
         if (!files || files.length === 0) {
           return res.status(404).json({ message: 'Image not found in GridFS' });
@@ -141,7 +175,9 @@ router.get('/:id', async (req, res) => {
         res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
 
         // Stream the file from GridFS to response
-        const downloadStream = bucket.openDownloadStream(new mongoose.Types.ObjectId(id));
+        const downloadStream = bucket.openDownloadStream(
+          new mongoose.Types.ObjectId(id)
+        );
 
         downloadStream.on('error', (err) => {
           console.error('GridFS download stream error:', err);
@@ -179,7 +215,7 @@ router.delete('/:filename', authenticateToken, async (req, res) => {
   try {
     const { filename } = req.params;
     const filePath = path.join(uploadsDir, filename);
-    
+
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
