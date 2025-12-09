@@ -141,7 +141,7 @@ const MerchantDetail = () => {
     return (
       <Box sx={{ bgcolor: "#f9fafb", minHeight: "100vh" }}>
         <Container maxWidth="lg" sx={{ pt: 12, pb: 8, textAlign: "center" }}>
-          <CircularProgress size={60} sx={{ mb: 2, color: "#4f46e5" }} />
+          <CircularProgress size={60} sx={{ mb: 2, color: "#667FEA" }} />
           <Typography variant="h6" sx={{ color: "#64748b" }}>
             Loading merchant details...
           </Typography>
@@ -175,8 +175,8 @@ const MerchantDetail = () => {
               textTransform: "none",
               fontWeight: 600,
               borderRadius: 2,
-              bgcolor: "#4f46e5",
-              "&:hover": { bgcolor: "#4f46e5" },
+              bgcolor: "#667FEA",
+              "&:hover": { bgcolor: "#667FEA" },
             }}
           >
             Back to Merchants
@@ -201,7 +201,7 @@ const MerchantDetail = () => {
             color: "#64748b",
             textTransform: "none",
             fontWeight: 600,
-            "&:hover": { bgcolor: "transparent", color: "#4f46e5" },
+            "&:hover": { bgcolor: "transparent", color: "#667FEA" },
           }}
         >
           Back to Merchants
@@ -236,7 +236,7 @@ const MerchantDetail = () => {
                 sx={{
                   width: 120,
                   height: 120,
-                  bgcolor: "#4f46e5",
+                  bgcolor: "#667FEA",
                   fontSize: "2.5rem",
                 }}
               >
@@ -375,7 +375,7 @@ const MerchantDetail = () => {
 
         {productsLoading ? (
           <Box sx={{ textAlign: "center", py: 4 }}>
-            <CircularProgress size={40} sx={{ color: "#4f46e5" }} />
+            <CircularProgress size={40} sx={{ color: "#667FEA" }} />
           </Box>
         ) : products && products.length > 0 ? (
           <Box
@@ -443,7 +443,7 @@ const MerchantDetail = () => {
                   <Typography
                     variant="h5"
                     fontWeight={700}
-                    sx={{ color: "#4f46e5" }}
+                    sx={{ color: "#667FEA" }}
                   >
                     KES {product.price?.toLocaleString()}
                   </Typography>
@@ -476,8 +476,8 @@ const MerchantDetail = () => {
                       textTransform: "none",
                       fontWeight: 600,
                       borderRadius: 2,
-                      bgcolor: "#4f46e5",
-                      "&:hover": { bgcolor: "#4f46e5" },
+                      bgcolor: "#667FEA",
+                      "&:hover": { bgcolor: "#667FEA" },
                     }}
                   >
                     View Details

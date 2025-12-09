@@ -173,7 +173,7 @@ const Checkout = () => {
         lastName: personalInfo.lastName,
         dateOfBirth: personalInfo.dateOfBirth,
         companyEmail: personalInfo.companyEmail,
-        phoneCountryCode: personalInfo.phoneCountryCode.replace('+', ''),
+        phoneCountryCode: personalInfo.phoneCountryCode.replace("+", ""),
         phoneNumber: personalInfo.phoneNumber,
         kraPin: personalInfo.kraPin,
       });
@@ -519,18 +519,27 @@ const Checkout = () => {
               width: 8,
               height: 8,
               borderRadius: "50%",
-              bgcolor: "#4f46e5",
+              bgcolor: "#667FEA",
             }}
           />
           <Typography
             variant="caption"
             fontWeight={600}
-            sx={{ color: "#4f46e5", textTransform: "uppercase", letterSpacing: "0.5px" }}
+            sx={{
+              color: "#667FEA",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
           >
             Step 1 of 6
           </Typography>
         </Box>
-        <Typography variant="h5" fontWeight={700} gutterBottom sx={{ fontSize: { xs: "1.5rem", sm: "1.75rem" } }}>
+        <Typography
+          variant="h5"
+          fontWeight={700}
+          gutterBottom
+          sx={{ fontSize: { xs: "1.5rem", sm: "1.75rem" } }}
+        >
           Personal Information
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -615,7 +624,7 @@ const Checkout = () => {
           helperText="Enter your Kenya Revenue Authority PIN (11 characters)"
           inputProps={{
             maxLength: 11,
-            style: { textTransform: 'uppercase' }
+            style: { textTransform: "uppercase" },
           }}
         />
       </Box>
@@ -708,8 +717,8 @@ const Checkout = () => {
             width: { xs: "100%", sm: "auto" },
             borderRadius: 2,
             borderWidth: 1,
-            borderColor: "#4f46e5",
-            color: "#4f46e5",
+            borderColor: "#667FEA",
+            color: "#667FEA",
             py: 1.5,
             px: 3,
             "&:hover": {
@@ -733,7 +742,7 @@ const Checkout = () => {
             "&:hover": {
               boxShadow: "0 6px 16px rgba(102, 126, 234, 0.5)",
             },
-            bgcolor: "#4f46e5",
+            bgcolor: "#667FEA",
           }}
         >
           Continue to Verification
@@ -762,23 +771,32 @@ const Checkout = () => {
               width: 8,
               height: 8,
               borderRadius: "50%",
-              bgcolor: "#4f46e5",
+              bgcolor: "#667FEA",
             }}
           />
           <Typography
             variant="caption"
             fontWeight={600}
-            sx={{ color: "#4f46e5", textTransform: "uppercase", letterSpacing: "0.5px" }}
+            sx={{
+              color: "#667FEA",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
           >
             Step 2 of 6
           </Typography>
         </Box>
-        <Typography variant="h5" fontWeight={700} gutterBottom sx={{ fontSize: { xs: "1.5rem", sm: "1.75rem" } }}>
+        <Typography
+          variant="h5"
+          fontWeight={700}
+          gutterBottom
+          sx={{ fontSize: { xs: "1.5rem", sm: "1.75rem" } }}
+        >
           Phone Verification
         </Typography>
         <Typography variant="body2" color="text.secondary">
           We've sent a 6-digit verification code to{" "}
-          <Box component="span" sx={{ fontWeight: 600, color: "#4f46e5" }}>
+          <Box component="span" sx={{ fontWeight: 600, color: "#667FEA" }}>
             {personalInfo.phoneCountryCode} {personalInfo.phoneNumber}
           </Box>
         </Typography>
@@ -814,7 +832,7 @@ const Checkout = () => {
               borderWidth: 2,
             },
             "&:hover fieldset": {
-              borderColor: "#4f46e5",
+              borderColor: "#667FEA",
             },
             "&.Mui-focused fieldset": {
               borderWidth: 2,
@@ -824,8 +842,12 @@ const Checkout = () => {
       />
 
       <Box sx={{ display: "flex", justifyContent: "center", mb: 4 }}>
-        <Button variant="text" onClick={handleResendOtp} size="small"
-        sx={{ color: "#4f46e5" }}>
+        <Button
+          variant="text"
+          onClick={handleResendOtp}
+          size="small"
+          sx={{ color: "#667FEA" }}
+        >
           Didn't receive the code? Resend OTP
         </Button>
       </Box>
@@ -842,28 +864,29 @@ const Checkout = () => {
           variant="outlined"
           startIcon={<ArrowBackIcon />}
           onClick={() => setCurrentStep(0)}
-          sx={{ width: { xs: "100%", sm: "auto" },
+          sx={{
+            width: { xs: "100%", sm: "auto" },
             borderRadius: 1,
-            color: "#4f46e5",
-            borderColor: "#4f46e5",
+            color: "#667FEA",
+            borderColor: "#667FEA",
             borderWidth: 2,
             py: 1.5,
             px: 3,
             "&:hover": {
               borderWidth: 2,
-              borderColor: "#4f46e5",
+              borderColor: "#667FEA",
             },
-         }}
+          }}
         >
           Back
         </Button>
         <Button
           type="submit"
           variant="contained"
-          // bgcolor="#4f46e5"
+          // bgcolor="#667FEA"
           size="large"
           disabled={otp.length !== 6}
-          sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#4f46e5" }}
+          sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#667FEA" }}
         >
           Verify & Continue
         </Button>
@@ -891,18 +914,27 @@ const Checkout = () => {
               width: 8,
               height: 8,
               borderRadius: "50%",
-              bgcolor: "#4f46e5",
+              bgcolor: "#667FEA",
             }}
           />
           <Typography
             variant="caption"
             fontWeight={600}
-            sx={{ color: "#4f46e5", textTransform: "uppercase", letterSpacing: "0.5px" }}
+            sx={{
+              color: "#667FEA",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
           >
             Step 3 of 6
           </Typography>
         </Box>
-        <Typography variant="h5" fontWeight={700} gutterBottom sx={{ fontSize: { xs: "1.5rem", sm: "1.75rem" } }}>
+        <Typography
+          variant="h5"
+          fontWeight={700}
+          gutterBottom
+          sx={{ fontSize: { xs: "1.5rem", sm: "1.75rem" } }}
+        >
           Shipping Address
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -1027,7 +1059,11 @@ const Checkout = () => {
           variant="outlined"
           startIcon={<ArrowBackIcon />}
           onClick={() => setCurrentStep(1)}
-          sx={{ width: { xs: "100%", sm: "auto" }, borderColor: "#4f46e5", color: "#4f46e5" }}
+          sx={{
+            width: { xs: "100%", sm: "auto" },
+            borderColor: "#667FEA",
+            color: "#667FEA",
+          }}
         >
           Back
         </Button>
@@ -1036,7 +1072,7 @@ const Checkout = () => {
           variant="contained"
           // color="primary"
           size="large"
-          sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#4f46e5" }}
+          sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#667FEA" }}
         >
           Submit Application
         </Button>
@@ -1088,7 +1124,7 @@ const Checkout = () => {
           borderRadius: 3,
           background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
           border: "2px solid",
-          borderColor: "#4f46e5",
+          borderColor: "#667FEA",
         }}
       >
         <Box
@@ -1149,13 +1185,15 @@ const Checkout = () => {
               width: 36,
               height: 36,
               borderRadius: 1.5,
-              bgcolor: "#4f46e5",
+              bgcolor: "#667FEA",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <Typography sx={{ color: "white", fontSize: "1.25rem" }}>💳</Typography>
+            <Typography sx={{ color: "white", fontSize: "1.25rem" }}>
+              💳
+            </Typography>
           </Box>
           <Typography variant="h6" fontWeight={700}>
             Payment Terms
@@ -1197,7 +1235,7 @@ const Checkout = () => {
             <Typography variant="body2" color="text.secondary">
               Payment Amount
             </Typography>
-            <Typography variant="h6" fontWeight={700} color="#4f46e5">
+            <Typography variant="h6" fontWeight={700} color="#667FEA">
               {formatCurrency(bnplTerms.paymentAmount)}
             </Typography>
           </Box>
@@ -1229,7 +1267,7 @@ const Checkout = () => {
           // color="primary"
           size="large"
           onClick={() => setCurrentStep(5)}
-          sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#4f46e5" }}
+          sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#667FEA" }}
         >
           Accept Terms & Continue
         </Button>
@@ -1317,7 +1355,7 @@ const Checkout = () => {
           <Checkbox
             checked={agreementAccepted}
             onChange={(e) => setAgreementAccepted(e.target.checked)}
-            sx={{ color: "#4f46e5" }}
+            sx={{ color: "#667FEA" }}
           />
         }
         label="I have read and agree to the terms and conditions of this BNPL agreement"
@@ -1336,7 +1374,11 @@ const Checkout = () => {
           variant="outlined"
           startIcon={<ArrowBackIcon />}
           onClick={() => setCurrentStep(4)}
-          sx={{ width: { xs: "100%", sm: "auto" }, borderColor: "#4f46e5", color: "#4f46e5" }}
+          sx={{
+            width: { xs: "100%", sm: "auto" },
+            borderColor: "#667FEA",
+            color: "#667FEA",
+          }}
         >
           Back to Terms
         </Button>
@@ -1346,7 +1388,7 @@ const Checkout = () => {
           size="large"
           onClick={handleAgreementSubmit}
           disabled={!agreementAccepted || loading}
-          sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#4f46e5" }}
+          sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#667FEA" }}
         >
           {loading ? "Processing..." : "Complete Order"}
         </Button>
@@ -1362,21 +1404,21 @@ const Checkout = () => {
 
     return (
       <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 80,
-              height: 80,
-              borderRadius: "50%",
-              bgcolor: "success.main",
-              display: "grid",
-              placeItems: "center",
-              mx: "auto",
-              mb: 3,
-              boxShadow: "0 8px 24px rgba(76, 175, 80, 0.3)",
-            }}
-          >
-            <CheckIcon sx={{ fontSize: "3rem", color: "white" }} />
-          </Box>
+        <Box
+          sx={{
+            width: 80,
+            height: 80,
+            borderRadius: "50%",
+            bgcolor: "success.main",
+            display: "grid",
+            placeItems: "center",
+            mx: "auto",
+            mb: 3,
+            boxShadow: "0 8px 24px rgba(76, 175, 80, 0.3)",
+          }}
+        >
+          <CheckIcon sx={{ fontSize: "3rem", color: "white" }} />
+        </Box>
         <Typography
           variant="h4"
           fontWeight={700}
@@ -1495,7 +1537,7 @@ const Checkout = () => {
             <Typography variant="h6" fontWeight={700}>
               Total:
             </Typography>
-            <Typography variant="h6" fontWeight={700} color="#4f46e5">
+            <Typography variant="h6" fontWeight={700} color="#667FEA">
               {formatCurrency(orderDetails.bnplTerms.totalAmount)}
             </Typography>
           </Box>
@@ -1637,7 +1679,7 @@ const Checkout = () => {
                   <Typography
                     variant="body2"
                     fontWeight={700}
-                    color="#4f46e5"
+                    color="#667FEA"
                     textAlign="right"
                   >
                     {formatCurrency(payment.amount)}
@@ -1741,7 +1783,7 @@ const Checkout = () => {
                     <Typography
                       variant="body2"
                       fontWeight={700}
-                      color="#4f46e5"
+                      color="#667FEA"
                     >
                       {formatCurrency(payment.amount)}
                     </Typography>
@@ -1766,14 +1808,14 @@ const Checkout = () => {
             <Typography
               variant="h6"
               fontWeight={700}
-              sx={{ color: "#4f46e5", fontSize: { xs: "1rem", sm: "1.25rem" } }}
+              sx={{ color: "#667FEA", fontSize: { xs: "1rem", sm: "1.25rem" } }}
             >
               Total Amount to Pay:
             </Typography>
             <Typography
               variant="h6"
               fontWeight={700}
-              sx={{ color: "#4f46e5", fontSize: { xs: "1rem", sm: "1.25rem" } }}
+              sx={{ color: "#667FEA", fontSize: { xs: "1rem", sm: "1.25rem" } }}
             >
               {formatCurrency(orderDetails.bnplTerms.totalAmount)}
             </Typography>
@@ -1785,7 +1827,7 @@ const Checkout = () => {
           // color="primary"
           size="large"
           onClick={() => navigate("/marketplace")}
-          sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#4f46e5" }}
+          sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#667FEA" }}
         >
           Back to Shop
         </Button>
@@ -1951,15 +1993,19 @@ const Checkout = () => {
                 variant="outlined"
                 // color="primary"
                 onClick={() => navigate("/marketplace")}
-                sx={{ width: { xs: "100%", sm: "auto" }, borderColor: "#4f46e5", color: "#4f46e5" }}
+                sx={{
+                  width: { xs: "100%", sm: "auto" },
+                  borderColor: "#667FEA",
+                  color: "#667FEA",
+                }}
               >
                 Return to Marketplace
               </Button>
               <Button
                 variant="contained"
-                // color="#4f46e5"
+                // color="#667FEA"
                 onClick={() => navigate("/support")}
-                sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#4f46e5" }}
+                sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#667FEA" }}
               >
                 Contact Support
               </Button>
@@ -1973,9 +2019,12 @@ const Checkout = () => {
   return (
     <Container
       maxWidth="lg"
-      sx={{ pt: { xs: 3, sm: 4 }, pb: 8, px: { xs: 2, sm: 3 },
-      marginTop:"-50px"
-     }}
+      sx={{
+        pt: { xs: 3, sm: 4 },
+        pb: 8,
+        px: { xs: 2, sm: 3 },
+        marginTop: "-50px",
+      }}
     >
       {/* Header with Back Button */}
       <Box sx={{ mb: 4 }}>
@@ -1984,14 +2033,14 @@ const Checkout = () => {
           onClick={() => navigate("/cart")}
           sx={{
             mb: 2,
-            color: "#4f46e5",
-            borderColor: "#4f46e5",
+            color: "#667FEA",
+            borderColor: "#667FEA",
             fontWeight: 500,
             textTransform: "none",
             fontSize: "0.95rem",
             "&:hover": {
               bgcolor: "action.hover",
-              color: "#4f46e5",
+              color: "#667FEA",
             },
           }}
         >
@@ -2002,7 +2051,7 @@ const Checkout = () => {
           fontWeight={700}
           sx={{
             fontSize: { xs: "1.75rem", sm: "2.25rem" },
-            color: "#4f46e5",
+            color: "#667FEA",
             letterSpacing: "-0.02em",
             mb: 0.5,
           }}
@@ -2027,7 +2076,7 @@ const Checkout = () => {
               color: "success.main",
             },
             "& .MuiStepLabel-root .Mui-active": {
-              color: "#4f46e5",
+              color: "#667FEA",
             },
             "& .MuiStepLabel-label": {
               fontSize: "0.875rem",
@@ -2059,7 +2108,7 @@ const Checkout = () => {
           <Typography variant="caption" color="text.secondary" fontWeight={600}>
             STEP {currentStep + 1} OF {steps.length}
           </Typography>
-          <Typography variant="caption" color="#4f46e5" fontWeight={600}>
+          <Typography variant="caption" color="#667FEA" fontWeight={600}>
             {Math.round(((currentStep + 1) / steps.length) * 100)}%
           </Typography>
         </Box>
@@ -2078,7 +2127,7 @@ const Checkout = () => {
             sx={{
               height: "100%",
               width: `${((currentStep + 1) / steps.length) * 100}%`,
-              bgcolor: "#4f46e5",
+              bgcolor: "#667FEA",
               transition: "width 0.3s ease",
             }}
           />
@@ -2138,7 +2187,7 @@ const Checkout = () => {
                 sx={{
                   mb: 3,
                   fontSize: "1.125rem",
-                  color: "#4f46e5",
+                  color: "#667FEA",
                 }}
               >
                 Order Summary
@@ -2153,7 +2202,8 @@ const Checkout = () => {
                       alignItems: "start",
                       py: 1.5,
                       gap: 2,
-                      borderBottom: index < items.length - 1 ? "1px solid" : "none",
+                      borderBottom:
+                        index < items.length - 1 ? "1px solid" : "none",
                       borderColor: "divider",
                     }}
                   >
@@ -2172,7 +2222,7 @@ const Checkout = () => {
                     <Typography
                       variant="body2"
                       fontWeight={600}
-                      sx={{ whiteSpace: "nowrap", color: "#4f46e5" }}
+                      sx={{ whiteSpace: "nowrap", color: "#667FEA" }}
                     >
                       {formatCurrency(item.price * item.quantity)}
                     </Typography>
@@ -2227,11 +2277,7 @@ const Checkout = () => {
                   <Typography variant="h6" fontWeight={700}>
                     Total
                   </Typography>
-                  <Typography
-                    variant="h6"
-                    fontWeight={700}
-                    color="#4f46e5"
-                  >
+                  <Typography variant="h6" fontWeight={700} color="#667FEA">
                     {formatCurrency(bnplTerms.totalAmount)}
                   </Typography>
                 </Box>

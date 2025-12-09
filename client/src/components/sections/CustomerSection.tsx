@@ -87,7 +87,7 @@ const CustomerSection: React.FC = () => {
               endIcon={<ArrowForwardIcon />}
               sx={{
                 px: 4,
-                bgcolor: '#4f46e5',
+                bgcolor: '#667FEA',
                 py: 1.5,
                 fontSize: '1rem',
                 fontWeight: 600,
@@ -108,7 +108,7 @@ const CustomerSection: React.FC = () => {
             elevation={0}
             sx={{
               order: { xs: 1, md: 2 },
-              background: 'linear-gradient(135deg, #667eea 0%, #4f46e5 100%)',
+              background: 'linear-gradient(135deg, #667eea 0%, #667FEA 100%)',
               color: 'white',
               p: 5,
               textAlign: 'center',

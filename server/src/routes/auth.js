@@ -529,11 +529,9 @@ router.post(
 
       // Check OTP attempts
       if (user.otp.attempts >= 5) {
-        return res
-          .status(400)
-          .json({
-            message: "Too many failed attempts. Please request a new OTP.",
-          });
+        return res.status(400).json({
+          message: "Too many failed attempts. Please request a new OTP.",
+        });
       }
 
       // Verify OTP
@@ -716,20 +714,20 @@ router.post(
 
       await user.save();
 
-      // Format phone number for SMS (combine country code + number)
+      // Format phone number for display
       const fullPhoneNumber = `${phoneCountryCode}${phoneNumber}`;
 
-      // Send OTP via SMS
+      // Send OTP via email
       try {
-        await otpService.sendOTP(fullPhoneNumber, otp, "sms");
-        console.log("SMS OTP sent successfully to:", fullPhoneNumber);
+        await otpService.sendOTP(companyEmail, otp, "email");
+        console.log("Email OTP sent successfully to:", companyEmail);
       } catch (otpError) {
-        console.error("SMS OTP sending failed:", otpError.message);
-        // Continue even if SMS fails - for development
+        console.error("Email OTP sending failed:", otpError.message);
+        // Continue even if email fails - for development
       }
 
       res.status(200).json({
-        message: "Customer information saved. OTP sent via SMS.",
+        message: "Customer information saved. OTP sent via email.",
         otp: otp, // Include OTP in response for development/testing
         customerInfo: {
           firstName: user.firstName,
@@ -740,12 +738,10 @@ router.post(
       });
     } catch (error) {
       console.error("Customer add-info error:", error);
-      res
-        .status(500)
-        .json({
-          message: "Failed to save customer information",
-          error: error.message,
-        });
+      res.status(500).json({
+        message: "Failed to save customer information",
+        error: error.message,
+      });
     }
   }
 );
@@ -777,11 +773,9 @@ router.post(
       // Find user
       const user = await User.findOne({ email: companyEmail, isActive: true });
       if (!user) {
-        return res
-          .status(404)
-          .json({
-            message: "Customer not found. Please add your information first.",
-          });
+        return res.status(404).json({
+          message: "Customer not found. Please add your information first.",
+        });
       }
 
       // Check if OTP exists
@@ -800,11 +794,9 @@ router.post(
 
       // Check OTP attempts
       if (user.otp.attempts >= 5) {
-        return res
-          .status(400)
-          .json({
-            message: "Too many failed attempts. Please request a new OTP.",
-          });
+        return res.status(400).json({
+          message: "Too many failed attempts. Please request a new OTP.",
+        });
       }
 
       // Verify OTP
@@ -865,11 +857,9 @@ router.post(
       // Find user
       const user = await User.findOne({ email: companyEmail, isActive: true });
       if (!user) {
-        return res
-          .status(404)
-          .json({
-            message: "Customer not found. Please add your information first.",
-          });
+        return res.status(404).json({
+          message: "Customer not found. Please add your information first.",
+        });
       }
 
       // Generate new OTP

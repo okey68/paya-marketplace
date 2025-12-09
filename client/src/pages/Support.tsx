@@ -186,7 +186,7 @@ const Support = () => {
             size="large"
             fullWidth
             disabled={submitting}
-            sx={{bgcolor:"#4f46e5", '&:hover': {bgcolor: "#4338ca"} }}
+            sx={{bgcolor:"#667FEA", '&:hover': {bgcolor: "#4338ca"} }}
           >
             {submitting ? 'Submitting...' : 'Submit Ticket'}
           </Button>
@@ -205,7 +205,7 @@ const Support = () => {
                 width: 40,
                 height: 40,
                 borderRadius: '50%',
-                bgcolor: '#4f46e5',
+                bgcolor: '#667FEA',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -229,7 +229,7 @@ const Support = () => {
                 width: 40,
                 height: 40,
                 borderRadius: '50%',
-                bgcolor: '#4f46e5',
+                bgcolor: '#667FEA',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -253,7 +253,7 @@ const Support = () => {
                 width: 40,
                 height: 40,
                 borderRadius: '50%',
-                bgcolor: '#4f46e5',
+                bgcolor: '#667FEA',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

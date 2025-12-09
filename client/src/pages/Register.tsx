@@ -145,7 +145,7 @@ const Register = () => {
                 width: 56,
                 height: 56,
                 borderRadius: '50%',
-                bgcolor: '#4f46e5',
+                bgcolor: '#667FEA',
                 mb: 2,
               }}
             >
@@ -361,7 +361,7 @@ const Register = () => {
               variant="contained"
               size="large"
               disabled={loading}
-              sx={{ mt: 3, mb: 2, bgcolor: "#4f46e5" }}
+              sx={{ mt: 3, mb: 2, bgcolor: "#667FEA" }}
             >
               {loading ? (
                 <CircularProgress size={24} color="inherit" />
@@ -384,7 +384,7 @@ const Register = () => {
               to="/login"
               variant="outlined"
               fullWidth
-              sx={{ borderColor: '#4f46e5', color: '#4f46e5' }}
+              sx={{ borderColor: '#667FEA', color: '#667FEA' }}
             >
               Sign In
             </Button>

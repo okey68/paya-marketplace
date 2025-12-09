@@ -65,7 +65,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ user }) => {
                   variant="overline"
                   sx={{
                     fontWeight: 600,
-                    color: "#4f46e5",
+                    color: "#667FEA",
                     letterSpacing: "0.1em",
                     fontSize: "0.85rem",
                   }}
@@ -86,7 +86,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ user }) => {
                 }}
               >
                 Shop Now, Pay Later with {" "}
-                <span style={{ color: "#4f46e5" }}>PAYA</span>
+                <span style={{ color: "#667FEA" }}>PAYA</span>
               </Typography>
 
               {/* Description */}
@@ -122,7 +122,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ user }) => {
                   size="large"
                   endIcon={<ArrowForwardIcon />}
                   sx={{
-                    bgcolor: "#4f46e5",
+                    bgcolor: "#667FEA",
                     color: "white",
                     px: 3,
                     py: 1.5,
@@ -189,7 +189,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ user }) => {
                   <Avatar
                     alt="User 1"
                     src="https://i.pravatar.cc/150?img=1"
-                    sx={{ bgcolor: "#4f46e5" }}
+                    sx={{ bgcolor: "#667FEA" }}
                   />
                   <Avatar
                     alt="User 2"

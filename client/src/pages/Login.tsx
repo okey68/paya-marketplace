@@ -89,7 +89,7 @@ const Login = () => {
                 width: 56,
                 height: 56,
                 borderRadius: '50%',
-                bgcolor: '#4f46e5',
+                bgcolor: '#667FEA',
                 mb: 2,
               }}
             >
@@ -149,7 +149,7 @@ const Login = () => {
               variant="contained"
               size="large"
               disabled={loading}
-              sx={{ mb: 2, bgcolor: "#4f46e5" }}
+              sx={{ mb: 2, bgcolor: "#667FEA" }}
             >
               {loading ? (
                 <CircularProgress size={24} color="inherit" />
@@ -164,7 +164,7 @@ const Login = () => {
                 to="/forgot-password"
                 variant="body2"
                 underline="hover"
-                color="#4f46e5"
+                color="#667FEA"
               >
                 Forgot password?
               </Link>
@@ -184,7 +184,7 @@ const Login = () => {
               to="/register"
               variant="outlined"
               fullWidth
-              sx={{ borderColor: '#4f46e5', color: '#4f46e5' }}
+              sx={{ borderColor: '#667FEA', color: '#667FEA' }}
             >
               Create Account
             </Button>

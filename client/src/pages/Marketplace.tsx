@@ -230,7 +230,7 @@ const Marketplace = () => {
                     sx={{
                       color: '#cbd5e1',
                       '&.Mui-checked': {
-                        color: '#4f46e5',
+                        color: '#667FEA',
                       },
                     }}
                   />
@@ -300,7 +300,7 @@ const Marketplace = () => {
                     sx={{
                       color: '#cbd5e1',
                       '&.Mui-checked': {
-                        color: '#4f46e5',
+                        color: '#667FEA',
                       },
                     }}
                   />
@@ -355,10 +355,10 @@ const Marketplace = () => {
   );
 
   return (
-    <Box sx={{ bgcolor: '#f9fafb', minHeight: '100vh' }}>
+    <Box sx={{ bgcolor: '#f9fafb', minHeight: '100vh', marginTop:"-50px" }}>
       <Container maxWidth="xl" sx={{ py: 1 }}>
         {/* Page Header */}
-        <Box sx={{ mb: 4 }}>
+        {/* <Box sx={{ mb: 4 }}>
           <Typography 
             variant="h4" 
             fontWeight={700} 
@@ -369,7 +369,7 @@ const Marketplace = () => {
           <Typography variant="body1" sx={{ color: '#64748b' }}>
             Discover amazing products from merchants
           </Typography>
-        </Box>
+        </Box> */}
 
         {/* Search and Controls */}
         <Box 
