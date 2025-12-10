@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   Container,
   Box,
@@ -22,7 +22,7 @@ import {
   Alert,
   Skeleton,
   ButtonGroup,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Add as AddIcon,
   Remove as RemoveIcon,
@@ -84,9 +84,9 @@ const ProductDetail = () => {
       const response = await api.get(`/products/${id}`);
       setProduct(response.data);
     } catch (error) {
-      console.error('Error fetching product:', error);
-      toast.error('Product not found');
-      navigate('/marketplace');
+      console.error("Error fetching product:", error);
+      toast.error("Product not found");
+      navigate("/marketplace");
     } finally {
       setLoading(false);
     }
@@ -113,7 +113,7 @@ const ProductDetail = () => {
 
   const handleBuyNow = () => {
     handleAddToCart();
-    navigate('/cart');
+    navigate("/cart");
   };
 
   const handleQuantityChange = (delta: number) => {
@@ -126,20 +126,34 @@ const ProductDetail = () => {
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
-    toast.success(isFavorite ? 'Removed from wishlist' : 'Added to wishlist');
+    toast.success(isFavorite ? "Removed from wishlist" : "Added to wishlist");
   };
 
   if (loading) {
     return (
-      <Box sx={{ bgcolor: '#f9fafb', minHeight: '100vh' }}>
+      <Box sx={{ bgcolor: "#f9fafb", minHeight: "100vh" }}>
         <Container maxWidth="lg" sx={{ pt: 2, pb: 4 }}>
           <Skeleton variant="text" width={300} height={40} sx={{ mb: 2 }} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 4 }}>
-            <Skeleton variant="rectangular" height={500} sx={{ borderRadius: 3 }} />
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+              gap: 4,
+            }}
+          >
+            <Skeleton
+              variant="rectangular"
+              height={500}
+              sx={{ borderRadius: 3 }}
+            />
             <Box>
               <Skeleton variant="text" height={60} />
               <Skeleton variant="text" height={40} width="60%" />
-              <Skeleton variant="rectangular" height={200} sx={{ mt: 2, borderRadius: 2 }} />
+              <Skeleton
+                variant="rectangular"
+                height={200}
+                sx={{ mt: 2, borderRadius: 2 }}
+              />
             </Box>
           </Box>
         </Container>
@@ -149,9 +163,13 @@ const ProductDetail = () => {
 
   if (!product) {
     return (
-      <Box sx={{ bgcolor: '#f9fafb', minHeight: '100vh' }}>
-        <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: '#1e293b' }}>
+      <Box sx={{ bgcolor: "#f9fafb", minHeight: "100vh" }}>
+        <Container maxWidth="sm" sx={{ py: 8, textAlign: "center" }}>
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{ fontWeight: 700, color: "#1e293b" }}
+          >
             Product Not Found
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
@@ -162,7 +180,7 @@ const ProductDetail = () => {
             component={RouterLink}
             to="/marketplace"
             sx={{
-              textTransform: 'none',
+              textTransform: "none",
               fontWeight: 600,
               px: 4,
               py: 1.5,
@@ -206,7 +224,7 @@ const ProductDetail = () => {
   const hasImage = !!imageUrl;
 
   return (
-    <Box sx={{ bgcolor: '#f9fafb', minHeight: '100vh' }}>
+    <Box sx={{ bgcolor: "#f9fafb", minHeight: "100vh", marginTop: "-50px" }}>
       <Container maxWidth="lg" sx={{ pt: 2, pb: 4 }}>
         {/* Breadcrumbs */}
         <Breadcrumbs
@@ -217,7 +235,7 @@ const ProductDetail = () => {
             component={RouterLink}
             to="/"
             underline="hover"
-            sx={{ color: '#64748b', '&:hover': { color: '#4f46e5' } }}
+            sx={{ color: '#64748b', '&:hover': { color: '#667FEA' } }}
           >
             Home
           </Link>
@@ -225,7 +243,7 @@ const ProductDetail = () => {
             component={RouterLink}
             to="/marketplace"
             underline="hover"
-            sx={{ color: '#64748b', '&:hover': { color: '#4f46e5' } }}
+            sx={{ color: "#64748b", "&:hover": { color: "#667FEA" } }}
           >
             Marketplace
           </Link>
@@ -233,34 +251,43 @@ const ProductDetail = () => {
             component={RouterLink}
             to="/marketplace"
             underline="hover"
-            sx={{ color: '#64748b', '&:hover': { color: '#4f46e5' } }}
+            sx={{ color: "#64748b", "&:hover": { color: "#667FEA" } }}
           >
             {product.category}
           </Link>
-          <Typography sx={{ color: '#0f172a', fontWeight: 600 }}>{product.name}</Typography>
+          <Typography sx={{ color: "#0f172a", fontWeight: 600 }}>
+            {product.name}
+          </Typography>
         </Breadcrumbs>
 
         {/* Main Product Section */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 4, mb: 4 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+            gap: 4,
+            mb: 4,
+          }}
+        >
           {/* Product Images */}
           <Box>
             <Paper
               elevation={0}
               sx={{
                 p: 2,
-                bgcolor: 'white',
+                bgcolor: "white",
                 borderRadius: 3,
                 mb: 2,
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               }}
             >
               <Box
                 sx={{
-                  position: 'relative',
-                  paddingTop: '100%',
-                  bgcolor: '#f1f5f9',
+                  position: "relative",
+                  paddingTop: "100%",
+                  bgcolor: "#f1f5f9",
                   borderRadius: 2,
-                  overflow: 'hidden',
+                  overflow: "hidden",
                 }}
               >
                 {hasImage ? (
@@ -331,12 +358,12 @@ const ProductDetail = () => {
                         flexShrink: 0,
                         cursor: 'pointer',
                         border: 2,
-                        borderColor: selectedImage === index ? '#4f46e5' : '#e2e8f0',
+                        borderColor: selectedImage === index ? '#667FEA' : '#e2e8f0',
                         borderRadius: 2,
                         overflow: 'hidden',
                         transition: 'all 0.2s',
                         '&:hover': {
-                          borderColor: '#4f46e5',
+                          borderColor: '#667FEA',
                         },
                       }}
                     >
@@ -472,10 +499,10 @@ const ProductDetail = () => {
                   fontWeight: 600,
                   textTransform: 'none',
                   borderRadius: 2,
-                  bgcolor: isInCart ? '#10b981' : '#5b21b6',
+                  bgcolor: isInCart ? '#10b981' : '#667FEA',
                   boxShadow: 'none',
                   '&:hover': {
-                    bgcolor: isInCart ? '#059669' : '#4c1d95',
+                    bgcolor: isInCart ? '#059669' : '#667FEA',
                     boxShadow: 'none',
                   },
                   '&:disabled': {
@@ -501,7 +528,7 @@ const ProductDetail = () => {
                   borderColor: '#e2e8f0',
                   color: '#0f172a',
                   '&:hover': {
-                    borderColor: '#4f46e5',
+                    borderColor: '#667FEA',
                     bgcolor: 'rgba(79, 70, 229, 0.04)',
                   },
                 }}
@@ -538,7 +565,7 @@ const ProductDetail = () => {
                   borderColor: '#e2e8f0',
                   color: '#64748b',
                   '&:hover': {
-                    borderColor: '#4f46e5',
+                    borderColor: '#667FEA',
                     bgcolor: 'rgba(79, 70, 229, 0.04)',
                   },
                 }}
@@ -560,7 +587,7 @@ const ProductDetail = () => {
             >
               <Stack spacing={2}>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                  <ShippingIcon sx={{ color: '#4f46e5' }} />
+                  <ShippingIcon sx={{ color: '#667FEA' }} />
                   <Box>
                     <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#0f172a' }}>
                       Free Delivery
@@ -571,7 +598,7 @@ const ProductDetail = () => {
                   </Box>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                  <ReturnIcon sx={{ color: '#4f46e5' }} />
+                  <ReturnIcon sx={{ color: '#667FEA' }} />
                   <Box>
                     <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#0f172a' }}>
                       30-Day Returns
@@ -582,7 +609,7 @@ const ProductDetail = () => {
                   </Box>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                  <WarrantyIcon sx={{ color: '#4f46e5' }} />
+                  <WarrantyIcon sx={{ color: '#667FEA' }} />
                   <Box>
                     <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#0f172a' }}>
                       Warranty
@@ -618,11 +645,11 @@ const ProductDetail = () => {
                 fontWeight: 600,
                 color: '#64748b',
                 '&.Mui-selected': {
-                  color: '#4f46e5',
+                  color: '#667FEA',
                 },
               },
               '& .MuiTabs-indicator': {
-                bgcolor: '#4f46e5',
+                bgcolor: '#667FEA',
               },
             }}
           >

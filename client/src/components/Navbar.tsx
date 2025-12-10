@@ -73,7 +73,7 @@ const Navbar = () => {
           justifyContent: "center",
         }}
       >
-        <Typography variant="h6" color="#4f46e5" fontWeight="bold">
+        <Typography variant="h6" color="#667FEA" fontWeight="bold">
           Paya Marketplace
         </Typography>
       </Box>
@@ -182,7 +182,7 @@ const Navbar = () => {
               to="/"
               sx={{
                 fontWeight: 700,
-                color: "#4f46e5",
+                color: "#667FEA",
                 textDecoration: "none",
                 flexGrow: isMobile ? 1 : 0,
                 mr: 4,
@@ -208,11 +208,11 @@ const Navbar = () => {
                     to={item.path}
                     sx={{
                       color: isActivePath(item.path)
-                        ? "#4f46e5"
+                        ? "#667FEA"
                         : "text.secondary",
                       fontWeight: isActivePath(item.path) ? 600 : 400,
                       "&:hover": {
-                        color: "#4f46e5",
+                        color: "#667FEA",
                         backgroundColor: "action.hover",
                       },
                     }}
@@ -224,7 +224,7 @@ const Navbar = () => {
                   component={RouterLink}
                   to="/cart"
                   sx={{
-                    color: isActivePath("/cart") ? "#4f46e5" : "text.secondary",
+                    color: isActivePath("/cart") ? "#667FEA" : "text.secondary",
                   }}
                 >
                   <Badge badgeContent={cartItemCount} color="error">
@@ -265,7 +265,7 @@ const Navbar = () => {
                       sx={{
                         textTransform: "none",
                         borderRadius: 2,
-                        borderColor: "#4f46e5",
+                        borderColor: "#667FEA",
                         width: "100px",
                         height: "36px",
                       }}
@@ -281,7 +281,7 @@ const Navbar = () => {
                       sx={{
                         textTransform: "none",
                         borderRadius: 2,
-                        bgcolor: "#4f46e5",
+                        bgcolor: "#667FEA",
                         width: "100px",
                         height: "36px",
                       }}

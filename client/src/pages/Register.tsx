@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -10,41 +10,30 @@ import {
   Link,
   Divider,
   CircularProgress,
-  ToggleButton,
-  ToggleButtonGroup,
-  MenuItem,
   InputAdornment,
   IconButton,
+  Alert,
 } from '@mui/material';
 import {
   PersonAddOutlined as PersonAddIcon,
-  ShoppingCart as ShoppingCartIcon,
   Store as StoreIcon,
   Visibility,
   VisibilityOff,
+  ArrowForward,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const Register = () => {
-  const [searchParams] = useSearchParams();
-  const roleParam = searchParams.get('role');
-  const initialUserType = (roleParam === 'merchant' || roleParam === 'customer') ? roleParam : 'customer';
-  const [userType, setUserType] = useState<'customer' | 'merchant'>(initialUserType);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    // Customer fields
     dateOfBirth: '',
     kraPin: '',
     phoneNumber: '',
-    // Merchant fields
-    businessName: '',
-    businessEmail: '',
-    businessType: '',
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -57,15 +46,6 @@ const Register = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
-  };
-
-  const handleUserTypeChange = (
-    _event: React.MouseEvent<HTMLElement>,
-    newType: 'customer' | 'merchant' | null
-  ) => {
-    if (newType !== null) {
-      setUserType(newType);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,28 +68,17 @@ const Register = () => {
       lastName: formData.lastName,
       email: formData.email,
       password: formData.password,
-      role: userType,
+      role: 'customer',
       phoneNumber: formData.phoneNumber,
+      dateOfBirth: formData.dateOfBirth,
+      kraPin: formData.kraPin,
     };
-
-    if (userType === 'customer') {
-      userData.dateOfBirth = formData.dateOfBirth;
-      userData.kraPin = formData.kraPin;
-    } else if (userType === 'merchant') {
-      userData.businessName = formData.businessName;
-      userData.businessEmail = formData.businessEmail;
-      userData.businessType = formData.businessType;
-    }
 
     const result = await register(userData);
 
     if (result.success) {
       toast.success('Account created successfully!');
-      if (userType === 'merchant') {
-        navigate('/merchant-onboarding');
-      } else {
-        navigate('/marketplace');
-      }
+      navigate('/marketplace');
     } else {
       toast.error(result.error);
       setLoading(false);
@@ -130,9 +99,10 @@ const Register = () => {
         <Paper
           elevation={3}
           sx={{
-            p: 4,
+            p: { xs: 3, sm: 4 },
             width: '100%',
-            borderRadius: 2,
+            borderRadius: 3,
+            background: 'linear-gradient(to bottom, rgba(102, 127, 234, 0.02), rgba(255, 255, 255, 1))',
           }}
         >
           {/* Header */}
@@ -142,64 +112,34 @@ const Register = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 56,
-                height: 56,
+                width: 64,
+                height: 64,
                 borderRadius: '50%',
-                bgcolor: '#4f46e5',
+                background: 'linear-gradient(135deg, #667FEA 0%, #667FEA 100%)',
                 mb: 2,
+                boxShadow: '0 8px 16px rgba(102, 127, 234, 0.3)',
               }}
             >
-              <PersonAddIcon sx={{ color: 'white', fontSize: 28 }} />
+              <PersonAddIcon sx={{ color: 'white', fontSize: 32 }} />
             </Box>
-            <Typography variant="h4" fontWeight={700} color="text.primary" gutterBottom>
+            <Typography 
+              variant="h4" 
+              fontWeight={700} 
+              color="text.primary" 
+              gutterBottom
+              sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}
+            >
               Create Your Account
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Join Paya Marketplace today
+              Join Paya Marketplace and start shopping with BNPL
             </Typography>
-          </Box>
-
-          {/* User Type Selection */}
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-              I want to:
-            </Typography>
-            <ToggleButtonGroup
-              value={userType}
-              exclusive
-              onChange={handleUserTypeChange}
-              fullWidth
-              sx={{ mb: 3 }}
-            >
-              <ToggleButton value="customer" sx={{ py: 2 }}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <ShoppingCartIcon sx={{ fontSize: 32, mb: 1 }} />
-                  <Typography variant="body2" fontWeight={600}>
-                    Shop Products
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Buy with BNPL
-                  </Typography>
-                </Box>
-              </ToggleButton>
-              <ToggleButton value="merchant" sx={{ py: 2 }}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <StoreIcon sx={{ fontSize: 32, mb: 1 }} />
-                  <Typography variant="body2" fontWeight={600}>
-                    Sell Products
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Start a business
-                  </Typography>
-                </Box>
-              </ToggleButton>
-            </ToggleButtonGroup>
           </Box>
 
           {/* Registration Form */}
           <Box component="form" onSubmit={handleSubmit} noValidate>
-            {/* Basic Information */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+            {/* Name Fields */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 2 }}>
               <TextField
                 fullWidth
                 label="First Name"
@@ -207,6 +147,14 @@ const Register = () => {
                 value={formData.firstName}
                 onChange={handleChange}
                 required
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#667FEA',
+                    },
+                  },
+                }}
               />
               <TextField
                 fullWidth
@@ -215,9 +163,18 @@ const Register = () => {
                 value={formData.lastName}
                 onChange={handleChange}
                 required
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#667FEA',
+                    },
+                  },
+                }}
               />
             </Box>
 
+            {/* Email */}
             <TextField
               fullWidth
               label="Email Address"
@@ -226,9 +183,17 @@ const Register = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              sx={{ mt: 2 }}
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: '#667FEA',
+                  },
+                },
+              }}
             />
 
+            {/* Phone Number */}
             <TextField
               fullWidth
               label="Phone Number"
@@ -237,80 +202,56 @@ const Register = () => {
               value={formData.phoneNumber}
               onChange={handleChange}
               placeholder="+254..."
-              sx={{ mt: 2 }}
+              required
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: '#667FEA',
+                  },
+                },
+              }}
             />
 
             {/* Customer-specific fields */}
-            {userType === 'customer' && (
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mt: 2 }}>
-                <TextField
-                  fullWidth
-                  label="Date of Birth"
-                  name="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={handleChange}
-                  required
-                  InputLabelProps={{ shrink: true }}
-                />
-                <TextField
-                  fullWidth
-                  label="KRA PIN"
-                  name="kraPin"
-                  value={formData.kraPin}
-                  onChange={handleChange}
-                  required
-                  placeholder="A123456789Z"
-                />
-              </Box>
-            )}
-
-            {/* Merchant-specific fields */}
-            {userType === 'merchant' && (
-              <>
-                <TextField
-                  fullWidth
-                  label="Business Name"
-                  name="businessName"
-                  value={formData.businessName}
-                  onChange={handleChange}
-                  required
-                  sx={{ mt: 2 }}
-                />
-
-                <TextField
-                  fullWidth
-                  label="Business Email"
-                  name="businessEmail"
-                  type="email"
-                  value={formData.businessEmail}
-                  onChange={handleChange}
-                  required
-                  sx={{ mt: 2 }}
-                />
-
-                <TextField
-                  fullWidth
-                  select
-                  label="Business Type"
-                  name="businessType"
-                  value={formData.businessType}
-                  onChange={handleChange}
-                  required
-                  sx={{ mt: 2 }}
-                >
-                  <MenuItem value="">Select business type</MenuItem>
-                  <MenuItem value="retail">Retail</MenuItem>
-                  <MenuItem value="wholesale">Wholesale</MenuItem>
-                  <MenuItem value="manufacturing">Manufacturing</MenuItem>
-                  <MenuItem value="services">Services</MenuItem>
-                  <MenuItem value="other">Other</MenuItem>
-                </TextField>
-              </>
-            )}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 2 }}>
+              <TextField
+                fullWidth
+                label="Date of Birth"
+                name="dateOfBirth"
+                type="date"
+                value={formData.dateOfBirth}
+                onChange={handleChange}
+                required
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#667FEA',
+                    },
+                  },
+                }}
+              />
+              <TextField
+                fullWidth
+                label="KRA PIN"
+                name="kraPin"
+                value={formData.kraPin}
+                onChange={handleChange}
+                required
+                placeholder="A123456789Z"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#667FEA',
+                    },
+                  },
+                }}
+              />
+            </Box>
 
             {/* Password fields */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mt: 2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 3 }}>
               <TextField
                 fullWidth
                 label="Password"
@@ -319,12 +260,20 @@ const Register = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#667FEA',
+                    },
+                  },
+                }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
                         onClick={() => setShowPassword(!showPassword)}
                         edge="end"
+                        size="small"
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
@@ -340,12 +289,20 @@ const Register = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#667FEA',
+                    },
+                  },
+                }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         edge="end"
+                        size="small"
                       >
                         {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
@@ -355,27 +312,47 @@ const Register = () => {
               />
             </Box>
 
+            {/* Submit Button */}
             <Button
               type="submit"
               fullWidth
               variant="contained"
               size="large"
               disabled={loading}
-              sx={{ mt: 3, mb: 2, bgcolor: "#4f46e5" }}
+              sx={{ 
+                mb: 2,
+                py: 1.5,
+                background: 'linear-gradient(135deg, #667FEA 0%, #667FEA 100%)',
+                boxShadow: '0 4px 12px rgba(102, 127, 234, 0.4)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #667FEA 0%, #667FEA 100%)',
+                  boxShadow: '0 6px 16px rgba(102, 127, 234, 0.5)',
+                },
+                '&:disabled': {
+                  background: 'rgba(0, 0, 0, 0.12)',
+                },
+                fontWeight: 600,
+                fontSize: '1rem',
+              }}
             >
               {loading ? (
                 <CircularProgress size={24} color="inherit" />
               ) : (
-                `Create ${userType === 'customer' ? 'Customer' : 'Merchant'} Account`
+                'Create Account'
               )}
             </Button>
+
+            {/* Terms */}
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mb: 2 }}>
+              By creating an account, you agree to our Terms of Service and Privacy Policy
+            </Typography>
           </Box>
 
           {/* Divider */}
           <Divider sx={{ my: 3 }} />
 
           {/* Sign In Link */}
-          <Box sx={{ textAlign: 'center' }}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Already have an account?
             </Typography>
@@ -384,10 +361,60 @@ const Register = () => {
               to="/login"
               variant="outlined"
               fullWidth
-              sx={{ borderColor: '#4f46e5', color: '#4f46e5' }}
+              sx={{ 
+                borderColor: '#667FEA', 
+                color: '#667FEA',
+                '&:hover': {
+                  borderColor: '#5568D3',
+                  backgroundColor: 'rgba(102, 127, 234, 0.04)',
+                },
+                fontWeight: 600,
+              }}
             >
               Sign In
             </Button>
+          </Box>
+
+          {/* Merchant CTA */}
+          <Box
+            sx={{
+              mt: 3,
+              p: 3,
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, rgba(102, 127, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+              border: '1px solid rgba(102, 127, 234, 0.2)',
+              textAlign: 'center',
+              transition: 'all 0.3s ease',
+              cursor: 'pointer',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 20px rgba(102, 127, 234, 0.2)',
+                background: 'linear-gradient(135deg, rgba(102, 127, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)',
+              },
+            }}
+            onClick={() => window.open('https://paya-marketplace-merchant.netlify.app/', '_blank')}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
+              <StoreIcon sx={{ fontSize: 28, color: '#667FEA', mr: 1 }} />
+              <Typography variant="h6" fontWeight={700} color="#667FEA">
+                Want to Sell Items?
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Become a merchant and start selling on Paya Marketplace
+            </Typography>
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                color: '#667FEA',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+              }}
+            >
+              Join as a Merchant
+              <ArrowForward sx={{ ml: 1, fontSize: 18 }} />
+            </Box>
           </Box>
         </Paper>
       </Box>

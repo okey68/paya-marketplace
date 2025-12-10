@@ -116,7 +116,7 @@ const Merchants = () => {
     return (
       <Box sx={{ bgcolor: "#f9fafb", minHeight: "100vh" }}>
         <Container maxWidth="lg" sx={{ pt: 12, pb: 8, textAlign: "center" }}>
-          <CircularProgress size={60} sx={{ mb: 2, color: "#4f46e5" }} />
+          <CircularProgress size={60} sx={{ mb: 2, color: "#667FEA" }} />
           <Typography variant="h6" sx={{ color: "#64748b" }}>
             Loading trusted merchants...
           </Typography>
@@ -174,7 +174,7 @@ const Merchants = () => {
                 border: "1px solid #e2e8f0",
                 boxShadow: "none",
                 "&:hover": {
-                  borderColor: "#4f46e5",
+                  borderColor: "#667FEA",
                   transform: "translateY(-2px)",
                   boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
                 },
@@ -193,7 +193,7 @@ const Merchants = () => {
                     height: 60,
                     mx: "auto",
                     mb: 1,
-                    bgcolor: "#4f46e5",
+                    bgcolor: "#667FEA",
                   }}
                 >
                   {getMerchantInitials(merchant.businessInfo?.businessName)}
@@ -256,7 +256,7 @@ const Merchants = () => {
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
                 "&:hover fieldset": {
-                  borderColor: "#4f46e5",
+                  borderColor: "#667FEA",
                 },
               },
             }}
@@ -347,7 +347,7 @@ const Merchants = () => {
                       sx={{
                         width: 64,
                         height: 64,
-                        bgcolor: "#4f46e5",
+                        bgcolor: "#667FEA",
                         fontSize: "1.5rem",
                       }}
                     >
@@ -449,10 +449,10 @@ const Merchants = () => {
                     textTransform: "none",
                     fontWeight: 600,
                     borderRadius: 2,
-                    bgcolor: "#4f46e5",
+                    bgcolor: "#667FEA",
                     boxShadow: "none",
                     "&:hover": {
-                      bgcolor: "#4f46e5",
+                      bgcolor: "#667FEA",
                       boxShadow: "none",
                     },
                   }}
@@ -498,10 +498,10 @@ const Merchants = () => {
                 textTransform: "none",
                 fontWeight: 600,
                 borderRadius: 2,
-                bgcolor: "#4f46e5",
+                bgcolor: "#667FEA",
                 boxShadow: "none",
                 "&:hover": {
-                  bgcolor: "#4f46e5",
+                  bgcolor: "#667FEA",
                   boxShadow: "none",
                 },
               }}
@@ -538,10 +538,10 @@ const Merchants = () => {
               borderRadius: 2,
               px: 4,
               py: 1.5,
-              bgcolor: "#4f46e5",
+              bgcolor: "#667FEA",
               boxShadow: "none",
               "&:hover": {
-                bgcolor: "#4f46e5",
+                bgcolor: "#667FEA",
                 boxShadow: "none",
               },
             }}

@@ -111,7 +111,7 @@ const Cart = () => {
             variant="contained"
             // color="primary"
             size="large"
-            sx={{ mt: 1.5, bgcolor: "#4f46e5", '&:hover': { bgcolor: "#4338ca" } }}
+            sx={{ mt: 1.5 , bgcolor: "#667FEA", '&:hover': {bgcolor: "#4338ca"} }}
           >
             Browse Products
           </Button>
@@ -261,7 +261,7 @@ const Cart = () => {
                         minWidth: "auto",
                         textTransform: "none",
                         fontSize: "0.75rem",
-                        color: "#4f46e5",
+                        color: "#667FEA",
                       }}
                     >
                       View Details →
@@ -279,7 +279,7 @@ const Cart = () => {
                   >
                     <Typography
                       variant="h6"
-                      color="#4f46e5"
+                      color="#667FEA"
                       fontWeight={700}
                     >
                       {formatCurrency(item.price * item.quantity)}
@@ -405,9 +405,9 @@ const Cart = () => {
                 variant="h6"
                 fontWeight={700}
                 sx={
-                  // #4f46e5
+                  // #667FEA
                   {
-                    color: "#4f46e5",
+                    color: "#667FEA",
                   }
                 }
               >
@@ -424,7 +424,7 @@ const Cart = () => {
             <Button
               fullWidth
               variant="contained"
-              // color="#4f46e5"
+              // color="#667FEA"
               size="large"
               onClick={handleCheckout}
               sx={{
@@ -434,9 +434,9 @@ const Cart = () => {
                 textTransform: "none",
                 fontSize: "1rem",
                 fontWeight: 600,
-                bgcolor: "#4f46e5",
+                bgcolor: "#667FEA",
                 "&:hover": {
-                  bgcolor: "##4f46e5",
+                  bgcolor: "##667FEA",
                 },
               }}
             >
