@@ -235,7 +235,7 @@ const ProductDetail = () => {
             component={RouterLink}
             to="/"
             underline="hover"
-            sx={{ color: '#64748b', '&:hover': { color: '#4f46e5' } }}
+            sx={{ color: '#64748b', '&:hover': { color: '#667FEA' } }}
           >
             Home
           </Link>
@@ -358,12 +358,12 @@ const ProductDetail = () => {
                         flexShrink: 0,
                         cursor: 'pointer',
                         border: 2,
-                        borderColor: selectedImage === index ? '#4f46e5' : '#e2e8f0',
+                        borderColor: selectedImage === index ? '#667FEA' : '#e2e8f0',
                         borderRadius: 2,
                         overflow: 'hidden',
                         transition: 'all 0.2s',
                         '&:hover': {
-                          borderColor: '#4f46e5',
+                          borderColor: '#667FEA',
                         },
                       }}
                     >
@@ -499,10 +499,10 @@ const ProductDetail = () => {
                   fontWeight: 600,
                   textTransform: 'none',
                   borderRadius: 2,
-                  bgcolor: isInCart ? '#10b981' : '#5b21b6',
+                  bgcolor: isInCart ? '#10b981' : '#667FEA',
                   boxShadow: 'none',
                   '&:hover': {
-                    bgcolor: isInCart ? '#059669' : '#4c1d95',
+                    bgcolor: isInCart ? '#059669' : '#667FEA',
                     boxShadow: 'none',
                   },
                   '&:disabled': {
@@ -528,7 +528,7 @@ const ProductDetail = () => {
                   borderColor: '#e2e8f0',
                   color: '#0f172a',
                   '&:hover': {
-                    borderColor: '#4f46e5',
+                    borderColor: '#667FEA',
                     bgcolor: 'rgba(79, 70, 229, 0.04)',
                   },
                 }}
@@ -565,7 +565,7 @@ const ProductDetail = () => {
                   borderColor: '#e2e8f0',
                   color: '#64748b',
                   '&:hover': {
-                    borderColor: '#4f46e5',
+                    borderColor: '#667FEA',
                     bgcolor: 'rgba(79, 70, 229, 0.04)',
                   },
                 }}
@@ -587,7 +587,7 @@ const ProductDetail = () => {
             >
               <Stack spacing={2}>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                  <ShippingIcon sx={{ color: '#4f46e5' }} />
+                  <ShippingIcon sx={{ color: '#667FEA' }} />
                   <Box>
                     <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#0f172a' }}>
                       Free Delivery
@@ -598,7 +598,7 @@ const ProductDetail = () => {
                   </Box>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                  <ReturnIcon sx={{ color: '#4f46e5' }} />
+                  <ReturnIcon sx={{ color: '#667FEA' }} />
                   <Box>
                     <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#0f172a' }}>
                       30-Day Returns
@@ -609,7 +609,7 @@ const ProductDetail = () => {
                   </Box>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                  <WarrantyIcon sx={{ color: '#4f46e5' }} />
+                  <WarrantyIcon sx={{ color: '#667FEA' }} />
                   <Box>
                     <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#0f172a' }}>
                       Warranty
@@ -645,11 +645,11 @@ const ProductDetail = () => {
                 fontWeight: 600,
                 color: '#64748b',
                 '&.Mui-selected': {
-                  color: '#4f46e5',
+                  color: '#667FEA',
                 },
               },
               '& .MuiTabs-indicator': {
-                bgcolor: '#4f46e5',
+                bgcolor: '#667FEA',
               },
             }}
           >
