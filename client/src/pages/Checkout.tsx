@@ -86,9 +86,20 @@ const Checkout = () => {
   const [monthlyDebt, setMonthlyDebt] = useState("");
   const [incomeConfirmed, setIncomeConfirmed] = useState(false);
 
+  // Next of Kin state
+  const [nextOfKin, setNextOfKin] = useState({
+    firstName: "",
+    lastName: "",
+    relationship: "",
+    phoneCountryCode: "+254",
+    phoneNumber: "",
+    email: "",
+  });
+
   // Decision flow state
   const [showDecision, setShowDecision] = useState(false);
   const [showApproval, setShowApproval] = useState(false);
+  const [showNextOfKin, setShowNextOfKin] = useState(false);
   const [showAgreement, setShowAgreement] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
 
@@ -1516,11 +1527,309 @@ const Checkout = () => {
           size="large"
           onClick={() => {
             setShowApproval(false);
-            setShowAgreement(true);
+            setShowNextOfKin(true);
           }}
           sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#667FEA" }}
         >
-          Accept Terms & Continue
+          Continue to Next of Kin
+        </Button>
+      </Box>
+    </Box>
+  );
+
+  const handleNextOfKinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (
+      !nextOfKin.firstName ||
+      !nextOfKin.lastName ||
+      !nextOfKin.relationship ||
+      !nextOfKin.phoneNumber ||
+      !nextOfKin.email
+    ) {
+      toast.error("Please fill in all next of kin fields");
+      return;
+    }
+
+    // Validate phone number length
+    const phoneValidation: { [key: string]: { length: number; name: string } } =
+      {
+        "+254": { length: 9, name: "Kenya" },
+        "+1": { length: 10, name: "USA" },
+        "+27": { length: 9, name: "South Africa" },
+        "+255": { length: 9, name: "Tanzania" },
+      };
+
+    const validation = phoneValidation[nextOfKin.phoneCountryCode];
+    if (
+      validation &&
+      nextOfKin.phoneNumber.replace(/\D/g, "").length !== validation.length
+    ) {
+      toast.error(
+        `Phone number for ${validation.name} must be exactly ${validation.length} digits`
+      );
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await api.post("/underwriting/add-next-of-kin", {
+        email: personalInfo.companyEmail,
+        nextOfKin: {
+          firstName: nextOfKin.firstName,
+          lastName: nextOfKin.lastName,
+          relationship: nextOfKin.relationship,
+          phoneCountryCode: nextOfKin.phoneCountryCode.replace("+", ""),
+          phoneNumber: nextOfKin.phoneNumber,
+          email: nextOfKin.email,
+        },
+      });
+
+      setLoading(false);
+      toast.success("Next of kin information saved successfully");
+      setShowNextOfKin(false);
+      setShowAgreement(true);
+    } catch (error: any) {
+      console.error("Next of kin submission error:", error);
+      setLoading(false);
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to save next of kin information"
+      );
+    }
+  };
+
+  const renderNextOfKinStep = () => (
+    <Box component="form" onSubmit={handleNextOfKinSubmit}>
+      <Box sx={{ mb: 4 }}>
+        <Box
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 1.5,
+            mb: 2,
+            px: 2,
+            py: 1,
+            bgcolor: "primary.50",
+            borderRadius: 2,
+          }}
+        >
+          <Box
+            sx={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              bgcolor: "#667FEA",
+            }}
+          />
+          <Typography
+            variant="caption"
+            fontWeight={600}
+            sx={{
+              color: "#667FEA",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
+          >
+            Next of Kin
+          </Typography>
+        </Box>
+        <Typography
+          variant="h5"
+          fontWeight={700}
+          gutterBottom
+          sx={{ fontSize: { xs: "1.5rem", sm: "1.75rem" } }}
+        >
+          Add Next of Kin for BNPL Agreement
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Please provide emergency contact information for your Buy Now, Pay
+          Later agreement
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <TextField
+          label="First Name"
+          required
+          fullWidth
+          value={nextOfKin.firstName}
+          onChange={(e) =>
+            setNextOfKin({ ...nextOfKin, firstName: e.target.value })
+          }
+        />
+        <TextField
+          label="Last Name"
+          required
+          fullWidth
+          value={nextOfKin.lastName}
+          onChange={(e) =>
+            setNextOfKin({ ...nextOfKin, lastName: e.target.value })
+          }
+        />
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <TextField
+          label="Relationship"
+          select
+          required
+          fullWidth
+          value={nextOfKin.relationship}
+          onChange={(e) =>
+            setNextOfKin({ ...nextOfKin, relationship: e.target.value })
+          }
+        >
+          <MenuItem value="Spouse">Spouse</MenuItem>
+          <MenuItem value="Parent">Parent</MenuItem>
+          <MenuItem value="Sibling">Sibling</MenuItem>
+          <MenuItem value="Child">Child</MenuItem>
+          <MenuItem value="Friend">Friend</MenuItem>
+          <MenuItem value="Other">Other</MenuItem>
+        </TextField>
+        <TextField
+          label="Email Address"
+          type="email"
+          required
+          fullWidth
+          placeholder="nextofkin@example.com"
+          value={nextOfKin.email}
+          onChange={(e) =>
+            setNextOfKin({ ...nextOfKin, email: e.target.value })
+          }
+        />
+      </Box>
+
+      <Box sx={{ mb: 4 }}>
+        <TextField
+          label="Phone Number"
+          required
+          fullWidth
+          placeholder={
+            nextOfKin.phoneCountryCode === "+1"
+              ? "2025551234"
+              : nextOfKin.phoneCountryCode === "+27"
+              ? "821234567"
+              : nextOfKin.phoneCountryCode === "+255"
+              ? "712345678"
+              : "712345678"
+          }
+          value={nextOfKin.phoneNumber}
+          onChange={(e) => {
+            const value = e.target.value.replace(/\D/g, "");
+            const maxLength =
+              nextOfKin.phoneCountryCode === "+1"
+                ? 10
+                : nextOfKin.phoneCountryCode === "+27"
+                ? 9
+                : nextOfKin.phoneCountryCode === "+255"
+                ? 9
+                : 9;
+            if (value.length <= maxLength) {
+              setNextOfKin({ ...nextOfKin, phoneNumber: value });
+            }
+          }}
+          helperText={
+            nextOfKin.phoneCountryCode === "+1"
+              ? "Enter 10 digits"
+              : nextOfKin.phoneCountryCode === "+27"
+              ? "Enter 9 digits"
+              : nextOfKin.phoneCountryCode === "+255"
+              ? "Enter 9 digits"
+              : "Enter 9 digits"
+          }
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <TextField
+                  select
+                  value={nextOfKin.phoneCountryCode}
+                  onChange={(e) =>
+                    setNextOfKin({
+                      ...nextOfKin,
+                      phoneCountryCode: e.target.value,
+                      phoneNumber: "",
+                    })
+                  }
+                  variant="standard"
+                  sx={{
+                    minWidth: "120px",
+                    "& .MuiInput-underline:before": { borderBottom: "none" },
+                    "& .MuiInput-underline:after": { borderBottom: "none" },
+                    "& .MuiInput-underline:hover:not(.Mui-disabled):before": {
+                      borderBottom: "none",
+                    },
+                  }}
+                >
+                  <MenuItem value="+254">🇰🇪 +254</MenuItem>
+                  <MenuItem value="+1">🇺🇸 +1</MenuItem>
+                  <MenuItem value="+27">🇿🇦 +27</MenuItem>
+                  <MenuItem value="+255">🇹🇿 +255</MenuItem>
+                </TextField>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          justifyContent: "space-between",
+          flexDirection: { xs: "column", sm: "row" },
+        }}
+      >
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={() => {
+            setShowNextOfKin(false);
+            setShowApproval(true);
+          }}
+          sx={{
+            width: { xs: "100%", sm: "auto" },
+            borderColor: "#667FEA",
+            color: "#667FEA",
+            borderWidth: 2,
+            "&:hover": {
+              borderWidth: 2,
+              borderColor: "#667FEA",
+            },
+          }}
+        >
+          Back to Payment Plan
+        </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          size="large"
+          disabled={loading}
+          sx={{
+            width: { xs: "100%", sm: "auto" },
+            bgcolor: "#667FEA",
+            boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
+            "&:hover": {
+              boxShadow: "0 6px 16px rgba(102, 126, 234, 0.5)",
+            },
+          }}
+        >
+          {loading ? "Saving..." : "Continue to Agreement"}
         </Button>
       </Box>
     </Box>
@@ -1673,7 +1982,7 @@ const Checkout = () => {
           startIcon={<ArrowBackIcon />}
           onClick={() => {
             setShowAgreement(false);
-            setShowApproval(true);
+            setShowNextOfKin(true);
           }}
           sx={{
             width: { xs: "100%", sm: "auto" },
@@ -1686,7 +1995,7 @@ const Checkout = () => {
             },
           }}
         >
-          Back to Payment Plan
+          Back to Next of Kin
         </Button>
         <Button
           variant="contained"
@@ -2465,7 +2774,11 @@ const Checkout = () => {
             gridTemplateColumns: {
               xs: "1fr",
               md:
-                showDecision || showApproval || showAgreement || showCompletion
+                showDecision ||
+                showApproval ||
+                showNextOfKin ||
+                showAgreement ||
+                showCompletion
                   ? "1fr"
                   : "2fr 1fr",
             },
@@ -2494,11 +2807,13 @@ const Checkout = () => {
               <>
                 {!showDecision &&
                   !showApproval &&
+                  !showNextOfKin &&
                   !showAgreement &&
                   !showCompletion &&
                   renderPaySlipStep()}
                 {showDecision && renderUnderwritingStep()}
                 {showApproval && renderApprovedStep()}
+                {showNextOfKin && renderNextOfKinStep()}
                 {showAgreement && renderAgreementStep()}
                 {showCompletion && renderCompletedStep()}
               </>
@@ -2508,6 +2823,7 @@ const Checkout = () => {
           {currentStep < 4 &&
             !showDecision &&
             !showApproval &&
+            !showNextOfKin &&
             !showAgreement &&
             !showCompletion && (
               <Paper

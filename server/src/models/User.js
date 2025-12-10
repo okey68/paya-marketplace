@@ -93,6 +93,16 @@ const userSchema = new mongoose.Schema({
       path: { type: String }
     }
   },
+
+  // Next of Kin (for BNPL Agreement)
+  nextOfKin: {
+    firstName: { type: String, trim: true },
+    lastName: { type: String, trim: true },
+    relationship: { type: String, trim: true },
+    phoneCountryCode: { type: String, trim: true, default: '+254' },
+    phoneNumber: { type: String, trim: true },
+    email: { type: String, lowercase: true, trim: true }
+  },
   
   // Account Status
   isActive: {

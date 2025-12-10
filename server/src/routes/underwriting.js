@@ -69,6 +69,60 @@ router.post('/upload-financial-info', uploadPayslip.single('payslip'), [
   }
 });
 
+// Add Next of Kin for BNPL Agreement
+router.post('/add-next-of-kin', [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('nextOfKin.firstName').trim().isLength({ min: 1 }).withMessage('Next of kin first name is required'),
+  body('nextOfKin.lastName').trim().isLength({ min: 1 }).withMessage('Next of kin last name is required'),
+  body('nextOfKin.relationship').trim().isLength({ min: 1 }).withMessage('Relationship is required'),
+  body('nextOfKin.phoneNumber').trim().isLength({ min: 1 }).withMessage('Next of kin phone number is required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        message: 'Validation errors',
+        errors: errors.array()
+      });
+    }
+
+    const { email, nextOfKin } = req.body;
+
+    // Find user by email
+    const user = await User.findOne({ email, isActive: true });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found. Please complete previous steps first.' });
+    }
+
+    // Update next of kin information
+    user.nextOfKin = {
+      firstName: nextOfKin.firstName,
+      lastName: nextOfKin.lastName,
+      relationship: nextOfKin.relationship,
+      phoneCountryCode: nextOfKin.phoneCountryCode || '+254',
+      phoneNumber: nextOfKin.phoneNumber,
+      email: nextOfKin.email || ''
+    };
+
+    await user.save();
+
+    res.json({
+      message: 'Next of kin information added successfully',
+      nextOfKin: {
+        firstName: user.nextOfKin.firstName,
+        lastName: user.nextOfKin.lastName,
+        relationship: user.nextOfKin.relationship,
+        phoneNumber: `${user.nextOfKin.phoneCountryCode}${user.nextOfKin.phoneNumber}`,
+        email: user.nextOfKin.email
+      }
+    });
+  } catch (error) {
+    console.error('Error adding next of kin:', error);
+    res.status(500).json({ message: 'Error adding next of kin information', error: error.message });
+  }
+});
+
 // Get active underwriting model
 router.get('/model', protect, adminOnly, async (req, res) => {
   try {
