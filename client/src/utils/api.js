@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // API base URL - use environment variable or fallback to localhost
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -38,6 +39,21 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export const getImageUrl = (imagePath) => {
+  if (!imagePath || typeof imagePath !== 'string') return undefined;
+  if (imagePath.startsWith('http')) return imagePath;
+
+  // Ensure path starts with /
+  const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+
+  // Strip /uploads prefix if present, as we want to use the API route which expects just the ID/filename
+  const cleanPath = path.replace(/^\/uploads/, '');
+
+  // Use the API route which handles both GridFS and filesystem lookups
+  // API_BASE_URL already includes /api
+  return `${API_BASE_URL}/uploads${cleanPath}`;
+};
 
 export default api;
 export { API_BASE_URL };

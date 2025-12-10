@@ -16,6 +16,8 @@ import {
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { useCart } from '../context/CartContext';
+import { getImageUrl } from '../utils/api';
+
 
 interface ProductCardProps {
   product: {
@@ -24,8 +26,8 @@ interface ProductCardProps {
     description?: string;
     price: number;
     currency?: string;
-    images?: string[];
-    primaryImage?: string;
+    images?: any[];
+    primaryImage?: any;
     category?: string;
     merchantName?: string;
     stockStatus?: string;
@@ -51,7 +53,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const { items } = useCart();
 
   // Check if product is in cart
-  const isInCart = items.some((item: any) => 
+  const isInCart = items.some((item: any) =>
     (item.id === product._id || item.product?._id === product._id)
   );
 
@@ -81,18 +83,44 @@ const ProductCard: React.FC<ProductCardProps> = ({
     }
   };
 
-  const isOutOfStock = product.stockStatus === 'out_of_stock' || 
-                       (product.inventory && product.inventory.quantity === 0);
 
-  const imageUrl = product.primaryImage || product.images?.[0];
+  const isOutOfStock = product.stockStatus === 'out_of_stock' ||
+    (product.inventory && product.inventory.quantity === 0);
+
+  // Extract image path - handle multiple formats
+  const primaryImage = product.primaryImage || product.images?.[0];
+
+  const imagePath = (() => {
+    if (!primaryImage) return null;
+
+    // If it's a string, use it directly
+    if (typeof primaryImage === 'string') {
+      return primaryImage;
+    }
+
+    // If it's an object, try different properties
+    if (typeof primaryImage === 'object') {
+      // Try path first (our new format)
+      if (primaryImage.path) return primaryImage.path;
+      // Try filename (legacy format)
+      if (primaryImage.filename) return primaryImage.filename;
+      // Try _id (GridFS format)
+      if (primaryImage._id) return primaryImage._id;
+    }
+
+    return null;
+  })();
+
+  const imageUrl = getImageUrl(imagePath);
   const hasImage = !!imageUrl;
+
 
   if (loading) {
     return (
-      <Card 
-        sx={{ 
-          height: '100%', 
-          display: 'flex', 
+      <Card
+        sx={{
+          height: '100%',
+          display: 'flex',
           flexDirection: 'column',
           borderRadius: 3,
           border: '1px solid',
@@ -146,11 +174,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
       >
         {/* Product Image */}
         {hasImage && !imageError ? (
+
+
           <CardMedia
             component="img"
             image={imageUrl}
             alt={product.name}
-            onError={() => setImageError(true)}
+            onError={(e) => {
+              console.error('Image failed to load:', imageUrl);
+              console.error('Image error event:', e);
+              setImageError(true);
+            }}
             sx={{
               position: 'absolute',
               top: 0,
@@ -185,9 +219,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
       </Box>
 
       {/* Product Info */}
-      <CardContent sx={{ 
-        flexGrow: 1, 
-        p: 2, 
+      <CardContent sx={{
+        flexGrow: 1,
+        p: 2,
         pb: 1.5,
         display: 'flex',
         flexDirection: 'column',
@@ -210,7 +244,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <Typography
             variant="h6"
             component="div"
-            sx={{ 
+            sx={{
               fontWeight: 700,
               color: '#0f172a',
               fontSize: '16px',
@@ -223,9 +257,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </Box>
 
         {/* Merchant Name as Description */}
-        <Typography 
-          variant="body2" 
-          sx={{ 
+        <Typography
+          variant="body2"
+          sx={{
             fontSize: '0.8rem',
             color: '#64748b',
             overflow: 'hidden',
@@ -242,8 +276,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </Typography>
 
         {/* Actions Row */}
-        <Box sx={{ 
-          display: 'flex', 
+        <Box sx={{
+          display: 'flex',
           gap: 1,
           marginTop: 'auto',
         }}>

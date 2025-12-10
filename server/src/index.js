@@ -32,7 +32,17 @@ const integrationsRoutes = require('./routes/integrations');
 const underwritingRoutes = require('./routes/underwriting');
 
 // Security middleware
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        'img-src': ["'self'", 'data:', 'http://localhost:*', 'https://*'],
+      },
+    },
+    crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow cross-origin images
+  })
+);
 app.use(compression());
 
 // Rate limiting (increased for development)
@@ -43,7 +53,7 @@ const limiter = rateLimit({
   skip: (req) => {
     // Skip rate limiting for localhost in development
     return process.env.NODE_ENV === 'development';
-  }
+  },
 });
 app.use('/api/', limiter);
 
@@ -52,7 +62,7 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:3001',
@@ -61,29 +71,32 @@ const corsOptions = {
       'http://localhost:3004',
       'https://paya-marketplace.netlify.app',
       'https://paya-marketplace-admin.netlify.app',
-      'https://paya-marketplace-merchant.netlify.app'
+      'https://paya-marketplace-merchant.netlify.app',
     ];
-    
+
     // Allow any localhost or 127.0.0.1 origin for development
-    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+    if (
+      origin.startsWith('http://localhost:') ||
+      origin.startsWith('http://127.0.0.1:')
+    ) {
       return callback(null, true);
     }
-    
+
     // Allow any Netlify deploy preview URLs
     if (origin.includes('.netlify.app')) {
       return callback(null, true);
     }
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     }
-    
+
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 };
 
 app.use(cors(corsOptions));
@@ -101,18 +114,21 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // Session middleware (for Shopify OAuth)
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'paya-session-secret-change-in-production',
-  resave: false,
-  saveUninitialized: false, // Only save session when data is added
-  cookie: {
-    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site for OAuth
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  },
-  name: 'paya.sid' // Custom session name
-}));
+app.use(
+  session({
+    secret:
+      process.env.SESSION_SECRET || 'paya-session-secret-change-in-production',
+    resave: false,
+    saveUninitialized: false, // Only save session when data is added
+    cookie: {
+      secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+      httpOnly: true,
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site for OAuth
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+    name: 'paya.sid', // Custom session name
+  })
+);
 
 // Logging
 if (process.env.NODE_ENV === 'development') {
@@ -124,28 +140,35 @@ const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Database connection
-const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://paya-admin:QVFHuUWKKlOYsAgR@marketplace.ty20ofu.mongodb.net/paya-marketplace?retryWrites=true&w=majority&appName=marketplace';
+const mongoUri =
+  process.env.MONGODB_URI ||
+  'mongodb+srv://paya-admin:QVFHuUWKKlOYsAgR@marketplace.ty20ofu.mongodb.net/paya-marketplace?retryWrites=true&w=majority&appName=marketplace';
 
-mongoose.connect(mongoUri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log('Connected to MongoDB Atlas');
+mongoose
+  .connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log('Connected to MongoDB Atlas');
 
-  // Initialize Shopify scheduled sync after DB connection
-  if (process.env.SHOPIFY_API_KEY && process.env.SHOPIFY_API_SECRET) {
-    const { initializeScheduledSync } = require('./services/shopifyScheduledSync');
-    initializeScheduledSync();
-    console.log('✅ Shopify scheduled sync initialized');
-  } else {
-    console.log('⚠️  Shopify credentials not found - scheduled sync disabled');
-  }
-})
-.catch((error) => {
-  console.error('MongoDB connection error:', error);
-  process.exit(1);
-});
+    // Initialize Shopify scheduled sync after DB connection
+    if (process.env.SHOPIFY_API_KEY && process.env.SHOPIFY_API_SECRET) {
+      const {
+        initializeScheduledSync,
+      } = require('./services/shopifyScheduledSync');
+      initializeScheduledSync();
+      console.log('✅ Shopify scheduled sync initialized');
+    } else {
+      console.log(
+        '⚠️  Shopify credentials not found - scheduled sync disabled'
+      );
+    }
+  })
+  .catch((error) => {
+    console.error('MongoDB connection error:', error);
+    process.exit(1);
+  });
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -161,10 +184,10 @@ app.use('/api/underwriting', underwritingRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
   });
 });
 
@@ -176,25 +199,25 @@ app.use('*', (req, res) => {
 // Global error handler
 app.use((error, req, res, next) => {
   console.error('Global error handler:', error);
-  
+
   if (error.name === 'ValidationError') {
     return res.status(400).json({
       message: 'Validation Error',
-      errors: Object.values(error.errors).map(err => err.message)
+      errors: Object.values(error.errors).map((err) => err.message),
     });
   }
-  
+
   if (error.name === 'CastError') {
     return res.status(400).json({ message: 'Invalid ID format' });
   }
-  
+
   if (error.code === 11000) {
     return res.status(400).json({ message: 'Duplicate field value' });
   }
-  
+
   res.status(error.status || 500).json({
     message: error.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+    ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
   });
 });
 
@@ -204,15 +227,21 @@ const PORT = process.env.PORT || 5001;
 app.get('/api/debug/env', (req, res) => {
   res.json({
     hasSlackWebhook: !!process.env.SLACK_WEBHOOK_URL,
-    slackWebhookLength: process.env.SLACK_WEBHOOK_URL ? process.env.SLACK_WEBHOOK_URL.length : 0,
+    slackWebhookLength: process.env.SLACK_WEBHOOK_URL
+      ? process.env.SLACK_WEBHOOK_URL.length
+      : 0,
     hasAdminPortalUrl: !!process.env.ADMIN_PORTAL_URL,
     nodeEnv: process.env.NODE_ENV,
-    allEnvKeys: Object.keys(process.env).filter(key => key.includes('SLACK') || key.includes('ADMIN'))
+    allEnvKeys: Object.keys(process.env).filter(
+      (key) => key.includes('SLACK') || key.includes('ADMIN')
+    ),
   });
 });
 
 app.listen(PORT, () => {
   console.log(`Paya Marketplace server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Debug: SLACK_WEBHOOK_URL exists: ${!!process.env.SLACK_WEBHOOK_URL}`);
+  console.log(
+    `Debug: SLACK_WEBHOOK_URL exists: ${!!process.env.SLACK_WEBHOOK_URL}`
+  );
 });

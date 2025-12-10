@@ -36,10 +36,10 @@ import {
   Store as StoreIcon,
   NavigateNext as NavigateNextIcon,
   CheckCircle as CheckCircleIcon,
-} from "@mui/icons-material";
-import { useCart } from "../context/CartContext";
-import api from "../utils/api";
-import toast from "react-hot-toast";
+} from '@mui/icons-material';
+import { useCart } from '../context/CartContext';
+import api, { getImageUrl } from '../utils/api';
+import toast from 'react-hot-toast';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -75,9 +75,8 @@ const ProductDetail = () => {
   const [isFavorite, setIsFavorite] = useState(false);
 
   // Check if product is in cart
-  const isInCart = items.some(
-    (item: any) =>
-      item.id === product?._id || item.product?._id === product?._id
+  const isInCart = items.some((item: any) =>
+    (item.id === product?._id || item.product?._id === product?._id)
   );
 
   const fetchProduct = React.useCallback(async () => {
@@ -196,9 +195,32 @@ const ProductDetail = () => {
   }
 
   const isOutOfStock = product.inventory?.quantity === 0;
-  const isLowStock =
-    product.inventory?.quantity <= product.inventory?.lowStockThreshold;
-  const imageUrl = product.images?.[selectedImage];
+  const isLowStock = product.inventory?.quantity <= product.inventory?.lowStockThreshold;
+
+  // Extract image path - handle multiple formats
+  const selectedImageData = product.images?.[selectedImage];
+  const imagePath = (() => {
+    if (!selectedImageData) return null;
+
+    // If it's a string, use it directly
+    if (typeof selectedImageData === 'string') {
+      return selectedImageData;
+    }
+
+    // If it's an object, try different properties
+    if (typeof selectedImageData === 'object') {
+      // Try path first (our new format)
+      if (selectedImageData.path) return selectedImageData.path;
+      // Try filename (legacy format)
+      if (selectedImageData.filename) return selectedImageData.filename;
+      // Try _id (GridFS format)
+      if (selectedImageData._id) return selectedImageData._id;
+    }
+
+    return null;
+  })();
+
+  const imageUrl = getImageUrl(imagePath);
   const hasImage = !!imageUrl;
 
   return (
@@ -213,7 +235,7 @@ const ProductDetail = () => {
             component={RouterLink}
             to="/"
             underline="hover"
-            sx={{ color: "#64748b", "&:hover": { color: "#667FEA" } }}
+            sx={{ color: '#64748b', '&:hover': { color: '#4f46e5' } }}
           >
             Home
           </Link>
@@ -269,38 +291,41 @@ const ProductDetail = () => {
                 }}
               >
                 {hasImage ? (
-                  <Box
-                    component="img"
-                    src={imageUrl}
-                    alt={product.name}
-                    onError={(e: any) => {
-                      e.target.style.display = "none";
-                    }}
-                    sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
+                  <>
+                    <Box
+                      component="img"
+                      src={imageUrl}
+                      alt={product.name}
+                      onError={(e: any) => {
+                        e.target.style.display = 'none';
+                      }}
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+
+                  </>
                 ) : (
                   <Box
                     sx={{
-                      position: "absolute",
+                      position: 'absolute',
                       top: 0,
                       left: 0,
-                      width: "100%",
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexDirection: "column",
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexDirection: 'column',
                       gap: 2,
                     }}
                   >
-                    <Typography sx={{ fontSize: "6rem" }}>🛍️</Typography>
+                    <Typography sx={{ fontSize: '6rem' }}>🛍️</Typography>
                     <Typography variant="h6" color="text.secondary">
                       No image available
                     </Typography>
@@ -311,43 +336,53 @@ const ProductDetail = () => {
 
             {/* Thumbnail Images */}
             {product.images && product.images.length > 1 && (
-              <Box sx={{ display: "flex", gap: 1.5, overflowX: "auto" }}>
-                {product.images.map((image: string, index: number) => (
-                  <Paper
-                    key={index}
-                    elevation={0}
-                    onClick={() => setSelectedImage(index)}
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      flexShrink: 0,
-                      cursor: "pointer",
-                      border: 2,
-                      borderColor:
-                        selectedImage === index ? "#667FEA" : "#e2e8f0",
-                      borderRadius: 2,
-                      overflow: "hidden",
-                      transition: "all 0.2s",
-                      "&:hover": {
-                        borderColor: "#667FEA",
-                      },
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src={image}
-                      alt={`${product.name} ${index + 1}`}
-                      onError={(e: any) => {
-                        e.target.src = "/placeholder-product.png";
-                      }}
+              <Box sx={{ display: 'flex', gap: 1.5, overflowX: 'auto' }}>
+                {product.images.map((image: any, index: number) => {
+                  // Extract thumbnail path - handle multiple formats
+                  const thumbPath = (() => {
+                    if (typeof image === 'string') return image;
+                    if (image?.path) return image.path;
+                    if (image?.filename) return image.filename;
+                    if (image?._id) return image._id;
+                    return null;
+                  })();
+
+                  return (
+                    <Paper
+                      key={index}
+                      elevation={0}
+                      onClick={() => setSelectedImage(index)}
                       sx={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
+                        width: 80,
+                        height: 80,
+                        flexShrink: 0,
+                        cursor: 'pointer',
+                        border: 2,
+                        borderColor: selectedImage === index ? '#4f46e5' : '#e2e8f0',
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          borderColor: '#4f46e5',
+                        },
                       }}
-                    />
-                  </Paper>
-                ))}
+                    >
+                      <Box
+                        component="img"
+                        src={getImageUrl(thumbPath)}
+                        alt={`${product.name} ${index + 1}`}
+                        onError={(e: any) => {
+                          e.target.src = '/placeholder-product.png';
+                        }}
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    </Paper>
+                  )
+                })}
               </Box>
             )}
           </Box>
@@ -355,26 +390,20 @@ const ProductDetail = () => {
           {/* Product Info */}
           <Box>
             {/* Product Header */}
-            <Typography
-              variant="h4"
-              component="h1"
-              fontWeight={700}
-              gutterBottom
-              sx={{ color: "#0f172a" }}
-            >
+            <Typography variant="h4" component="h1" fontWeight={700} gutterBottom sx={{ color: '#0f172a' }}>
               {product.name}
             </Typography>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-              <StoreIcon sx={{ fontSize: 20, color: "#64748b" }} />
-              <Typography variant="body2" sx={{ color: "#64748b" }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <StoreIcon sx={{ fontSize: 20, color: '#64748b' }} />
+              <Typography variant="body2" sx={{ color: '#64748b' }}>
                 by {product.merchantName}
               </Typography>
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
               <Rating value={4} precision={0.5} readOnly size="small" />
-              <Typography variant="body2" sx={{ color: "#64748b" }}>
+              <Typography variant="body2" sx={{ color: '#64748b' }}>
                 (4.0) • 23 reviews
               </Typography>
             </Box>
@@ -382,11 +411,7 @@ const ProductDetail = () => {
             <Divider sx={{ my: 3 }} />
 
             {/* Price */}
-            <Typography
-              variant="h3"
-              sx={{ color: "#0f172a", fontWeight: 700 }}
-              gutterBottom
-            >
+            <Typography variant="h3" sx={{ color: '#0f172a', fontWeight: 700 }} gutterBottom>
               KES {product.price.toLocaleString()}
             </Typography>
 
@@ -407,20 +432,15 @@ const ProductDetail = () => {
 
             {/* Quantity Selector */}
             <Box sx={{ mb: 3 }}>
-              <Typography
-                variant="subtitle2"
-                gutterBottom
-                fontWeight={600}
-                sx={{ color: "#0f172a" }}
-              >
+              <Typography variant="subtitle2" gutterBottom fontWeight={600} sx={{ color: '#0f172a' }}>
                 Quantity:
               </Typography>
               <ButtonGroup
                 variant="outlined"
                 sx={{
                   mb: 2,
-                  "& .MuiButtonGroup-grouped": {
-                    borderColor: "#e2e8f0",
+                  '& .MuiButtonGroup-grouped': {
+                    borderColor: '#e2e8f0',
                   },
                 }}
               >
@@ -429,9 +449,9 @@ const ProductDetail = () => {
                   disabled={quantity <= 1}
                   size="large"
                   sx={{
-                    borderRadius: "8px 0 0 8px",
-                    "&:hover": {
-                      bgcolor: "#f1f5f9",
+                    borderRadius: '8px 0 0 8px',
+                    '&:hover': {
+                      bgcolor: '#f1f5f9',
                     },
                   }}
                 >
@@ -441,10 +461,10 @@ const ProductDetail = () => {
                   disabled
                   sx={{
                     minWidth: 60,
-                    fontSize: "1.1rem",
+                    fontSize: '1.1rem',
                     fontWeight: 600,
-                    color: "#0f172a",
-                    bgcolor: "white",
+                    color: '#0f172a',
+                    bgcolor: 'white',
                   }}
                 >
                   {quantity}
@@ -454,9 +474,9 @@ const ProductDetail = () => {
                   disabled={quantity >= (product.inventory?.quantity || 1)}
                   size="large"
                   sx={{
-                    borderRadius: "0 8px 8px 0",
-                    "&:hover": {
-                      bgcolor: "#f1f5f9",
+                    borderRadius: '0 8px 8px 0',
+                    '&:hover': {
+                      bgcolor: '#f1f5f9',
                     },
                   }}
                 >
@@ -475,28 +495,24 @@ const ProductDetail = () => {
                 disabled={isOutOfStock || isInCart}
                 sx={{
                   py: 1.5,
-                  fontSize: "1rem",
+                  fontSize: '1rem',
                   fontWeight: 600,
-                  textTransform: "none",
+                  textTransform: 'none',
                   borderRadius: 2,
-                  bgcolor: isInCart ? "#10b981" : "#667FEA",
-                  boxShadow: "none",
-                  "&:hover": {
-                    bgcolor: isInCart ? "#059669" : "#667FEA",
-                    boxShadow: "none",
+                  bgcolor: isInCart ? '#10b981' : '#5b21b6',
+                  boxShadow: 'none',
+                  '&:hover': {
+                    bgcolor: isInCart ? '#059669' : '#4c1d95',
+                    boxShadow: 'none',
                   },
-                  "&:disabled": {
-                    bgcolor: isInCart ? "#10b981" : "#e2e8f0",
-                    color: isInCart ? "white" : "#94a3b8",
+                  '&:disabled': {
+                    bgcolor: isInCart ? '#10b981' : '#e2e8f0',
+                    color: isInCart ? 'white' : '#94a3b8',
                     opacity: isInCart ? 1 : 0.6,
                   },
                 }}
               >
-                {isOutOfStock
-                  ? "Out of Stock"
-                  : isInCart
-                  ? "Added to Cart"
-                  : "Add to Cart"}
+                {isOutOfStock ? 'Out of Stock' : isInCart ? 'Added to Cart' : 'Add to Cart'}
               </Button>
               <Button
                 variant="outlined"
@@ -505,15 +521,15 @@ const ProductDetail = () => {
                 disabled={isOutOfStock}
                 sx={{
                   py: 1.5,
-                  fontSize: "1rem",
+                  fontSize: '1rem',
                   fontWeight: 600,
-                  textTransform: "none",
+                  textTransform: 'none',
                   borderRadius: 2,
-                  borderColor: "#e2e8f0",
-                  color: "#0f172a",
-                  "&:hover": {
-                    borderColor: "#667FEA",
-                    bgcolor: "rgba(79, 70, 229, 0.04)",
+                  borderColor: '#e2e8f0',
+                  color: '#0f172a',
+                  '&:hover': {
+                    borderColor: '#4f46e5',
+                    bgcolor: 'rgba(79, 70, 229, 0.04)',
                   },
                 }}
               >
@@ -525,34 +541,32 @@ const ProductDetail = () => {
             <Stack direction="row" spacing={1} sx={{ mb: 4 }}>
               <Button
                 variant="outlined"
-                startIcon={
-                  isFavorite ? <FavoriteIcon /> : <FavoriteBorderIcon />
-                }
+                startIcon={isFavorite ? <FavoriteIcon /> : <FavoriteBorderIcon />}
                 onClick={toggleFavorite}
                 sx={{
-                  textTransform: "none",
+                  textTransform: 'none',
                   borderRadius: 2,
-                  borderColor: "#e2e8f0",
-                  color: isFavorite ? "#ec4899" : "#64748b",
-                  "&:hover": {
-                    borderColor: "#ec4899",
-                    bgcolor: "rgba(236, 72, 153, 0.04)",
+                  borderColor: '#e2e8f0',
+                  color: isFavorite ? '#ec4899' : '#64748b',
+                  '&:hover': {
+                    borderColor: '#ec4899',
+                    bgcolor: 'rgba(236, 72, 153, 0.04)',
                   },
                 }}
               >
-                {isFavorite ? "Saved" : "Save"}
+                {isFavorite ? 'Saved' : 'Save'}
               </Button>
               <Button
                 variant="outlined"
                 startIcon={<ShareIcon />}
                 sx={{
-                  textTransform: "none",
+                  textTransform: 'none',
                   borderRadius: 2,
-                  borderColor: "#e2e8f0",
-                  color: "#64748b",
-                  "&:hover": {
-                    borderColor: "#667FEA",
-                    bgcolor: "rgba(79, 70, 229, 0.04)",
+                  borderColor: '#e2e8f0',
+                  color: '#64748b',
+                  '&:hover': {
+                    borderColor: '#4f46e5',
+                    bgcolor: 'rgba(79, 70, 229, 0.04)',
                   },
                 }}
               >
@@ -564,55 +578,43 @@ const ProductDetail = () => {
             <Paper
               elevation={0}
               sx={{
-                bgcolor: "#f9fafb",
+                bgcolor: '#f9fafb',
                 p: 2.5,
                 borderRadius: 2,
-                border: "1px solid",
-                borderColor: "#e2e8f0",
+                border: '1px solid',
+                borderColor: '#e2e8f0',
               }}
             >
               <Stack spacing={2}>
-                <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-                  <ShippingIcon sx={{ color: "#667FEA" }} />
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                  <ShippingIcon sx={{ color: '#4f46e5' }} />
                   <Box>
-                    <Typography
-                      variant="subtitle2"
-                      fontWeight={600}
-                      sx={{ color: "#0f172a" }}
-                    >
+                    <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#0f172a' }}>
                       Free Delivery
                     </Typography>
-                    <Typography variant="caption" sx={{ color: "#64748b" }}>
+                    <Typography variant="caption" sx={{ color: '#64748b' }}>
                       On orders over KES 5,000
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-                  <ReturnIcon sx={{ color: "#667FEA" }} />
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                  <ReturnIcon sx={{ color: '#4f46e5' }} />
                   <Box>
-                    <Typography
-                      variant="subtitle2"
-                      fontWeight={600}
-                      sx={{ color: "#0f172a" }}
-                    >
+                    <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#0f172a' }}>
                       30-Day Returns
                     </Typography>
-                    <Typography variant="caption" sx={{ color: "#64748b" }}>
+                    <Typography variant="caption" sx={{ color: '#64748b' }}>
                       Easy returns within 30 days
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-                  <WarrantyIcon sx={{ color: "#667FEA" }} />
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                  <WarrantyIcon sx={{ color: '#4f46e5' }} />
                   <Box>
-                    <Typography
-                      variant="subtitle2"
-                      fontWeight={600}
-                      sx={{ color: "#0f172a" }}
-                    >
+                    <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#0f172a' }}>
                       Warranty
                     </Typography>
-                    <Typography variant="caption" sx={{ color: "#64748b" }}>
+                    <Typography variant="caption" sx={{ color: '#64748b' }}>
                       1-year manufacturer warranty
                     </Typography>
                   </Box>
@@ -626,9 +628,9 @@ const ProductDetail = () => {
         <Paper
           elevation={0}
           sx={{
-            bgcolor: "white",
+            bgcolor: 'white',
             borderRadius: 3,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
           }}
         >
           <Tabs
@@ -636,18 +638,18 @@ const ProductDetail = () => {
             onChange={(_, newValue) => setActiveTab(newValue)}
             sx={{
               borderBottom: 1,
-              borderColor: "#e2e8f0",
+              borderColor: '#e2e8f0',
               px: 2,
-              "& .MuiTab-root": {
-                textTransform: "none",
+              '& .MuiTab-root': {
+                textTransform: 'none',
                 fontWeight: 600,
-                color: "#64748b",
-                "&.Mui-selected": {
-                  color: "#667FEA",
+                color: '#64748b',
+                '&.Mui-selected': {
+                  color: '#4f46e5',
                 },
               },
-              "& .MuiTabs-indicator": {
-                bgcolor: "#667FEA",
+              '& .MuiTabs-indicator': {
+                bgcolor: '#4f46e5',
               },
             }}
           >
@@ -658,26 +660,16 @@ const ProductDetail = () => {
 
           <Box sx={{ p: 3 }}>
             <TabPanel value={activeTab} index={0}>
-              <Typography
-                variant="h6"
-                fontWeight={600}
-                gutterBottom
-                sx={{ color: "#0f172a" }}
-              >
+              <Typography variant="h6" fontWeight={600} gutterBottom sx={{ color: '#0f172a' }}>
                 Product Description
               </Typography>
-              <Typography variant="body1" sx={{ color: "#64748b" }} paragraph>
+              <Typography variant="body1" sx={{ color: '#64748b' }} paragraph>
                 {product.description}
               </Typography>
 
               {product.tags && product.tags.length > 0 && (
                 <Box sx={{ mt: 3 }}>
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight={600}
-                    gutterBottom
-                    sx={{ color: "#0f172a" }}
-                  >
+                  <Typography variant="subtitle2" fontWeight={600} gutterBottom sx={{ color: '#0f172a' }}>
                     Tags:
                   </Typography>
                   <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
@@ -687,8 +679,8 @@ const ProductDetail = () => {
                         label={tag}
                         size="small"
                         sx={{
-                          bgcolor: "#eff6ff",
-                          color: "#3b82f6",
+                          bgcolor: '#eff6ff',
+                          color: '#3b82f6',
                           fontWeight: 600,
                         }}
                       />
@@ -699,83 +691,48 @@ const ProductDetail = () => {
             </TabPanel>
 
             <TabPanel value={activeTab} index={1}>
-              <Typography
-                variant="h6"
-                fontWeight={600}
-                gutterBottom
-                sx={{ color: "#0f172a" }}
-              >
+              <Typography variant="h6" fontWeight={600} gutterBottom sx={{ color: '#0f172a' }}>
                 Product Specifications
               </Typography>
               <Table>
                 <TableBody>
                   <TableRow>
-                    <TableCell
-                      sx={{ fontWeight: 600, width: "30%", color: "#0f172a" }}
-                    >
-                      SKU
-                    </TableCell>
-                    <TableCell sx={{ color: "#64748b" }}>
-                      {product.inventory?.sku || "N/A"}
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, width: '30%', color: '#0f172a' }}>SKU</TableCell>
+                    <TableCell sx={{ color: '#64748b' }}>{product.inventory?.sku || 'N/A'}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, color: "#0f172a" }}>
-                      Category
-                    </TableCell>
-                    <TableCell sx={{ color: "#64748b" }}>
-                      {product.category}
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#0f172a' }}>Category</TableCell>
+                    <TableCell sx={{ color: '#64748b' }}>{product.category}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, color: "#0f172a" }}>
-                      Merchant
-                    </TableCell>
-                    <TableCell sx={{ color: "#64748b" }}>
-                      {product.merchantName}
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#0f172a' }}>Merchant</TableCell>
+                    <TableCell sx={{ color: '#64748b' }}>{product.merchantName}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, color: "#0f172a" }}>
-                      Stock Status
-                    </TableCell>
-                    <TableCell sx={{ color: "#64748b" }}>
-                      {product.stockStatus || "In Stock"}
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#0f172a' }}>Stock Status</TableCell>
+                    <TableCell sx={{ color: '#64748b' }}>{product.stockStatus || 'In Stock'}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
             </TabPanel>
 
             <TabPanel value={activeTab} index={2}>
-              <Typography
-                variant="h6"
-                fontWeight={600}
-                gutterBottom
-                sx={{ color: "#0f172a" }}
-              >
+              <Typography variant="h6" fontWeight={600} gutterBottom sx={{ color: '#0f172a' }}>
                 Customer Reviews
               </Typography>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 3, mb: 3 }}
-              >
-                <Box sx={{ textAlign: "center" }}>
-                  <Typography
-                    variant="h2"
-                    fontWeight={700}
-                    sx={{ color: "#0f172a" }}
-                  >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 3 }}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h2" fontWeight={700} sx={{ color: '#0f172a' }}>
                     4.0
                   </Typography>
                   <Rating value={4} precision={0.5} readOnly />
-                  <Typography variant="caption" sx={{ color: "#64748b" }}>
+                  <Typography variant="caption" sx={{ color: '#64748b' }}>
                     Based on 23 reviews
                   </Typography>
                 </Box>
               </Box>
               <Alert severity="info" sx={{ borderRadius: 2 }}>
-                Reviews feature coming soon! Customers will be able to leave
-                feedback and ratings here.
+                Reviews feature coming soon! Customers will be able to leave feedback and ratings here.
               </Alert>
             </TabPanel>
           </Box>
