@@ -17,6 +17,8 @@ import {
   Visibility,
   VisibilityOff,
   LockOutlined as LockIcon,
+  Store as StoreIcon,
+  ArrowForward,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -74,9 +76,10 @@ const Login = () => {
         <Paper
           elevation={3}
           sx={{
-            p: 4,
+            p: { xs: 3, sm: 4 },
             width: '100%',
-            borderRadius: 2,
+            borderRadius: 3,
+            background: 'linear-gradient(to bottom, rgba(102, 127, 234, 0.02), rgba(255, 255, 255, 1))',
           }}
         >
           {/* Header */}
@@ -86,16 +89,23 @@ const Login = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 56,
-                height: 56,
+                width: 64,
+                height: 64,
                 borderRadius: '50%',
-                bgcolor: '#667FEA',
+                background: 'linear-gradient(135deg, #667FEA 0%, #667FEA 100%)',
                 mb: 2,
+                boxShadow: '0 8px 16px rgba(102, 127, 234, 0.3)',
               }}
             >
-              <LockIcon sx={{ color: 'white', fontSize: 28 }} />
+              <LockIcon sx={{ color: 'white', fontSize: 32 }} />
             </Box>
-            <Typography variant="h4" fontWeight={700} color="text.primary" gutterBottom>
+            <Typography 
+              variant="h4" 
+              fontWeight={700} 
+              color="text.primary" 
+              gutterBottom
+              sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}
+            >
               Welcome Back
             </Typography>
             <Typography variant="body1" color="text.secondary">
@@ -115,7 +125,14 @@ const Login = () => {
               required
               autoComplete="email"
               autoFocus
-              sx={{ mb: 2}}
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: '#667FEA',
+                  },
+                },
+              }}
             />
 
             <TextField
@@ -127,7 +144,14 @@ const Login = () => {
               onChange={handleChange}
               required
               autoComplete="current-password"
-              sx={{ mb: 3 }}
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: '#667FEA',
+                  },
+                },
+              }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -135,6 +159,7 @@ const Login = () => {
                       aria-label="toggle password visibility"
                       onClick={handleTogglePasswordVisibility}
                       edge="end"
+                      size="small"
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -143,13 +168,45 @@ const Login = () => {
               }}
             />
 
+            <Box sx={{ textAlign: 'right', mb: 2 }}>
+              <Link
+                component={RouterLink}
+                to="/forgot-password"
+                variant="body2"
+                underline="hover"
+                sx={{ 
+                  color: '#667FEA',
+                  fontWeight: 500,
+                  '&:hover': {
+                    color: '#5568D3',
+                  },
+                }}
+              >
+                Forgot password?
+              </Link>
+            </Box>
+
             <Button
               type="submit"
               fullWidth
               variant="contained"
               size="large"
               disabled={loading}
-              sx={{ mb: 2, bgcolor: "#667FEA" }}
+              sx={{ 
+                mb: 2,
+                py: 1.5,
+                background: 'linear-gradient(135deg, #667FEA 0%, #667FEA 100%)',
+                boxShadow: '0 4px 12px rgba(102, 127, 234, 0.4)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5568D3 0%, #667FEA 100%)',
+                  boxShadow: '0 6px 16px rgba(102, 127, 234, 0.5)',
+                },
+                '&:disabled': {
+                  background: 'rgba(0, 0, 0, 0.12)',
+                },
+                fontWeight: 600,
+                fontSize: '1rem',
+              }}
             >
               {loading ? (
                 <CircularProgress size={24} color="inherit" />
@@ -157,18 +214,6 @@ const Login = () => {
                 'Sign In'
               )}
             </Button>
-
-            <Box sx={{ textAlign: 'center' }}>
-              <Link
-                component={RouterLink}
-                to="/forgot-password"
-                variant="body2"
-                underline="hover"
-                color="#667FEA"
-              >
-                Forgot password?
-              </Link>
-            </Box>
           </Box>
 
           {/* Divider */}
@@ -184,10 +229,60 @@ const Login = () => {
               to="/register"
               variant="outlined"
               fullWidth
-              sx={{ borderColor: '#667FEA', color: '#667FEA' }}
+              sx={{ 
+                borderColor: '#667FEA', 
+                color: '#667FEA',
+                '&:hover': {
+                  borderColor: '#5568D3',
+                  backgroundColor: 'rgba(102, 127, 234, 0.04)',
+                },
+                fontWeight: 600,
+              }}
             >
               Create Account
             </Button>
+          </Box>
+
+          {/* Merchant CTA */}
+          <Box
+            sx={{
+              mt: 3,
+              p: 3,
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, rgba(102, 127, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+              border: '1px solid rgba(102, 127, 234, 0.2)',
+              textAlign: 'center',
+              transition: 'all 0.3s ease',
+              cursor: 'pointer',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 20px rgba(102, 127, 234, 0.2)',
+                background: 'linear-gradient(135deg, rgba(102, 127, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)',
+              },
+            }}
+            onClick={() => window.open('https://paya-marketplace-merchant.netlify.app/', '_blank')}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
+              <StoreIcon sx={{ fontSize: 28, color: '#667FEA', mr: 1 }} />
+              <Typography variant="h6" fontWeight={700} color="#667FEA">
+                Want to Sell Items?
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Become a merchant and start selling on Paya Marketplace
+            </Typography>
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                color: '#667FEA',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+              }}
+            >
+              Join as a Merchant
+              <ArrowForward sx={{ ml: 1, fontSize: 18 }} />
+            </Box>
           </Box>
         </Paper>
       </Box>
