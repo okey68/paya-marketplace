@@ -25,6 +25,7 @@ import {
 import {
   CheckCircle as CheckIcon,
   ArrowBack as ArrowBackIcon,
+  ShoppingBag,
 } from "@mui/icons-material";
 import api from "../utils/api";
 import toast from "react-hot-toast";
@@ -33,9 +34,8 @@ const steps = [
   "Personal Info",
   "OTP Verification",
   "Shipping",
-  "Decision",
-  "BNPL Agreement",
-  "Complete",
+  "Income & Pay Slip",
+  // "Complete",
 ];
 
 const Checkout = () => {
@@ -79,6 +79,18 @@ const Checkout = () => {
 
   // OTP state
   const [otp, setOtp] = useState("");
+
+  // Pay slip state
+  const [paySlip, setPaySlip] = useState<File | null>(null);
+  const [monthlyIncome, setMonthlyIncome] = useState("");
+  const [monthlyDebt, setMonthlyDebt] = useState("");
+  const [incomeConfirmed, setIncomeConfirmed] = useState(false);
+
+  // Decision flow state
+  const [showDecision, setShowDecision] = useState(false);
+  const [showApproval, setShowApproval] = useState(false);
+  const [showAgreement, setShowAgreement] = useState(false);
+  const [showCompletion, setShowCompletion] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -260,10 +272,54 @@ const Checkout = () => {
       return;
     }
 
+    setCurrentStep(3); // Move to Pay Slip step
+  };
+
+  const handlePaySlipSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!paySlip) {
+      toast.error("Please upload your pay slip");
+      return;
+    }
+
+    if (!monthlyIncome || parseFloat(monthlyIncome) <= 0) {
+      toast.error("Please enter a valid monthly income");
+      return;
+    }
+
+    if (!monthlyDebt || parseFloat(monthlyDebt) < 0) {
+      toast.error("Please enter a valid monthly debt amount");
+      return;
+    }
+
+    if (!incomeConfirmed) {
+      toast.error("Please confirm that your income information is correct");
+      return;
+    }
+
     setLoading(true);
-    setCurrentStep(3); // Move to Decision step (adjusted for OTP step)
 
     try {
+      // Upload pay slip
+      const formData = new FormData();
+      formData.append("email", personalInfo.companyEmail);
+      formData.append("monthlyIncome", monthlyIncome);
+      formData.append("monthlyDebt", monthlyDebt);
+      formData.append("payslip", paySlip);
+
+      await api.post("/underwriting/upload-financial-info", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      toast.success("Financial information uploaded successfully");
+
+      // Only proceed to decision if upload was successful
+      setShowDecision(true);
+
+      // Create order
       const orderData = {
         items: items.map((item: any) => ({
           product: item.id,
@@ -344,7 +400,7 @@ const Checkout = () => {
               maxLoanAmount: 0,
             });
             setLoading(false);
-            setCurrentStep(3); // Stay on Decision step
+            setShowDecision(false);
             return;
           }
 
@@ -394,7 +450,8 @@ const Checkout = () => {
               },
             });
             setLoading(false);
-            setCurrentStep(4); // Move to BNPL Agreement step
+            setShowDecision(false);
+            setShowApproval(true); // Show approval screen
           } else {
             // Application rejected
             console.log(
@@ -434,7 +491,7 @@ const Checkout = () => {
               rejectionResponse.data
             );
             setLoading(false);
-            setCurrentStep(3); // Stay on Decision step to show rejection
+            setShowDecision(false); // Hide decision processing
           }
         } catch (error: any) {
           console.error("Error during underwriting:", error);
@@ -446,10 +503,14 @@ const Checkout = () => {
           );
         }
       }, 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating order:", error);
       setLoading(false);
-      toast.error("Failed to process application. Please try again.");
+      setShowDecision(false);
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to process application. Please try again."
+      );
     }
   };
 
@@ -488,8 +549,9 @@ const Checkout = () => {
         shippingAddress,
       });
 
-      clearCart();
-      setCurrentStep(6); // Move to Complete step
+      // Show completion screen first - don't clear cart yet
+      setShowAgreement(false);
+      setShowCompletion(true); // Show completion screen within step 3
       localStorage.removeItem("currentOrderId");
       localStorage.removeItem("currentOrderNumber");
     } catch (error) {
@@ -1074,7 +1136,193 @@ const Checkout = () => {
           size="large"
           sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#667FEA" }}
         >
-          Submit Application
+          Continue to Income Verification
+        </Button>
+      </Box>
+    </Box>
+  );
+
+  const renderPaySlipStep = () => (
+    <Box component="form" onSubmit={handlePaySlipSubmit}>
+      <Box sx={{ mb: 4 }}>
+        <Box
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 1.5,
+            mb: 2,
+            px: 2,
+            py: 1,
+            bgcolor: "primary.50",
+            borderRadius: 2,
+          }}
+        >
+          <Box
+            sx={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              bgcolor: "#667FEA",
+            }}
+          />
+          <Typography
+            variant="caption"
+            fontWeight={600}
+            sx={{
+              color: "#667FEA",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
+          >
+            Step 4 of 5
+          </Typography>
+        </Box>
+        <Typography
+          variant="h5"
+          fontWeight={700}
+          gutterBottom
+          sx={{ fontSize: { xs: "1.5rem", sm: "1.75rem" } }}
+        >
+          Income Verification
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Upload your pay slip and confirm your financial information
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
+          mb: 3,
+          p: 3,
+          border: "2px dashed",
+          borderColor: paySlip ? "success.main" : "grey.300",
+          borderRadius: 2,
+          bgcolor: paySlip ? "success.50" : "grey.50",
+          textAlign: "center",
+          cursor: "pointer",
+          transition: "all 0.2s",
+          "&:hover": {
+            borderColor: "#667FEA",
+            bgcolor: "primary.50",
+          },
+        }}
+        onClick={() => document.getElementById("payslip-upload")?.click()}
+      >
+        <input
+          id="payslip-upload"
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            if (e.target.files && e.target.files[0]) {
+              setPaySlip(e.target.files[0]);
+              toast.success("Pay slip uploaded successfully");
+            }
+          }}
+        />
+        {paySlip ? (
+          <Box>
+            <Typography sx={{ fontSize: "3rem", mb: 1 }}>✅</Typography>
+            <Typography variant="body1" fontWeight={600} color="success.main">
+              {paySlip.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Click to change file
+            </Typography>
+          </Box>
+        ) : (
+          <Box>
+            <Typography sx={{ fontSize: "3rem", mb: 1 }}>📄</Typography>
+            <Typography variant="body1" fontWeight={600} gutterBottom>
+              Upload Your Pay Slip
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Click to select a file (PDF, JPG, or PNG)
+            </Typography>
+          </Box>
+        )}
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <TextField
+          label="Monthly Income (KES)"
+          required
+          fullWidth
+          type="number"
+          placeholder="50000"
+          value={monthlyIncome}
+          onChange={(e) => setMonthlyIncome(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">KES</InputAdornment>
+            ),
+          }}
+          helperText="Enter your gross monthly income"
+        />
+        <TextField
+          label="Monthly Debt Obligations (KES)"
+          required
+          fullWidth
+          type="number"
+          placeholder="10000"
+          value={monthlyDebt}
+          onChange={(e) => setMonthlyDebt(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">KES</InputAdornment>
+            ),
+          }}
+          helperText="Total monthly loan/credit payments"
+        />
+      </Box>
+
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={incomeConfirmed}
+            onChange={(e) => setIncomeConfirmed(e.target.checked)}
+            sx={{ color: "#667FEA" }}
+          />
+        }
+        label="I confirm that the income information I have entered is accurate and true"
+        sx={{ mb: 4 }}
+      />
+
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          justifyContent: "space-between",
+          flexDirection: { xs: "column", sm: "row" },
+        }}
+      >
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={() => setCurrentStep(2)}
+          sx={{
+            width: { xs: "100%", sm: "auto" },
+            borderColor: "#667FEA",
+            color: "#667FEA",
+          }}
+        >
+          Back
+        </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          size="large"
+          disabled={loading}
+          sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#667FEA" }}
+        >
+          {loading ? "Processing..." : "Submit for Decision"}
         </Button>
       </Box>
     </Box>
@@ -1115,14 +1363,14 @@ const Checkout = () => {
   };
 
   const renderApprovedStep = () => (
-    <Box>
+    <Box sx={{ width: "100%", mx: "auto" }}>
       <Box
         sx={{
           textAlign: "center",
           mb: 4,
           p: 4,
           borderRadius: 3,
-          background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+          background: "linear-gradient(135deg, #667eea15 0%, #667FEA15 100%)",
           border: "2px solid",
           borderColor: "#667FEA",
         }}
@@ -1132,16 +1380,17 @@ const Checkout = () => {
             width: 80,
             height: 80,
             borderRadius: "50%",
-            bgcolor: "success.main",
+            bgcolor: "#50C878	",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             mx: "auto",
             mb: 3,
-            boxShadow: "0 8px 24px rgba(76, 175, 80, 0.3)",
+            boxShadow: "0 8px 24px rgba(130, 243, 134, 0.3)",
           }}
         >
-          <Typography sx={{ fontSize: "3rem" }}>🎉</Typography>
+          {/* <Typography sx={{ fontSize: "3rem" }}></Typography> */}
+          <CheckIcon sx={{ fontSize: "3rem", color: "white" }} />
         </Box>
         <Typography
           variant="h4"
@@ -1149,7 +1398,7 @@ const Checkout = () => {
           gutterBottom
           sx={{
             fontSize: { xs: "1.75rem", sm: "2.125rem" },
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: "linear-gradient(135deg, #667eea 0%, #667FEA 100%)",
             backgroundClip: "text",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -1264,9 +1513,11 @@ const Checkout = () => {
       <Box sx={{ display: "flex", justifyContent: "center" }}>
         <Button
           variant="contained"
-          // color="primary"
           size="large"
-          onClick={() => setCurrentStep(5)}
+          onClick={() => {
+            setShowApproval(false);
+            setShowAgreement(true);
+          }}
           sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#667FEA" }}
         >
           Accept Terms & Continue
@@ -1277,9 +1528,51 @@ const Checkout = () => {
 
   const renderAgreementStep = () => (
     <Box>
-      <Typography variant="h5" fontWeight={700} gutterBottom>
-        BNPL Agreement
-      </Typography>
+      <Box sx={{ mb: 4 }}>
+        <Box
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 1.5,
+            mb: 2,
+            px: 2,
+            py: 1,
+            bgcolor: "primary.50",
+            borderRadius: 2,
+          }}
+        >
+          <Box
+            sx={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              bgcolor: "#667FEA",
+            }}
+          />
+          <Typography
+            variant="caption"
+            fontWeight={600}
+            sx={{
+              color: "#667FEA",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
+          >
+            Agreement Terms
+          </Typography>
+        </Box>
+        <Typography
+          variant="h5"
+          fontWeight={700}
+          gutterBottom
+          sx={{ fontSize: { xs: "1.5rem", sm: "1.75rem" } }}
+        >
+          BNPL Agreement
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Please review and accept the terms and conditions
+        </Typography>
+      </Box>
 
       <Paper
         elevation={0}
@@ -1355,11 +1648,16 @@ const Checkout = () => {
           <Checkbox
             checked={agreementAccepted}
             onChange={(e) => setAgreementAccepted(e.target.checked)}
-            sx={{ color: "#667FEA" }}
+            sx={{
+              color: "#667FEA",
+              "&.Mui-checked": {
+                color: "#667FEA",
+              },
+            }}
           />
         }
         label="I have read and agree to the terms and conditions of this BNPL agreement"
-        sx={{ mb: 3 }}
+        sx={{ mb: 4 }}
       />
 
       <Box
@@ -1373,24 +1671,38 @@ const Checkout = () => {
         <Button
           variant="outlined"
           startIcon={<ArrowBackIcon />}
-          onClick={() => setCurrentStep(4)}
+          onClick={() => {
+            setShowAgreement(false);
+            setShowApproval(true);
+          }}
           sx={{
             width: { xs: "100%", sm: "auto" },
             borderColor: "#667FEA",
             color: "#667FEA",
+            borderWidth: 2,
+            "&:hover": {
+              borderWidth: 2,
+              borderColor: "#667FEA",
+            },
           }}
         >
-          Back to Terms
+          Back to Payment Plan
         </Button>
         <Button
           variant="contained"
-          // color="primary"
           size="large"
           onClick={handleAgreementSubmit}
           disabled={!agreementAccepted || loading}
-          sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#667FEA" }}
+          sx={{
+            width: { xs: "100%", sm: "auto" },
+            bgcolor: "#667FEA",
+            boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
+            "&:hover": {
+              boxShadow: "0 6px 16px rgba(102, 126, 234, 0.5)",
+            },
+          }}
         >
-          {loading ? "Processing..." : "Complete Order"}
+          {loading ? "Processing..." : "I Agree - Complete Order"}
         </Button>
       </Box>
     </Box>
@@ -1409,7 +1721,7 @@ const Checkout = () => {
             width: 80,
             height: 80,
             borderRadius: "50%",
-            bgcolor: "success.main",
+            bgcolor: "#50C878	",
             display: "grid",
             placeItems: "center",
             mx: "auto",
@@ -1417,7 +1729,8 @@ const Checkout = () => {
             boxShadow: "0 8px 24px rgba(76, 175, 80, 0.3)",
           }}
         >
-          <CheckIcon sx={{ fontSize: "3rem", color: "white" }} />
+          {/* <CheckIcon sx={{ fontSize: "3rem", color: "white" }} /> */}
+          <ShoppingBag sx={{ fontSize: "3rem", color: "white" }} />
         </Box>
         <Typography
           variant="h4"
@@ -1425,7 +1738,7 @@ const Checkout = () => {
           gutterBottom
           sx={{
             fontSize: { xs: "1.75rem", sm: "2.125rem" },
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: "linear-gradient(135deg, #667eea 0%, #667FEA 100%)",
             backgroundClip: "text",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -1826,7 +2139,10 @@ const Checkout = () => {
           variant="contained"
           // color="primary"
           size="large"
-          onClick={() => navigate("/marketplace")}
+          onClick={() => {
+            clearCart();
+            navigate("/marketplace");
+          }}
           sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#667FEA" }}
         >
           Back to Shop
@@ -2023,7 +2339,7 @@ const Checkout = () => {
         pt: { xs: 3, sm: 4 },
         pb: 8,
         px: { xs: 2, sm: 3 },
-        marginTop: "-50px",
+        marginTop: "-70px",
       }}
     >
       {/* Header with Back Button */}
@@ -2070,10 +2386,10 @@ const Checkout = () => {
       {/* Desktop Stepper */}
       <Box sx={{ mb: 5, display: { xs: "none", sm: "block" } }}>
         <Stepper
-          activeStep={currentStep}
+          activeStep={showCompletion ? 4 : currentStep}
           sx={{
             "& .MuiStepLabel-root .Mui-completed": {
-              color: "success.main",
+              color: "#50C878",
             },
             "& .MuiStepLabel-root .Mui-active": {
               color: "#667FEA",
@@ -2084,8 +2400,11 @@ const Checkout = () => {
             },
           }}
         >
-          {steps.map((label) => (
-            <Step key={label}>
+          {steps.map((label, index) => (
+            <Step
+              key={label}
+              completed={index < 4 || (showCompletion && index === 3)}
+            >
               <StepLabel>{label}</StepLabel>
             </Step>
           ))}
@@ -2106,14 +2425,17 @@ const Checkout = () => {
       >
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Typography variant="caption" color="text.secondary" fontWeight={600}>
-            STEP {currentStep + 1} OF {steps.length}
+            STEP {showCompletion ? 5 : currentStep + 1} OF {steps.length}
           </Typography>
           <Typography variant="caption" color="#667FEA" fontWeight={600}>
-            {Math.round(((currentStep + 1) / steps.length) * 100)}%
+            {showCompletion
+              ? 100
+              : Math.round(((currentStep + 1) / steps.length) * 100)}
+            %
           </Typography>
         </Box>
         <Typography variant="body2" fontWeight={700} sx={{ mb: 1.5 }}>
-          {steps[currentStep]}
+          {showCompletion ? steps[4] : steps[currentStep]}
         </Typography>
         <Box
           sx={{
@@ -2126,7 +2448,9 @@ const Checkout = () => {
           <Box
             sx={{
               height: "100%",
-              width: `${((currentStep + 1) / steps.length) * 100}%`,
+              width: `${
+                showCompletion ? 100 : ((currentStep + 1) / steps.length) * 100
+              }%`,
               bgcolor: "#667FEA",
               transition: "width 0.3s ease",
             }}
@@ -2134,11 +2458,17 @@ const Checkout = () => {
         </Box>
       </Box>
 
-      {currentStep < 6 && (
+      {currentStep < 4 && (
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "2fr 1fr" },
+            gridTemplateColumns: {
+              xs: "1fr",
+              md:
+                showDecision || showApproval || showAgreement || showCompletion
+                  ? "1fr"
+                  : "2fr 1fr",
+            },
             gap: 3,
           }}
         >
@@ -2160,134 +2490,148 @@ const Checkout = () => {
             {currentStep === 0 && renderPersonalInfoStep()}
             {currentStep === 1 && renderOtpStep()}
             {currentStep === 2 && renderShippingStep()}
-            {currentStep === 3 && renderUnderwritingStep()}
-            {currentStep === 4 && renderApprovedStep()}
-            {currentStep === 5 && renderAgreementStep()}
+            {currentStep === 3 && (
+              <>
+                {!showDecision &&
+                  !showApproval &&
+                  !showAgreement &&
+                  !showCompletion &&
+                  renderPaySlipStep()}
+                {showDecision && renderUnderwritingStep()}
+                {showApproval && renderApprovedStep()}
+                {showAgreement && renderAgreementStep()}
+                {showCompletion && renderCompletedStep()}
+              </>
+            )}
           </Paper>
 
-          {currentStep < 5 && (
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 3, sm: 3.5 },
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 2,
-                height: "fit-content",
-                position: { xs: "relative", md: "sticky" },
-                top: { xs: 0, md: 100 },
-                order: { xs: -1, md: 0 },
-                bgcolor: "grey.50",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-              }}
-            >
-              <Typography
-                variant="h6"
-                fontWeight={700}
+          {currentStep < 4 &&
+            !showDecision &&
+            !showApproval &&
+            !showAgreement &&
+            !showCompletion && (
+              <Paper
+                elevation={0}
                 sx={{
-                  mb: 3,
-                  fontSize: "1.125rem",
-                  color: "#667FEA",
+                  p: { xs: 3, sm: 3.5 },
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  height: "fit-content",
+                  position: { xs: "relative", md: "sticky" },
+                  top: { xs: 0, md: 100 },
+                  order: { xs: -1, md: 0 },
+                  bgcolor: "grey.50",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
                 }}
               >
-                Order Summary
-              </Typography>
-              <Box sx={{ mb: 3 }}>
-                {items.map((item: any, index: number) => (
-                  <Box
-                    key={item.id}
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "start",
-                      py: 1.5,
-                      gap: 2,
-                      borderBottom:
-                        index < items.length - 1 ? "1px solid" : "none",
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant="h6"
+                  fontWeight={700}
+                  sx={{
+                    mb: 3,
+                    fontSize: "1.125rem",
+                    color: "#667FEA",
+                  }}
+                >
+                  Order Summary
+                </Typography>
+                <Box sx={{ mb: 3 }}>
+                  {items.map((item: any, index: number) => (
+                    <Box
+                      key={item.id}
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "start",
+                        py: 1.5,
+                        gap: 2,
+                        borderBottom:
+                          index < items.length - 1 ? "1px solid" : "none",
+                        borderColor: "divider",
+                      }}
+                    >
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography
+                          variant="body2"
+                          fontWeight={500}
+                          sx={{ mb: 0.25, lineHeight: 1.4 }}
+                        >
+                          {item.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Quantity: {item.quantity}
+                        </Typography>
+                      </Box>
                       <Typography
                         variant="body2"
-                        fontWeight={500}
-                        sx={{ mb: 0.25, lineHeight: 1.4 }}
+                        fontWeight={600}
+                        sx={{ whiteSpace: "nowrap", color: "#667FEA" }}
                       >
-                        {item.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Quantity: {item.quantity}
+                        {formatCurrency(item.price * item.quantity)}
                       </Typography>
                     </Box>
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      sx={{ whiteSpace: "nowrap", color: "#667FEA" }}
-                    >
-                      {formatCurrency(item.price * item.quantity)}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-              <Box
-                sx={{
-                  pt: 2.5,
-                  borderTop: "1px solid",
-                  borderColor: "divider",
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 1.5,
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    Subtotal
-                  </Typography>
-                  <Typography variant="body2" fontWeight={500}>
-                    {formatCurrency(getSubtotal())}
-                  </Typography>
+                  ))}
                 </Box>
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 2.5,
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    Interest ({bnplTerms.interestRate}%)
-                  </Typography>
-                  <Typography variant="body2" fontWeight={500}>
-                    {formatCurrency(bnplTerms.totalAmount - getSubtotal())}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
                     pt: 2.5,
-                    borderTop: "2px solid",
+                    borderTop: "1px solid",
                     borderColor: "divider",
                   }}
                 >
-                  <Typography variant="h6" fontWeight={700}>
-                    Total
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700} color="#667FEA">
-                    {formatCurrency(bnplTerms.totalAmount)}
-                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      mb: 1.5,
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      Subtotal
+                    </Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                      {formatCurrency(getSubtotal())}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      mb: 2.5,
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      Interest ({bnplTerms.interestRate}%)
+                    </Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                      {formatCurrency(bnplTerms.totalAmount - getSubtotal())}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      pt: 2.5,
+                      borderTop: "2px solid",
+                      borderColor: "divider",
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight={700}>
+                      Total
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700} color="#667FEA">
+                      {formatCurrency(bnplTerms.totalAmount)}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </Paper>
-          )}
+              </Paper>
+            )}
         </Box>
       )}
 
-      {currentStep === 6 && (
+      {currentStep === 4 && (
         <Paper
           elevation={0}
           sx={{

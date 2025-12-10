@@ -1,51 +1,21 @@
 const multer = require('multer');
-const { GridFsStorage } = require('multer-gridfs-storage');
 const path = require('path');
+const fs = require('fs');
 
-// MongoDB connection URI
-const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://okey68_db_user:6PyTMOIkvsQF5cRh@college.gd8jyma.mongodb.net/paya-marketplace?retryWrites=true&w=majority';
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
-// Create storage engine for business documents
-const businessDocStorage = new GridFsStorage({
-  url: mongoURI,
-  file: (req, file) => {
-    return new Promise((resolve, reject) => {
-      const filename = `${Date.now()}-${file.originalname}`;
-      const fileInfo = {
-        filename: filename,
-        bucketName: 'uploads',
-        metadata: {
-          originalName: file.originalname,
-          uploadedBy: req.user?.userId || 'unknown',
-          uploadDate: new Date(),
-          fileType: 'business-document',
-          documentType: req.body.documentType || 'general'
-        }
-      };
-      resolve(fileInfo);
-    });
-  }
-});
-
-// Create storage engine for product images
-const productImageStorage = new GridFsStorage({
-  url: mongoURI,
-  file: (req, file) => {
-    return new Promise((resolve, reject) => {
-      const filename = `${Date.now()}-${file.originalname}`;
-      const fileInfo = {
-        filename: filename,
-        bucketName: 'uploads',
-        metadata: {
-          originalName: file.originalname,
-          uploadedBy: req.user?.userId || 'unknown',
-          uploadDate: new Date(),
-          fileType: 'product-image',
-          productId: req.body.productId || null
-        }
-      };
-      resolve(fileInfo);
-    });
+// Disk storage for payslip documents
+const payslipDiskStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'payslip-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 
@@ -75,25 +45,15 @@ const imageFileFilter = (req, file, cb) => {
   }
 };
 
-// Configure multer for business documents
-const uploadBusinessDoc = multer({
-  storage: businessDocStorage,
+// Configure multer for payslip uploads
+const uploadPayslip = multer({
+  storage: payslipDiskStorage,
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
   fileFilter: documentFileFilter
 });
 
-// Configure multer for product images
-const uploadProductImage = multer({
-  storage: productImageStorage,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  },
-  fileFilter: imageFileFilter
-});
-
 module.exports = {
-  uploadBusinessDoc,
-  uploadProductImage
+  uploadPayslip
 };

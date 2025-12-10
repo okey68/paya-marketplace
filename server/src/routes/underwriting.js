@@ -1,11 +1,73 @@
 const express = require('express');
 const router = express.Router();
 const UnderwritingModel = require('../models/UnderwritingModel');
+const User = require('../models/User');
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const { uploadPayslip } = require('../config/multer');
+const { body, validationResult } = require('express-validator');
 
 // Middleware aliases
 const protect = authenticateToken;
 const adminOnly = requireRole('admin');
+
+// Upload payslip and financial information
+router.post('/upload-financial-info', uploadPayslip.single('payslip'), [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('monthlyIncome').isNumeric().withMessage('Monthly income must be a number'),
+  body('monthlyDebt').isNumeric().withMessage('Monthly debt must be a number')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        message: 'Validation errors',
+        errors: errors.array()
+      });
+    }
+
+    const { email, monthlyIncome, monthlyDebt } = req.body;
+
+    // Find user by email
+    let user = await User.findOne({ email, isActive: true });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found. Please complete customer information first.' });
+    }
+
+    // Update employment and financial information
+    user.employmentInfo = user.employmentInfo || {};
+    user.employmentInfo.monthlyIncome = parseFloat(monthlyIncome);
+
+    user.financialInfo = user.financialInfo || {};
+    user.financialInfo.monthlyDebt = parseFloat(monthlyDebt);
+    user.financialInfo.otherObligations = parseFloat(monthlyDebt); // Use debt as other obligations
+
+    // Store payslip information if file was uploaded
+    if (req.file) {
+      user.financialInfo.payslip = {
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        uploadDate: new Date(),
+        path: req.file.path
+      };
+    }
+
+    await user.save();
+
+    res.json({
+      message: 'Financial information uploaded successfully',
+      financialInfo: {
+        monthlyIncome: user.employmentInfo.monthlyIncome,
+        monthlyDebt: user.financialInfo.monthlyDebt,
+        payslipUploaded: !!req.file,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.error('Error uploading financial information:', error);
+    res.status(500).json({ message: 'Error uploading financial information', error: error.message });
+  }
+});
 
 // Get active underwriting model
 router.get('/model', protect, adminOnly, async (req, res) => {
@@ -66,7 +128,7 @@ router.put('/model', protect, adminOnly, async (req, res) => {
 // Test applicant against model (public endpoint for BNPL checkout)
 router.post('/model/test', async (req, res) => {
   try {
-    const { applicant, loanAmount } = req.body;
+    const { applicant, loanAmount, email } = req.body;
     
     // Get active model
     const model = await UnderwritingModel.findOne({ isActive: true });
@@ -74,9 +136,40 @@ router.post('/model/test', async (req, res) => {
     if (!model) {
       return res.status(404).json({ message: 'No active underwriting model found' });
     }
+
+    // If email is provided, fetch user data to enrich applicant info
+    let enrichedApplicant = { ...applicant };
+    
+    if (email) {
+      const user = await User.findOne({ email, isActive: true });
+      
+      if (user) {
+        // Use user's stored financial information
+        enrichedApplicant = {
+          ...enrichedApplicant,
+          income: user.employmentInfo?.monthlyIncome || applicant.income,
+          yearsEmployed: user.employmentInfo?.yearsEmployed || applicant.yearsEmployed || 1,
+          creditScore: user.financialInfo?.creditScore || applicant.creditScore || 650,
+          defaults: user.financialInfo?.defaultCount || applicant.defaults || 0,
+          otherObligations: user.financialInfo?.monthlyDebt || user.financialInfo?.otherObligations || applicant.otherObligations || 0
+        };
+
+        // Calculate age from dateOfBirth if available
+        if (user.dateOfBirth) {
+          const today = new Date();
+          const birthDate = new Date(user.dateOfBirth);
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          enrichedApplicant.age = age;
+        }
+      }
+    }
     
     // Evaluate applicant (pass loan amount for income ratio check)
-    const evaluation = model.evaluateApplicant(applicant, loanAmount);
+    const evaluation = model.evaluateApplicant(enrichedApplicant, loanAmount);
     
     // Calculate loan details if approved
     let loanDetails = null;
@@ -88,7 +181,8 @@ router.post('/model/test', async (req, res) => {
       evaluation,
       loanDetails,
       modelVersion: model.version,
-      thresholds: model.metrics
+      thresholds: model.metrics,
+      applicantData: enrichedApplicant // Return enriched data for transparency
     });
   } catch (error) {
     console.error('Error testing applicant:', error);

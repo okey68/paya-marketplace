@@ -84,7 +84,14 @@ const userSchema = new mongoose.Schema({
     creditScore: { type: Number },
     hasDefaults: { type: Boolean, default: false },
     defaultCount: { type: Number, default: 0 },
-    otherObligations: { type: Number, default: 0 }
+    otherObligations: { type: Number, default: 0 },
+    monthlyDebt: { type: Number, default: 0 },
+    payslip: {
+      filename: { type: String },
+      originalName: { type: String },
+      uploadDate: { type: Date },
+      path: { type: String }
+    }
   },
   
   // Account Status
