@@ -575,7 +575,7 @@ class SlackService {
   // BNPL Application Approved Notification
   async notifyBNPLApproval(order) {
     const orderUrl = `${this.adminPortalUrl}/orders/${order._id}`;
-    
+
     const message = {
       text: '✅ BNPL Application Approved',
       blocks: [
@@ -626,6 +626,331 @@ class SlackService {
                 emoji: true
               },
               url: orderUrl,
+              style: 'primary'
+            }
+          ]
+        }
+      ]
+    };
+
+    await this.sendNotification(message);
+  }
+
+  // HR Verification Created Notification
+  async notifyHRVerificationCreated(verification, order, company) {
+    const verificationUrl = `${this.adminPortalUrl}/hr-verifications/${verification._id}`;
+
+    const message = {
+      text: '📋 HR Verification Initiated',
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: '📋 HR Verification Initiated',
+            emoji: true
+          }
+        },
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `*Order Number:*\n${order.orderNumber}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Customer:*\n${verification.customerSnapshot?.firstName} ${verification.customerSnapshot?.lastName}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Company:*\n${company.companyName}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*HR Contact:*\n${verification.hrContactSnapshot?.email}`
+            }
+          ]
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: '📧 *Verification email will be sent to HR shortly*'
+          }
+        },
+        {
+          type: 'actions',
+          elements: [
+            {
+              type: 'button',
+              text: {
+                type: 'plain_text',
+                text: 'View Verification',
+                emoji: true
+              },
+              url: verificationUrl,
+              style: 'primary'
+            }
+          ]
+        }
+      ]
+    };
+
+    await this.sendNotification(message);
+  }
+
+  // HR Verification Email Sent Notification
+  async notifyHRVerificationSent(verification) {
+    const verificationUrl = `${this.adminPortalUrl}/hr-verifications/${verification._id}`;
+
+    const message = {
+      text: '📧 HR Verification Email Sent',
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: '📧 HR Verification Email Sent',
+            emoji: true
+          }
+        },
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `*Order Number:*\n${verification.order?.orderNumber || 'N/A'}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Customer:*\n${verification.customerSnapshot?.firstName} ${verification.customerSnapshot?.lastName}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Sent To:*\n${verification.hrContactSnapshot?.email}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Deadline:*\n${verification.responseDeadline ? new Date(verification.responseDeadline).toLocaleDateString('en-KE') : 'N/A'}`
+            }
+          ]
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: '⏳ *Awaiting HR response. Will escalate if no response within deadline.*'
+          }
+        },
+        {
+          type: 'actions',
+          elements: [
+            {
+              type: 'button',
+              text: {
+                type: 'plain_text',
+                text: 'View Verification',
+                emoji: true
+              },
+              url: verificationUrl,
+              style: 'primary'
+            }
+          ]
+        }
+      ]
+    };
+
+    await this.sendNotification(message);
+  }
+
+  // HR Verification Completed Notification
+  async notifyHRVerificationCompleted(verification, isVerified, reason = null) {
+    const verificationUrl = `${this.adminPortalUrl}/hr-verifications/${verification._id}`;
+    const emoji = isVerified ? '✅' : '❌';
+    const status = isVerified ? 'Verified' : 'Not Verified';
+    const headerEmoji = isVerified ? '✅' : '⚠️';
+    const style = isVerified ? 'primary' : 'danger';
+
+    const message = {
+      text: `${headerEmoji} HR Verification ${status}`,
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: `${headerEmoji} HR Verification ${status}`,
+            emoji: true
+          }
+        },
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `*Order Number:*\n${verification.order?.orderNumber || 'N/A'}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Customer:*\n${verification.customerSnapshot?.firstName} ${verification.customerSnapshot?.lastName}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Company:*\n${verification.hrContactSnapshot?.companyName || 'N/A'}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Result:*\n${emoji} ${status}`
+            }
+          ]
+        }
+      ]
+    };
+
+    if (reason && !isVerified) {
+      message.blocks.push({
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*Reason:*\n${reason}`
+        }
+      });
+    }
+
+    if (isVerified) {
+      message.blocks.push({
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: '🎉 *Order can now proceed to completion and fund advance*'
+        }
+      });
+    } else {
+      message.blocks.push({
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: '⚠️ *Customer may need to be contacted for clarification*'
+        }
+      });
+    }
+
+    message.blocks.push({
+      type: 'actions',
+      elements: [
+        {
+          type: 'button',
+          text: {
+            type: 'plain_text',
+            text: 'View Details',
+            emoji: true
+          },
+          url: verificationUrl,
+          style: style
+        }
+      ]
+    });
+
+    await this.sendNotification(message);
+  }
+
+  // HR Verification Timeout Notification
+  async notifyHRVerificationTimeout(verification) {
+    const verificationUrl = `${this.adminPortalUrl}/hr-verifications/${verification._id}`;
+
+    const message = {
+      text: '🚨 HR Verification Timeout - Action Required',
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: '🚨 HR Verification Timeout',
+            emoji: true
+          }
+        },
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `*Order Number:*\n${verification.order?.orderNumber || 'N/A'}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Customer:*\n${verification.customerSnapshot?.firstName} ${verification.customerSnapshot?.lastName}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Company:*\n${verification.hrContactSnapshot?.companyName || 'N/A'}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Days Waiting:*\n${verification.daysSinceEmailSent || 'N/A'} days`
+            }
+          ]
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: '⚠️ *No response received from HR within the deadline. Manual review required.*'
+          }
+        },
+        {
+          type: 'actions',
+          elements: [
+            {
+              type: 'button',
+              text: {
+                type: 'plain_text',
+                text: 'Review Now',
+                emoji: true
+              },
+              url: verificationUrl,
+              style: 'danger'
+            }
+          ]
+        }
+      ]
+    };
+
+    await this.sendNotification(message);
+  }
+
+  // HR Verification Pending Review Notification (for admin dashboard)
+  async notifyHRVerificationPendingReview(count) {
+    const verificationListUrl = `${this.adminPortalUrl}/hr-verifications?status=pending`;
+
+    const message = {
+      text: `📋 ${count} HR Verification(s) Pending Review`,
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: '📋 HR Verifications Pending Review',
+            emoji: true
+          }
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `You have *${count}* HR verification(s) awaiting admin review.`
+          }
+        },
+        {
+          type: 'actions',
+          elements: [
+            {
+              type: 'button',
+              text: {
+                type: 'plain_text',
+                text: 'View All Pending',
+                emoji: true
+              },
+              url: verificationListUrl,
               style: 'primary'
             }
           ]

@@ -69,11 +69,15 @@ const userSchema = new mongoose.Schema({
   // Employment Information (for BNPL underwriting)
   employmentInfo: {
     employerName: { type: String, trim: true },
+    company: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'CDLCompany'
+    },
     jobTitle: { type: String, trim: true },
     monthlyIncome: { type: Number },
     yearsEmployed: { type: Number },
-    employmentStatus: { 
-      type: String, 
+    employmentStatus: {
+      type: String,
       enum: ['permanent', 'contract', 'temporary', 'self-employed'],
       default: 'permanent'
     }

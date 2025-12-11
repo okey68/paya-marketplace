@@ -8,6 +8,7 @@ const Navbar = ({ user, onLogout }) => {
     { path: '/', label: 'Dashboard' },
     { path: '/merchants', label: 'Merchants' },
     { path: '/orders', label: 'Orders' },
+    { path: '/hr-verifications', label: 'HR Verify' },
     { path: '/products', label: 'Products' },
     { path: '/users', label: 'Users' },
     { path: '/model', label: 'Model' },
@@ -28,15 +29,20 @@ const Navbar = ({ user, onLogout }) => {
         </div>
         
         <div className="navbar-nav">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isActive = item.path === '/'
+              ? location.pathname === '/'
+              : location.pathname.startsWith(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`nav-link ${isActive ? 'active' : ''}`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
         
         <div className="navbar-actions">

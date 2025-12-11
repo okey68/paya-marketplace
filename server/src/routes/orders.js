@@ -4,6 +4,7 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const { authenticateToken, requireRole, requireApprovedMerchant } = require('../middleware/auth');
 const slackService = require('../../services/slackService');
+const hrVerificationService = require('../services/hrVerificationService');
 
 const router = express.Router();
 
@@ -367,9 +368,10 @@ router.get('/merchant/stats', authenticateToken, requireApprovedMerchant, [
 
 // Update order status during checkout
 router.patch('/:id/status', [
-  body('status').isIn(['pending_payment', 'underwriting', 'approved', 'rejected', 'paid', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded']).withMessage('Invalid status'),
+  body('status').isIn(['pending_payment', 'underwriting', 'approved', 'rejected', 'hr_verification_pending', 'hr_verified', 'hr_unverified', 'paid', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded']).withMessage('Invalid status'),
   body('note').optional().trim(),
-  body('underwritingResult').optional()
+  body('underwritingResult').optional(),
+  body('skipHRVerification').optional().isBoolean()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -380,7 +382,7 @@ router.patch('/:id/status', [
       });
     }
 
-    const { status, note, underwritingResult } = req.body;
+    const { status, note, underwritingResult, skipHRVerification } = req.body;
     const order = await Order.findById(req.params.id);
 
     if (!order) {
@@ -429,6 +431,38 @@ router.patch('/:id/status', [
     // Send specific notifications for BNPL status changes
     if (status === 'approved' && order.payment?.method === 'paya_bnpl') {
       await slackService.notifyBNPLApproval(order);
+
+      // Trigger HR verification after underwriting approval (unless skipped)
+      if (!skipHRVerification) {
+        try {
+          const hrVerification = await hrVerificationService.initiateVerification(order._id);
+
+          // Send verification email to HR
+          await hrVerificationService.sendVerificationEmail(hrVerification._id);
+
+          // Reload order to get updated status
+          await order.populate('hrVerification');
+
+          return res.json({
+            message: 'Order approved. HR verification initiated.',
+            order,
+            hrVerification: {
+              id: hrVerification._id,
+              status: hrVerification.status,
+              hrEmail: hrVerification.hrContactSnapshot?.email
+            }
+          });
+        } catch (hrError) {
+          console.error('HR verification initiation error:', hrError.message);
+          // Continue without HR verification if it fails (e.g., no CDL company found)
+          // The order remains approved but without HR verification
+          return res.json({
+            message: 'Order approved. HR verification could not be initiated: ' + hrError.message,
+            order,
+            hrVerificationError: hrError.message
+          });
+        }
+      }
     } else if (status === 'rejected' && order.payment?.method === 'paya_bnpl') {
       // Extract rejection reasons from the note
       const reasons = note ? note.replace('BNPL application rejected: ', '').split(', ') : ['Application did not meet criteria'];
