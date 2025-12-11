@@ -43,6 +43,7 @@ const Checkout = () => {
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [completedOrderDetails, setCompletedOrderDetails] = useState<any>(null);
 
@@ -201,10 +202,16 @@ const Checkout = () => {
         kraPin: personalInfo.kraPin,
       });
 
-      // OTP sent via SMS automatically
+      // OTP sent via email automatically
       toast.success(
-        `OTP sent to ${personalInfo.phoneCountryCode} ${personalInfo.phoneNumber}`
+        `OTP sent to ${personalInfo.companyEmail}`
       );
+      setCompletedSteps(prev => {
+        if (!prev.includes(0)) {
+          return [...prev, 0];
+        }
+        return prev;
+      });
       setCurrentStep(1); // Move to OTP verification step
     } catch (error: any) {
       toast.error(
@@ -228,6 +235,12 @@ const Checkout = () => {
       });
 
       toast.success("Phone number verified successfully!");
+      setCompletedSteps(prev => {
+        if (!prev.includes(1)) {
+          return [...prev, 1];
+        }
+        return prev;
+      });
       setCurrentStep(2); // Move to Shipping step
     } catch (error: any) {
       toast.error(
@@ -244,7 +257,7 @@ const Checkout = () => {
 
       setOtp("");
       toast.success(
-        `New OTP sent to ${personalInfo.phoneCountryCode} ${personalInfo.phoneNumber}`
+        `New OTP sent to ${personalInfo.companyEmail}`
       );
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to resend OTP");
@@ -283,6 +296,12 @@ const Checkout = () => {
       return;
     }
 
+    setCompletedSteps(prev => {
+      if (!prev.includes(2)) {
+        return [...prev, 2];
+      }
+      return prev;
+    });
     setCurrentStep(3); // Move to Pay Slip step
   };
 
@@ -439,6 +458,12 @@ const Checkout = () => {
           setUnderwritingResult(evaluation);
 
           if (evaluation.approved) {
+            setCompletedSteps(prev => {
+              if (!prev.includes(3)) {
+                return [...prev, 3];
+              }
+              return prev;
+            });
             // Application approved
             await api.patch(`/orders/${orderId}/status`, {
               status: "approved",
@@ -865,12 +890,12 @@ const Checkout = () => {
           gutterBottom
           sx={{ fontSize: { xs: "1.5rem", sm: "1.75rem" } }}
         >
-          Phone Verification
+          Email Verification
         </Typography>
         <Typography variant="body2" color="text.secondary">
           We've sent a 6-digit verification code to{" "}
           <Box component="span" sx={{ fontWeight: 600, color: "#667FEA" }}>
-            {personalInfo.phoneCountryCode} {personalInfo.phoneNumber}
+            {personalInfo.companyEmail}
           </Box>
         </Typography>
       </Box>
@@ -2712,7 +2737,7 @@ const Checkout = () => {
           {steps.map((label, index) => (
             <Step
               key={label}
-              completed={index < 4 || (showCompletion && index === 3)}
+              completed={completedSteps.includes(index) || (showCompletion && index === 3)}
             >
               <StepLabel>{label}</StepLabel>
             </Step>
