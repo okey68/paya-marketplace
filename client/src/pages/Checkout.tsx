@@ -16,9 +16,6 @@ import {
   Checkbox,
   FormControlLabel,
   Alert,
-  List,
-  ListItem,
-  ListItemText,
   MenuItem,
   InputAdornment,
 } from "@mui/material";
@@ -1487,7 +1484,7 @@ const Checkout = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+            gridTemplateColumns: { xs: "1fr 1fr", sm: "1fr 1fr 1fr 1fr" },
             gap: 2,
             mb: 3,
           }}
@@ -1502,14 +1499,6 @@ const Checkout = () => {
           </Box>
           <Box>
             <Typography variant="body2" color="text.secondary">
-              Interest Rate
-            </Typography>
-            <Typography variant="h6" fontWeight={700}>
-              {bnplTerms.interestRate}%
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="body2" color="text.secondary">
               Number of Payments
             </Typography>
             <Typography variant="h6" fontWeight={700}>
@@ -1518,7 +1507,15 @@ const Checkout = () => {
           </Box>
           <Box>
             <Typography variant="body2" color="text.secondary">
-              Payment Amount
+              Interest Rate
+            </Typography>
+            <Typography variant="h6" fontWeight={700}>
+              {bnplTerms.interestRate}%
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Total Monthly Payment
             </Typography>
             <Typography variant="h6" fontWeight={700} color="#667FEA">
               {formatCurrency(bnplTerms.paymentAmount)}
@@ -1531,19 +1528,148 @@ const Checkout = () => {
         <Typography variant="subtitle1" fontWeight={600} gutterBottom>
           Payment Schedule
         </Typography>
-        <List dense>
-          {bnplTerms.payments.map((payment) => (
-            <ListItem key={payment.number} sx={{ px: 0 }}>
-              <ListItemText
-                primary={`Payment ${payment.number}`}
-                secondary={payment.date}
-              />
-              <Typography fontWeight={600}>
-                {formatCurrency(payment.amount)}
-              </Typography>
-            </ListItem>
-          ))}
-        </List>
+        
+        {/* Desktop view - Table */}
+        <Box sx={{ display: { xs: "none", md: "block" } }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "1.2fr 1fr 1fr 1fr 1.2fr",
+              gap: 2,
+              p: 1.5,
+              bgcolor: "grey.100",
+              borderRadius: 1,
+              mb: 1,
+            }}
+          >
+            <Typography variant="caption" fontWeight={700} color="text.secondary">
+              PAYMENT
+            </Typography>
+            <Typography variant="caption" fontWeight={700} color="text.secondary" textAlign="right">
+              PRINCIPAL
+            </Typography>
+            <Typography variant="caption" fontWeight={700} color="text.secondary" textAlign="right">
+              OUTSTANDING
+            </Typography>
+            <Typography variant="caption" fontWeight={700} color="text.secondary" textAlign="right">
+              INTEREST
+            </Typography>
+            <Typography variant="caption" fontWeight={700} color="text.secondary" textAlign="right">
+              MONTHLY PAYMENT
+            </Typography>
+          </Box>
+
+          {bnplTerms.payments.map((payment, index) => {
+            const principalPerPayment = bnplTerms.subtotal / bnplTerms.numberOfPayments;
+            const interestPerPayment = bnplTerms.totalInterest / bnplTerms.numberOfPayments;
+            const outstandingAmount = bnplTerms.subtotal - (principalPerPayment * (index + 1));
+
+            return (
+              <Box
+                key={payment.number}
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1.2fr 1fr 1fr 1fr 1.2fr",
+                  gap: 2,
+                  p: 1.5,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  mb: 1,
+                  alignItems: "center",
+                  "&:hover": {
+                    bgcolor: "grey.50",
+                  },
+                }}
+              >
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    Payment {payment.number}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {payment.date}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" textAlign="right">
+                  {formatCurrency(principalPerPayment)}
+                </Typography>
+                <Typography variant="body2" textAlign="right">
+                  {formatCurrency(Math.max(0, outstandingAmount))}
+                </Typography>
+                <Typography variant="body2" textAlign="right">
+                  {formatCurrency(interestPerPayment)}
+                </Typography>
+                <Typography variant="body2" fontWeight={700} color="#667FEA" textAlign="right">
+                  {formatCurrency(payment.amount)}
+                </Typography>
+              </Box>
+            );
+          })}
+        </Box>
+
+        {/* Mobile view - Cards */}
+        <Box sx={{ display: { xs: "block", md: "none" } }}>
+          {bnplTerms.payments.map((payment, index) => {
+            const principalPerPayment = bnplTerms.subtotal / bnplTerms.numberOfPayments;
+            const interestPerPayment = bnplTerms.totalInterest / bnplTerms.numberOfPayments;
+            const outstandingAmount = bnplTerms.subtotal - (principalPerPayment * (index + 1));
+
+            return (
+              <Box
+                key={payment.number}
+                sx={{
+                  p: 2,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  mb: 2,
+                }}
+              >
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                  <Typography variant="body2" fontWeight={700}>
+                    Payment {payment.number}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {payment.date}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Principal:
+                  </Typography>
+                  <Typography variant="body2">
+                    {formatCurrency(principalPerPayment)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Outstanding:
+                  </Typography>
+                  <Typography variant="body2">
+                    {formatCurrency(Math.max(0, outstandingAmount))}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Interest:
+                  </Typography>
+                  <Typography variant="body2">
+                    {formatCurrency(interestPerPayment)}
+                  </Typography>
+                </Box>
+                <Divider sx={{ my: 1 }} />
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2" fontWeight={700}>
+                    Monthly Payment:
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700} color="#667FEA">
+                    {formatCurrency(payment.amount)}
+                  </Typography>
+                </Box>
+              </Box>
+            );
+          })}
+        </Box>
       </Paper>
 
       <Box sx={{ display: "flex", justifyContent: "center" }}>

@@ -1,18 +1,26 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../utils/api';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import api from "../utils/api";
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  // Initialize user from localStorage if available (prevents flash of unauthenticated state)
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem("user");
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,21 +29,34 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
+        setUser(null);
+        localStorage.removeItem("user");
         setLoading(false);
         return;
       }
-      
-      const response = await api.get('/auth/verify');
+
+      const response = await api.get("/auth/verify");
       if (response.data.valid) {
         setUser(response.data.user);
+        // Save user to localStorage for faster initial load
+        localStorage.setItem("user", JSON.stringify(response.data.user));
       } else {
-        localStorage.removeItem('token');
+        // Only remove token if explicitly invalid
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUser(null);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
-      localStorage.removeItem('token');
+      console.error("Auth check failed:", error);
+      // Only remove token on 401 unauthorized, not on network errors
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUser(null);
+      }
+      // For other errors, keep the token and user, let user retry
     } finally {
       setLoading(false);
     }
@@ -43,35 +64,41 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post("/auth/login", { email, password });
       const { token, user } = response.data;
-      
-      localStorage.setItem('token', token);
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed';
+      const message = error.response?.data?.message || "Login failed";
       return { success: false, error: message };
     }
   };
 
   const register = async (userData) => {
     try {
-      const endpoint = userData.role === 'merchant' ? '/auth/register/merchant' : '/auth/register/customer';
+      const endpoint =
+        userData.role === "merchant"
+          ? "/auth/register/merchant"
+          : "/auth/register/customer";
       const response = await api.post(endpoint, userData);
       const { token, user } = response.data;
-      
-      localStorage.setItem('token', token);
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Registration failed';
+      const message = error.response?.data?.message || "Registration failed";
       return { success: false, error: message };
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setUser(null);
   };
 
@@ -86,12 +113,8 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateUser,
-    checkAuthStatus
+    checkAuthStatus,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

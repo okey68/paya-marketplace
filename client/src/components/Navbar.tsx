@@ -14,9 +14,13 @@ import {
   ListItem,
   ListItemButton,
   ListItemText,
+  ListItemIcon,
   Divider,
   useTheme,
   useMediaQuery,
+  Menu,
+  MenuItem,
+  Avatar,
 } from "@mui/material";
 import {
   ShoppingCart as ShoppingCartIcon,
@@ -24,6 +28,12 @@ import {
   Store as StoreIcon,
   Support as SupportIcon,
   Dashboard as DashboardIcon,
+  Person as PersonIcon,
+  ShoppingBag as OrdersIcon,
+  Favorite as FavoriteIcon,
+  Logout as LogoutIcon,
+  KeyboardArrowDown as ArrowDownIcon,
+  Settings as SettingsIcon,
 } from "@mui/icons-material";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -36,11 +46,32 @@ const Navbar = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
 
   const handleLogout = () => {
     logout();
     navigate("/");
     setMobileMenuOpen(false);
+    setUserMenuAnchor(null);
+  };
+
+  const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setUserMenuAnchor(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchor(null);
+  };
+
+  const handleUserMenuItemClick = (path: string) => {
+    navigate(path);
+    handleUserMenuClose();
+  };
+
+  const getInitials = () => {
+    const first = user?.firstName?.[0] || '';
+    const last = user?.lastName?.[0] || '';
+    return (first + last).toUpperCase() || 'U';
   };
 
   const cartItemCount = getItemCount();
@@ -116,15 +147,36 @@ const Navbar = () => {
                 secondary={user.email}
               />
             </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => handleNavClick("/profile")}>
+                <ListItemIcon><PersonIcon /></ListItemIcon>
+                <ListItemText primary="My Profile" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => handleNavClick("/orders")}>
+                <ListItemIcon><OrdersIcon /></ListItemIcon>
+                <ListItemText primary="My Orders" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => handleNavClick("/wishlist")}>
+                <ListItemIcon><FavoriteIcon /></ListItemIcon>
+                <ListItemText primary="Wishlist" />
+              </ListItemButton>
+            </ListItem>
             {user.role === "merchant" && (
               <ListItem disablePadding>
-                <ListItemButton onClick={() => handleNavClick("/merchant")}>
+                <ListItemButton onClick={() => handleNavClick("/merchant/dashboard")}>
+                  <ListItemIcon><DashboardIcon /></ListItemIcon>
                   <ListItemText primary="Dashboard" />
                 </ListItemButton>
               </ListItem>
             )}
+            <Divider sx={{ my: 1 }} />
             <ListItem disablePadding>
               <ListItemButton onClick={handleLogout}>
+                <ListItemIcon><LogoutIcon /></ListItemIcon>
                 <ListItemText primary="Logout" />
               </ListItemButton>
             </ListItem>
@@ -239,21 +291,85 @@ const Navbar = () => {
               <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                 {user ? (
                   <>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mr: 1 }}
-                    >
-                      Hello, {user.firstName}
-                    </Typography>
                     <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={handleLogout}
-                      sx={{ textTransform: "none" }}
+                      onClick={handleUserMenuOpen}
+                      endIcon={<ArrowDownIcon />}
+                      sx={{
+                        textTransform: "none",
+                        color: "text.primary",
+                        borderRadius: 2,
+                        px: 1.5,
+                        "&:hover": {
+                          bgcolor: "action.hover",
+                        },
+                      }}
                     >
-                      Logout
+                      <Avatar
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          bgcolor: "#667FEA",
+                          fontSize: "0.875rem",
+                          mr: 1,
+                        }}
+                      >
+                        {getInitials()}
+                      </Avatar>
+                      {user.firstName}
                     </Button>
+                    <Menu
+                      anchorEl={userMenuAnchor}
+                      open={Boolean(userMenuAnchor)}
+                      onClose={handleUserMenuClose}
+                      anchorOrigin={{
+                        vertical: "bottom",
+                        horizontal: "right",
+                      }}
+                      transformOrigin={{
+                        vertical: "top",
+                        horizontal: "right",
+                      }}
+                      PaperProps={{
+                        sx: {
+                          mt: 1,
+                          minWidth: 200,
+                          borderRadius: 2,
+                          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                        },
+                      }}
+                    >
+                      <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: "divider" }}>
+                        <Typography variant="subtitle2" fontWeight={600}>
+                          {user.firstName} {user.lastName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {user.email}
+                        </Typography>
+                      </Box>
+                      <MenuItem onClick={() => handleUserMenuItemClick("/profile")}>
+                        <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText>My Profile</ListItemText>
+                      </MenuItem>
+                      <MenuItem onClick={() => handleUserMenuItemClick("/orders")}>
+                        <ListItemIcon><OrdersIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText>My Orders</ListItemText>
+                      </MenuItem>
+                      <MenuItem onClick={() => handleUserMenuItemClick("/wishlist")}>
+                        <ListItemIcon><FavoriteIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText>Wishlist</ListItemText>
+                      </MenuItem>
+                      {user.role === "merchant" && (
+                        <MenuItem onClick={() => handleUserMenuItemClick("/merchant/dashboard")}>
+                          <ListItemIcon><DashboardIcon fontSize="small" /></ListItemIcon>
+                          <ListItemText>Merchant Dashboard</ListItemText>
+                        </MenuItem>
+                      )}
+                      <Divider />
+                      <MenuItem onClick={handleLogout} sx={{ color: "error.main" }}>
+                        <ListItemIcon><LogoutIcon fontSize="small" color="error" /></ListItemIcon>
+                        <ListItemText>Logout</ListItemText>
+                      </MenuItem>
+                    </Menu>
                   </>
                 ) : (
                   <>

@@ -4,15 +4,264 @@ import {
   Container,
   Box,
   Typography,
-  Button
+  Button,
+  Paper,
+  Stack,
 } from "@mui/material";
-import { ArrowForward as ArrowForwardIcon } from "@mui/icons-material";
+import {
+  ArrowForward as ArrowForwardIcon,
+  ShoppingBag as ShoppingBagIcon,
+  Favorite as FavoriteIcon,
+  Receipt as ReceiptIcon,
+  Person as PersonIcon,
+} from "@mui/icons-material";
 
 interface HeroSectionProps {
   user: any;
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({ user }) => {
+  // Quick action cards for logged-in users
+  const quickActions = [
+    {
+      icon: <ShoppingBagIcon sx={{ fontSize: 28 }} />,
+      title: "My Orders",
+      description: "Track your orders",
+      path: "/orders",
+      color: "#667FEA",
+    },
+    {
+      icon: <FavoriteIcon sx={{ fontSize: 28 }} />,
+      title: "Wishlist",
+      description: "Saved items",
+      path: "/wishlist",
+      color: "#ec4899",
+    },
+    {
+      icon: <ReceiptIcon sx={{ fontSize: 28 }} />,
+      title: "Continue Shopping",
+      description: "Browse products",
+      path: "/marketplace",
+      color: "#10b981",
+    },
+    {
+      icon: <PersonIcon sx={{ fontSize: 28 }} />,
+      title: "My Profile",
+      description: "Account settings",
+      path: "/profile",
+      color: "#f59e0b",
+    },
+  ];
+
+  // Personalized hero for logged-in users
+  if (user) {
+    return (
+      <Box
+        sx={{
+          background:
+            "linear-gradient(to bottom, #ffffff 0%, #f0f9ff 50%, #faf5ff 100%)",
+          pt: { xs: "100px", md: "80px" },
+          pb: { xs: 8, md: 12 },
+        }}
+      >
+        <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 5 } }}>
+          {/* Welcome Message */}
+          <Box sx={{ textAlign: { xs: "center", lg: "left" }, mb: 6 }}>
+            <Typography
+              variant="h3"
+              sx={{
+                color: "#0f172a",
+                fontWeight: 700,
+                mb: 1,
+              }}
+            >
+              Welcome back, {user.firstName}! 👋
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                color: "#475569",
+                fontSize: "1.1rem",
+              }}
+            >
+              Ready to shop? Here's what you can do today.
+            </Typography>
+          </Box>
+
+          {/* Quick Actions Grid */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, 1fr)",
+                md: "repeat(4, 1fr)",
+              },
+              gap: 3,
+              mb: 6,
+            }}
+          >
+            {quickActions.map((action) => (
+              <Paper
+                key={action.title}
+                component={Link}
+                to={action.path}
+                elevation={0}
+                sx={{
+                  p: 3,
+                  borderRadius: 3,
+                  border: 1,
+                  borderColor: "divider",
+                  textDecoration: "none",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+                    borderColor: action.color,
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 2,
+                    bgcolor: `${action.color}15`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: action.color,
+                    mb: 2,
+                  }}
+                >
+                  {action.icon}
+                </Box>
+                <Typography
+                  variant="h6"
+                  fontWeight={600}
+                  color="#0f172a"
+                  sx={{ mb: 0.5 }}
+                >
+                  {action.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {action.description}
+                </Typography>
+              </Paper>
+            ))}
+          </Box>
+
+          {/* Featured Section */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 3, md: 5 },
+              borderRadius: 4,
+              background: "linear-gradient(135deg, #667FEA 0%, #764ba2 100%)",
+              color: "white",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 4,
+              }}
+            >
+              <Box sx={{ flex: 1, textAlign: { xs: "center", md: "left" } }}>
+                <Typography
+                  variant="h4"
+                  fontWeight={700}
+                  sx={{ mb: 2 }}
+                >
+                  Shop Now, Pay Later with PAYA
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ opacity: 0.9, mb: 3, maxWidth: 500 }}
+                >
+                  Apply for credit and spread your payments through your
+                  employer's payroll system. Zero interest on selected items!
+                </Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={2}
+                  justifyContent={{ xs: "center", md: "flex-start" }}
+                >
+                  <Button
+                    component={Link}
+                    to="/marketplace"
+                    variant="contained"
+                    size="large"
+                    endIcon={<ArrowForwardIcon />}
+                    sx={{
+                      bgcolor: "white",
+                      color: "#667FEA",
+                      px: 4,
+                      py: 1.5,
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      textTransform: "none",
+                      "&:hover": {
+                        bgcolor: "rgba(255,255,255,0.9)",
+                      },
+                    }}
+                  >
+                    Start Shopping
+                  </Button>
+                  <Button
+                    component={Link}
+                    to="/merchants"
+                    variant="outlined"
+                    size="large"
+                    sx={{
+                      borderColor: "rgba(255,255,255,0.5)",
+                      color: "white",
+                      px: 4,
+                      py: 1.5,
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      textTransform: "none",
+                      "&:hover": {
+                        borderColor: "white",
+                        bgcolor: "rgba(255,255,255,0.1)",
+                      },
+                    }}
+                  >
+                    View Merchants
+                  </Button>
+                </Stack>
+              </Box>
+              <Box
+                sx={{
+                  width: { xs: 200, md: 280 },
+                  height: { xs: 200, md: 280 },
+                  display: { xs: "none", sm: "flex" },
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Box
+                  component="img"
+                  src="https://mockuuups.studio/cdn-cgi/image/format=auto/web-cdn/images/header-iphone-mockups-2-p-1080.png"
+                  alt="Paya App"
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                  }}
+                />
+              </Box>
+            </Box>
+          </Paper>
+        </Container>
+      </Box>
+    );
+  }
+
+  // Default hero for non-logged-in users
   return (
     <Box
       sx={{
