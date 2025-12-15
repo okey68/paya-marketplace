@@ -48,7 +48,7 @@ router.post('/upload-financial-info', uploadPayslip.single('payslip'), [
         filename: req.file.filename,
         originalName: req.file.originalname,
         uploadDate: new Date(),
-        path: req.file.path
+        path: req.file.filename // Store just the filename, not full path
       };
     }
 

@@ -59,6 +59,36 @@ const AdminOrderDetail = () => {
     }).format(amount);
   };
 
+  const formatDate = (date) => {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('en-KE', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Helper function to construct document URL from path
+  const getDocumentUrl = (path) => {
+    if (!path) return '#';
+
+    const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5001';
+
+    // Handle different path formats
+    if (path.startsWith('/uploads')) {
+      return `${baseUrl}${path}`;
+    }
+
+    const uploadsIndex = path.indexOf('/uploads');
+    if (uploadsIndex !== -1) {
+      return `${baseUrl}${path.substring(uploadsIndex)}`;
+    }
+
+    return `${baseUrl}/uploads/${path}`;
+  };
+
   const generatePaymentSchedule = (bnplDetails) => {
     if (!bnplDetails) return [];
     
@@ -419,6 +449,237 @@ const AdminOrderDetail = () => {
             </div>
           )}
         </div>
+
+        {/* Customer Documents Section */}
+        {order.payment?.method === 'paya_bnpl' && (
+          <div className="info-card" style={{ marginTop: '1.5rem' }}>
+            <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              Customer Documents
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+              {/* Payslip Document */}
+              <div style={{
+                padding: '1rem',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                backgroundColor: '#f8fafc'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    backgroundColor: (order.hrVerification?.payslipPath || order.customer?.financialInfo?.payslip?.path) ? '#dbeafe' : '#f1f5f9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={(order.hrVerification?.payslipPath || order.customer?.financialInfo?.payslip?.path) ? '#2563eb' : '#94a3b8'} strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#1e293b' }}>Payslip</h4>
+                    {(order.hrVerification?.payslipPath || order.customer?.financialInfo?.payslip?.path) ? (
+                      <>
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          padding: '0.2rem 0.5rem',
+                          backgroundColor: '#dcfce7',
+                          color: '#166534',
+                          borderRadius: '4px',
+                          fontSize: '0.7rem',
+                          fontWeight: '600',
+                          marginBottom: '0.5rem'
+                        }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          Uploaded
+                        </span>
+                        <p style={{ margin: '0.5rem 0', fontSize: '0.8rem', color: '#64748b' }}>
+                          {order.hrVerification?.payslipOriginalName || order.customer?.financialInfo?.payslip?.originalName || 'Payslip document'}
+                        </p>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          <a
+                            href={getDocumentUrl(order.hrVerification?.payslipPath || order.customer?.financialInfo?.payslip?.path)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-sm btn-primary"
+                            style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
+                          >
+                            View
+                          </a>
+                          <a
+                            href={getDocumentUrl(order.hrVerification?.payslipPath || order.customer?.financialInfo?.payslip?.path)}
+                            download={order.hrVerification?.payslipOriginalName || 'payslip'}
+                            className="btn btn-sm btn-outline"
+                            style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
+                          >
+                            Download
+                          </a>
+                        </div>
+                      </>
+                    ) : (
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                        No payslip uploaded
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* BNPL Agreement Document */}
+              <div style={{
+                padding: '1rem',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                backgroundColor: '#f8fafc'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    backgroundColor: (order.hrVerification?.agreementPdfPath || order.payment?.bnpl?.agreementPdfPath) ? '#f3e8ff' : '#f1f5f9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={(order.hrVerification?.agreementPdfPath || order.payment?.bnpl?.agreementPdfPath) ? '#7c3aed' : '#94a3b8'} strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <path d="M9 15l2 2 4-4" />
+                    </svg>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#1e293b' }}>BNPL Agreement</h4>
+                    {(order.hrVerification?.agreementPdfPath || order.payment?.bnpl?.agreementPdfPath) ? (
+                      <>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            padding: '0.2rem 0.5rem',
+                            backgroundColor: '#ede9fe',
+                            color: '#5b21b6',
+                            borderRadius: '4px',
+                            fontSize: '0.7rem',
+                            fontWeight: '600'
+                          }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            Generated
+                          </span>
+                          {order.payment?.bnpl?.agreementAccepted && (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              padding: '0.2rem 0.5rem',
+                              backgroundColor: '#dcfce7',
+                              color: '#166534',
+                              borderRadius: '4px',
+                              fontSize: '0.7rem',
+                              fontWeight: '600'
+                            }}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
+                              </svg>
+                              Signed
+                            </span>
+                          )}
+                        </div>
+                        {order.payment?.bnpl?.agreementAcceptedAt && (
+                          <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', color: '#64748b' }}>
+                            Signed on: {formatDate(order.payment.bnpl.agreementAcceptedAt)}
+                          </p>
+                        )}
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          <a
+                            href={getDocumentUrl(order.hrVerification?.agreementPdfPath || order.payment?.bnpl?.agreementPdfPath)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-sm btn-primary"
+                            style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
+                          >
+                            View
+                          </a>
+                          <a
+                            href={getDocumentUrl(order.hrVerification?.agreementPdfPath || order.payment?.bnpl?.agreementPdfPath)}
+                            download={`BNPL_Agreement_${order.orderNumber}.pdf`}
+                            className="btn btn-sm btn-outline"
+                            style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
+                          >
+                            Download
+                          </a>
+                        </div>
+                      </>
+                    ) : (
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                        Agreement not generated yet
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* HR Verification Status Link */}
+            {order.hrVerification && (
+              <div style={{
+                marginTop: '1rem',
+                padding: '0.75rem',
+                backgroundColor: '#eff6ff',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.85rem', color: '#1e40af' }}>
+                    HR Verification Status:
+                  </span>
+                  <span style={{
+                    padding: '0.2rem 0.5rem',
+                    backgroundColor: order.hrVerification.status === 'verified' ? '#dcfce7' :
+                                     order.hrVerification.status === 'unverified' ? '#fee2e2' : '#fef3c7',
+                    color: order.hrVerification.status === 'verified' ? '#166534' :
+                           order.hrVerification.status === 'unverified' ? '#991b1b' : '#92400e',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    textTransform: 'capitalize'
+                  }}>
+                    {order.hrVerification.status?.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <button
+                  onClick={() => navigate(`/hr-verifications/${order.hrVerification._id}`)}
+                  className="btn btn-sm btn-outline"
+                  style={{ fontSize: '0.75rem' }}
+                >
+                  View HR Verification Details
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
       </div>
 
