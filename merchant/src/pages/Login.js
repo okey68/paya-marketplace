@@ -134,7 +134,7 @@ const Login = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: isMobile ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#ffffff',
+        background: isMobile ? 'linear-gradient(135deg, #667FEA 0%, #667FEA 100%)' : '#ffffff',
         padding: isMobile ? '2rem 1rem' : '2rem',
         minHeight: '100vh'
       }}>
@@ -211,7 +211,7 @@ const Login = () => {
                   backgroundColor: '#f7fafc'
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#667eea';
+                  e.target.style.borderColor = '#667FEA';
                   e.target.style.backgroundColor = '#ffffff';
                 }}
                 onBlur={(e) => {
@@ -237,7 +237,7 @@ const Login = () => {
                 </label>
                 <button type="button" style={{
                   fontSize: '0.875rem',
-                  color: '#667eea',
+                  color: '#667FEA',
                   textDecoration: 'none',
                   fontWeight: '500',
                   background: 'none',
@@ -268,7 +268,7 @@ const Login = () => {
                   backgroundColor: '#f7fafc'
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#667eea';
+                  e.target.style.borderColor = '#667FEA';
                   e.target.style.backgroundColor = '#ffffff';
                 }}
                 onBlur={(e) => {
@@ -288,7 +288,7 @@ const Login = () => {
                 fontSize: '1.05rem',
                 fontWeight: '600',
                 color: 'white',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: 'linear-gradient(135deg, #667FEA 0%, #667FEA 100%)',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: isSubmitting ? 'not-allowed' : 'pointer',
@@ -321,7 +321,7 @@ const Login = () => {
             <Link 
               to="/register" 
               style={{ 
-                color: '#667eea', 
+                color: '#667FEA', 
                 fontWeight: '600',
                 textDecoration: 'none'
               }}

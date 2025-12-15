@@ -45,7 +45,7 @@ body {
   width: 2rem;
   height: 2rem;
   border: 2px solid #e2e8f0;
-  border-top: 2px solid #667eea;
+  border-top: 2px solid #667FEA;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -80,7 +80,7 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667FEA 0%, #667FEA 100%);
   color: white;
 }
 
@@ -100,12 +100,12 @@ body {
 
 .btn-outline {
   background: transparent;
-  border: 2px solid #667eea;
-  color: #667eea;
+  border: 2px solid #667FEA;
+  color: #667FEA;
 }
 
 .btn-outline:hover {
-  background: #667eea;
+  background: #667FEA;
   color: white;
 }
 
@@ -161,7 +161,7 @@ body {
 
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #667FEA;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -279,7 +279,7 @@ body {
 }
 
 .file-upload-label:hover {
-  border-color: #667eea;
+  border-color: #667FEA;
   background: #edf2f7;
   transform: translateY(-2px);
 }
@@ -429,8 +429,8 @@ body {
 }
 
 .settings-tabs .tab.active {
-  color: #667eea;
-  border-bottom-color: #667eea;
+  color: #667FEA;
+  border-bottom-color: #667FEA;
   font-weight: 600;
 }
 
@@ -803,7 +803,7 @@ body {
   padding: 0.75rem 1.5rem;
   font-size: 0.95rem;
   font-weight: 600;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667FEA 0%, #667FEA 100%);
   border: none;
   border-radius: 8px;
   color: white;
@@ -874,7 +874,7 @@ body {
 
 .total-subtitle {
   font-size: 0.75rem;
-  color: #667eea;
+  color: #667FEA;
   font-weight: 600;
 }
 
@@ -884,7 +884,7 @@ body {
 }
 
 .advanced-amount {
-  color: #667eea;
+  color: #667FEA;
   font-weight: 700;
   font-size: 1.1rem;
 }
@@ -993,7 +993,7 @@ body {
 .btn-link {
   background: none;
   border: none;
-  color: #667eea;
+  color: #667FEA;
   cursor: pointer;
   padding: 0.5rem 0;
   font-weight: 600;
@@ -1019,7 +1019,7 @@ body {
 }
 
 .file-upload-label:hover {
-  border-color: #667eea;
+  border-color: #667FEA;
   background: #f8fafc;
 }
 
@@ -1188,7 +1188,7 @@ body {
   padding: 0.75rem 1.5rem;
   font-size: 0.95rem;
   font-weight: 600;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667FEA 0%, #667FEA 100%);
   border: none;
   border-radius: 8px;
   color: white;
@@ -1751,7 +1751,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667FEA 0%, #667FEA 100%);
   padding: 2rem;
 }
 
@@ -1809,7 +1809,7 @@ body {
 
 .auth-form .form-group input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #667FEA;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -1837,7 +1837,7 @@ body {
 }
 
 .auth-footer a {
-  color: #667eea;
+  color: #667FEA;
   text-decoration: none;
   font-weight: 600;
 }
@@ -1858,7 +1858,7 @@ body {
   width: 40px;
   height: 40px;
   border: 4px solid #e2e8f0;
-  border-top: 4px solid #667eea;
+  border-top: 4px solid #667FEA;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -1891,7 +1891,7 @@ body {
 
 .navbar-brand .brand-link {
   text-decoration: none;
-  color: #667eea;
+  color: #667FEA;
   font-size: 1.5rem;
   font-weight: 700;
   display: flex;
@@ -1966,12 +1966,12 @@ body {
 }
 
 .nav-link:hover {
-  color: #667eea;
+  color: #667FEA;
   background: #f8fafc;
 }
 
 .nav-link.active {
-  color: #667eea;
+  color: #667FEA;
   background: #edf2f7;
 }
 
@@ -2088,12 +2088,12 @@ body {
 
   .nav-link:hover {
     background: #f7fafc;
-    border-left-color: #667eea;
+    border-left-color: #667FEA;
   }
 
   .nav-link.active {
     background: #edf2f7;
-    border-left-color: #667eea;
+    border-left-color: #667FEA;
   }
 
   /* Mobile User Info */
@@ -2338,7 +2338,7 @@ body {
   font-weight: 800;
   color: #1a202c;
   margin: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667FEA 0%, #667FEA 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -2374,7 +2374,7 @@ body {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667FEA 0%, #667FEA 100%);
 }
 
 .stat:hover {
@@ -2428,7 +2428,7 @@ body {
 }
 
 .products-filters .search-box input:focus {
-  border-color: #667eea;
+  border-color: #667FEA;
   background: white;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
@@ -2463,7 +2463,7 @@ body {
 }
 
 .products-filters select:focus {
-  border-color: #667eea;
+  border-color: #667FEA;
   background: white;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
@@ -2612,7 +2612,7 @@ body {
   padding: 0.875rem 2rem;
   font-size: 1rem;
   font-weight: 600;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667FEA 0%, #667FEA 100%);
   border: none;
   border-radius: 10px;
   color: white;
@@ -2677,7 +2677,7 @@ body {
 }
 
 .orders-filters .search-box input:focus {
-  border-color: #667eea;
+  border-color: #667FEA;
 }
 
 .orders-filters .filter-controls {
@@ -2697,7 +2697,7 @@ body {
 }
 
 .orders-filters select:focus {
-  border-color: #667eea;
+  border-color: #667FEA;
 }
 
 /* Orders List Layout */

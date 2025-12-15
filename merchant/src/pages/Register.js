@@ -253,7 +253,7 @@ const Register = () => {
           alignItems: "center",
           justifyContent: "center",
           background: isMobile
-            ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+            ? "linear-gradient(135deg, #667FEA 0%, #667FEA 100%)"
             : "#ffffff",
           padding: isMobile ? "2rem 1rem" : "2rem",
           minHeight: "100vh",
@@ -358,7 +358,7 @@ const Register = () => {
                       transition: "border-color 0.2s",
                       boxSizing: "border-box",
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = "#667eea")}
+                    onFocus={(e) => (e.target.style.borderColor = "#667FEA")}
                     onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
                   />
                 </div>
@@ -394,7 +394,7 @@ const Register = () => {
                       transition: "border-color 0.2s",
                       boxSizing: "border-box",
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = "#667eea")}
+                    onFocus={(e) => (e.target.style.borderColor = "#667FEA")}
                     onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
                   />
                 </div>
@@ -431,7 +431,7 @@ const Register = () => {
                     transition: "border-color 0.2s",
                     boxSizing: "border-box",
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = "#667eea")}
+                  onFocus={(e) => (e.target.style.borderColor = "#667FEA")}
                   onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
                 />
               </div>
@@ -459,7 +459,7 @@ const Register = () => {
                       transition: "border-color 0.2s",
                     }}
                     onFocus={(e) =>
-                      (e.currentTarget.style.borderColor = "#667eea")
+                      (e.currentTarget.style.borderColor = "#667FEA")
                     }
                     onBlur={(e) =>
                       (e.currentTarget.style.borderColor = "#e2e8f0")
@@ -662,7 +662,7 @@ const Register = () => {
                       transition: "border-color 0.2s",
                       boxSizing: "border-box",
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = "#667eea")}
+                    onFocus={(e) => (e.target.style.borderColor = "#667FEA")}
                     onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
                   />
                   <button
@@ -700,7 +700,7 @@ const Register = () => {
                   fontWeight: "600",
                   color: "white",
                   background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    "linear-gradient(135deg, #667FEA 0%, #667FEA 100%)",
                   border: "none",
                   borderRadius: "8px",
                   cursor: isSubmitting ? "not-allowed" : "pointer",
@@ -750,7 +750,7 @@ const Register = () => {
                     boxSizing: "border-box",
                     fontWeight: "600",
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = "#667eea")}
+                  onFocus={(e) => (e.target.style.borderColor = "#667FEA")}
                   onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
                 />
               </div>
@@ -762,7 +762,7 @@ const Register = () => {
                   style={{
                     background: "none",
                     border: "none",
-                    color: "#667eea",
+                    color: "#667FEA",
                     fontSize: "0.9rem",
                     fontWeight: "600",
                     cursor: "pointer",
@@ -783,7 +783,7 @@ const Register = () => {
                   fontWeight: "600",
                   color: "white",
                   background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    "linear-gradient(135deg, #667FEA 0%, #667FEA 100%)",
                   border: "none",
                   borderRadius: "8px",
                   cursor:
@@ -828,7 +828,7 @@ const Register = () => {
               <Link
                 to="/login"
                 style={{
-                  color: "#667eea",
+                  color: "#667FEA",
                   fontWeight: "600",
                   textDecoration: "none",
                 }}

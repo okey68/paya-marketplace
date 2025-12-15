@@ -44,13 +44,13 @@
 }
 
 .tab-button:hover {
-  color: #667eea;
+  color: #667FEA;
   background: #f7fafc;
 }
 
 .tab-button.active {
-  color: #667eea;
-  border-bottom-color: #667eea;
+  color: #667FEA;
+  border-bottom-color: #667FEA;
 }
 
 .tab-icon {
@@ -450,7 +450,7 @@
 }
 
 .business-account-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667FEA 0%, #667FEA 100%);
   border-radius: 16px;
   padding: 1.5rem;
   color: white !important;
@@ -584,7 +584,7 @@
 }
 
 .action-button:hover:not(:disabled) {
-  border-color: #667eea;
+  border-color: #667FEA;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
   transform: translateY(-2px);
 }
@@ -701,7 +701,7 @@
 
 .search-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #667FEA;
 }
 
 .filter-select {
@@ -791,7 +791,7 @@
   padding: 0.5rem 1rem;
   border: none;
   background: none;
-  color: #667eea;
+  color: #667FEA;
   font-size: 0.85rem;
   cursor: pointer;
   font-weight: 500;

@@ -192,7 +192,7 @@
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1rem;
-  border-left: 3px solid #667eea;
+  border-left: 3px solid #667FEA;
 }
 
 .response-header {
@@ -240,7 +240,7 @@
 
 .response-form textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #667FEA;
 }
 
 .response-form button {
