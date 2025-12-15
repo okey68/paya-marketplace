@@ -123,6 +123,33 @@ router.post('/add-next-of-kin', [
   }
 });
 
+// Get loan parameters for frontend display (public endpoint)
+router.get('/loan-parameters', async (req, res) => {
+  try {
+    const model = await UnderwritingModel.findOne({ isActive: true }).sort({ createdAt: -1 });
+
+    // Return default values if no model exists
+    const parameters = model?.parameters || {
+      interestRate: 8,
+      termMonths: 4
+    };
+
+    res.json({
+      interestRate: parameters.interestRate,
+      termMonths: parameters.termMonths,
+      calculationMethod: 'declining_balance'
+    });
+  } catch (error) {
+    console.error('Error fetching loan parameters:', error);
+    // Return defaults on error
+    res.json({
+      interestRate: 8,
+      termMonths: 4,
+      calculationMethod: 'declining_balance'
+    });
+  }
+});
+
 // Get active underwriting model
 router.get('/model', protect, adminOnly, async (req, res) => {
   try {

@@ -69,11 +69,28 @@ const Checkout = () => {
     subtotal: 0,
     totalAmount: 0,
     totalInterest: 0,
-    interestRate: 8,
-    numberOfPayments: 4,
+    interestRate: 8, // Will be fetched from API
+    numberOfPayments: 4, // Will be fetched from API
     paymentAmount: 0,
     payments: [] as any[],
   });
+
+  // Fetch loan parameters from API on component mount
+  useEffect(() => {
+    const fetchLoanParameters = async () => {
+      try {
+        const response = await api.get("/underwriting/loan-parameters");
+        setBnplTerms((prev) => ({
+          ...prev,
+          interestRate: response.data.interestRate,
+          numberOfPayments: response.data.termMonths,
+        }));
+      } catch (error) {
+        console.error("Failed to fetch loan parameters, using defaults");
+      }
+    };
+    fetchLoanParameters();
+  }, []);
 
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [underwritingResult, setUnderwritingResult] = useState<any>(null);
@@ -110,27 +127,51 @@ const Checkout = () => {
 
   useEffect(() => {
     const subtotal = getSubtotal();
-    const totalInterest =
-      subtotal * (bnplTerms.interestRate / 100) * bnplTerms.numberOfPayments;
-    const totalWithInterest = subtotal + totalInterest;
-    const paymentAmount = totalWithInterest / bnplTerms.numberOfPayments;
+    const interestRate = bnplTerms.interestRate / 100; // Convert percentage to decimal
+    const numberOfPayments = bnplTerms.numberOfPayments;
+    const principalPerPayment = subtotal / numberOfPayments;
 
-    const payments: Array<{ number: number; amount: number; date: string }> =
-      [];
+    // Calculate payment schedule using declining balance method
+    let outstandingBalance = subtotal;
+    let totalInterest = 0;
+    const payments: Array<{
+      number: number;
+      principal: number;
+      outstandingBalance: number;
+      interest: number;
+      amount: number;
+      date: string;
+    }> = [];
     const today = new Date();
-    for (let i = 0; i < bnplTerms.numberOfPayments; i++) {
+
+    for (let i = 0; i < numberOfPayments; i++) {
       const paymentDate = new Date(today);
       paymentDate.setMonth(paymentDate.getMonth() + i + 1);
+
+      // Interest is calculated on the outstanding balance
+      const interest = outstandingBalance * interestRate;
+      const monthlyPayment = principalPerPayment + interest;
+
       payments.push({
         number: i + 1,
-        amount: paymentAmount,
+        principal: principalPerPayment,
+        outstandingBalance: outstandingBalance,
+        interest: interest,
+        amount: monthlyPayment,
         date: paymentDate.toLocaleDateString("en-US", {
           year: "numeric",
           month: "long",
           day: "numeric",
         }),
       });
+
+      totalInterest += interest;
+      outstandingBalance -= principalPerPayment;
     }
+
+    const totalWithInterest = subtotal + totalInterest;
+    // First payment amount (highest) for display purposes
+    const paymentAmount = payments.length > 0 ? payments[0].amount : 0;
 
     setBnplTerms((prev) => ({
       ...prev,
@@ -1518,10 +1559,13 @@ const Checkout = () => {
           </Box>
           <Box>
             <Typography variant="body2" color="text.secondary">
-              Payment Amount
+              First Payment (Highest)
             </Typography>
             <Typography variant="h6" fontWeight={700} color="#667FEA">
               {formatCurrency(bnplTerms.paymentAmount)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Payments decrease each month
             </Typography>
           </Box>
         </Box>
@@ -1529,18 +1573,25 @@ const Checkout = () => {
         <Divider sx={{ my: 2 }} />
 
         <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-          Payment Schedule
+          Payment Schedule (Declining Balance)
         </Typography>
         <List dense>
-          {bnplTerms.payments.map((payment) => (
-            <ListItem key={payment.number} sx={{ px: 0 }}>
-              <ListItemText
-                primary={`Payment ${payment.number}`}
-                secondary={payment.date}
-              />
-              <Typography fontWeight={600}>
-                {formatCurrency(payment.amount)}
-              </Typography>
+          {bnplTerms.payments.map((payment: any) => (
+            <ListItem key={payment.number} sx={{ px: 0, flexDirection: 'column', alignItems: 'stretch' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mb: 0.5 }}>
+                <ListItemText
+                  primary={`Payment ${payment.number}`}
+                  secondary={payment.date}
+                />
+                <Typography fontWeight={700} color="#667FEA">
+                  {formatCurrency(payment.amount)}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pl: 2 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Principal: {formatCurrency(payment.principal)} | Interest: {formatCurrency(payment.interest)}
+                </Typography>
+              </Box>
             </ListItem>
           ))}
         </List>
@@ -1935,10 +1986,11 @@ const Checkout = () => {
           <Typography component="li" variant="body2" paragraph>
             You agree to pay the total amount of{" "}
             {formatCurrency(bnplTerms.totalAmount)} in{" "}
-            {bnplTerms.numberOfPayments} equal monthly installments.
+            {bnplTerms.numberOfPayments} monthly installments using declining balance method.
           </Typography>
           <Typography component="li" variant="body2" paragraph>
-            Each payment of {formatCurrency(bnplTerms.paymentAmount)} will be
+            Monthly payments will decrease from {formatCurrency(bnplTerms.payments[0]?.amount || 0)} to{" "}
+            {formatCurrency(bnplTerms.payments[bnplTerms.payments.length - 1]?.amount || 0)} and will be
             automatically deducted from your payroll.
           </Typography>
           <Typography component="li" variant="body2" paragraph>
@@ -2267,15 +2319,7 @@ const Checkout = () => {
               </Typography>
             </Box>
 
-            {orderDetails.bnplTerms.payments.map((payment: any) => {
-              const principalPerPayment =
-                orderDetails.bnplTerms.subtotal /
-                orderDetails.bnplTerms.numberOfPayments;
-              const interestPerPayment =
-                orderDetails.bnplTerms.totalInterest /
-                orderDetails.bnplTerms.numberOfPayments;
-
-              return (
+            {orderDetails.bnplTerms.payments.map((payment: any) => (
                 <Box
                   key={payment.number}
                   sx={{
@@ -2318,10 +2362,10 @@ const Checkout = () => {
                     </Typography>
                   </Box>
                   <Typography variant="body2" textAlign="right">
-                    {formatCurrency(principalPerPayment)}
+                    {formatCurrency(payment.principal)}
                   </Typography>
                   <Typography variant="body2" textAlign="right">
-                    {formatCurrency(interestPerPayment)}
+                    {formatCurrency(payment.interest)}
                   </Typography>
                   <Typography
                     variant="body2"
@@ -2332,21 +2376,12 @@ const Checkout = () => {
                     {formatCurrency(payment.amount)}
                   </Typography>
                 </Box>
-              );
-            })}
+              ))}
           </Box>
 
           {/* Mobile view */}
           <Box sx={{ mb: 2, display: { xs: "block", md: "none" } }}>
-            {orderDetails.bnplTerms.payments.map((payment: any) => {
-              const principalPerPayment =
-                orderDetails.bnplTerms.subtotal /
-                orderDetails.bnplTerms.numberOfPayments;
-              const interestPerPayment =
-                orderDetails.bnplTerms.totalInterest /
-                orderDetails.bnplTerms.numberOfPayments;
-
-              return (
+            {orderDetails.bnplTerms.payments.map((payment: any) => (
                 <Box
                   key={payment.number}
                   sx={{
@@ -2403,7 +2438,7 @@ const Checkout = () => {
                       Principal:
                     </Typography>
                     <Typography variant="body2">
-                      {formatCurrency(principalPerPayment)}
+                      {formatCurrency(payment.principal)}
                     </Typography>
                   </Box>
                   <Box
@@ -2417,7 +2452,7 @@ const Checkout = () => {
                       Interest:
                     </Typography>
                     <Typography variant="body2">
-                      {formatCurrency(interestPerPayment)}
+                      {formatCurrency(payment.interest)}
                     </Typography>
                   </Box>
                   <Divider sx={{ my: 1 }} />
@@ -2436,8 +2471,7 @@ const Checkout = () => {
                     </Typography>
                   </Box>
                 </Box>
-              );
-            })}
+              ))}
           </Box>
 
           <Divider sx={{ my: 2 }} />

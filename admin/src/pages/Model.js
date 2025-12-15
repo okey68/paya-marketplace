@@ -128,14 +128,6 @@ const Model = () => {
     }));
   };
 
-  const handlePaymentScheduleChange = (index, value) => {
-    const newSchedule = [...parameters.paymentSchedule];
-    newSchedule[index] = parseFloat(value) || 0;
-    setParameters(prev => ({
-      ...prev,
-      paymentSchedule: newSchedule
-    }));
-  };
 
   const handleSaveModel = async () => {
     try {
@@ -191,8 +183,6 @@ const Model = () => {
       minimumFractionDigits: 0
     }).format(amount);
   };
-
-  const paymentScheduleSum = parameters.paymentSchedule.reduce((acc, val) => acc + val, 0);
 
   if (loading) {
     return (
@@ -296,10 +286,10 @@ const Model = () => {
                     <div>
                       <strong>Parameters:</strong>
                       <ul style={{ margin: '0.5rem 0', paddingLeft: '1.5rem' }}>
-                        <li>Interest Rate: {version.parameters.interestRate}%</li>
+                        <li>Interest Rate: {version.parameters.interestRate}% per month</li>
                         <li>Advance Rate: {version.parameters.advanceRate}%</li>
                         <li>Term: {version.parameters.termMonths} months</li>
-                        <li>Payment Schedule: {version.parameters.paymentSchedule.join('%, ')}%</li>
+                        <li>Method: Declining Balance</li>
                       </ul>
                     </div>
                   </div>
@@ -615,27 +605,38 @@ const Model = () => {
           </div>
           
           <div className="payment-schedule-section" style={{ marginTop: '2rem' }}>
-            <h3>Payment Schedule</h3>
-            <p className="schedule-description">
-              Define the percentage of total payment for each month (must sum to 100%)
-            </p>
-            <div className="payment-schedule-grid">
-              {parameters.paymentSchedule.map((percentage, index) => (
-                <div key={index} className="schedule-item">
-                  <label>Month {index + 1} (%)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={percentage}
-                    onChange={(e) => handlePaymentScheduleChange(index, e.target.value)}
-                    className="schedule-input"
-                    disabled={isLocked}
-                  />
-                </div>
-              ))}
-            </div>
-            <div className={`schedule-sum ${paymentScheduleSum === 100 ? 'valid' : 'invalid'}`}>
-              Total: {paymentScheduleSum}% {paymentScheduleSum === 100 ? '✓' : '✗ Must equal 100%'}
+            <h3>Payment Calculation Method</h3>
+            <div style={{
+              backgroundColor: '#f0f9ff',
+              border: '1px solid #bae6fd',
+              borderRadius: '8px',
+              padding: '1rem',
+              marginTop: '0.5rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <span style={{
+                  backgroundColor: '#6366f1',
+                  color: 'white',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '4px',
+                  fontSize: '0.75rem',
+                  fontWeight: '600'
+                }}>
+                  DECLINING BALANCE
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: '#334155' }}>
+                Interest is calculated on the <strong>outstanding balance</strong> each month.
+                Principal per payment is fixed, while interest decreases as the balance reduces.
+              </p>
+              <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#64748b' }}>
+                <strong>Formula:</strong>
+                <ul style={{ margin: '0.5rem 0', paddingLeft: '1.5rem' }}>
+                  <li>Principal per payment = Loan Amount ÷ Term Months</li>
+                  <li>Interest = Outstanding Balance × Interest Rate</li>
+                  <li>Monthly Payment = Principal + Interest (decreases each month)</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -791,15 +792,55 @@ const Model = () => {
                     </div>
                     
                     <div className="payment-schedule-results">
-                      <h5>Payment Schedule</h5>
+                      <h5>Payment Schedule (Declining Balance)</h5>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '0.8fr 1fr 1fr 1fr 1.2fr',
+                        gap: '0.5rem',
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        color: '#64748b',
+                        padding: '0.5rem 0',
+                        borderBottom: '1px solid #e2e8f0'
+                      }}>
+                        <span>#</span>
+                        <span>Principal</span>
+                        <span>Outstanding</span>
+                        <span>Interest</span>
+                        <span>Payment</span>
+                      </div>
                       {testResults.loanDetails.payments.map((payment, index) => (
-                        <div key={index} className="payment-row-result">
-                          <span>Payment {payment.paymentNumber}</span>
-                          <span>{payment.percentage}%</span>
-                          <span>{formatCurrency(payment.amount)}</span>
-                          <span>{new Date(payment.dueDate).toLocaleDateString()}</span>
+                        <div key={index} className="payment-row-result" style={{
+                          display: 'grid',
+                          gridTemplateColumns: '0.8fr 1fr 1fr 1fr 1.2fr',
+                          gap: '0.5rem',
+                          padding: '0.5rem 0',
+                          borderBottom: '1px solid #f1f5f9',
+                          fontSize: '0.875rem'
+                        }}>
+                          <span>{payment.paymentNumber}</span>
+                          <span>{formatCurrency(payment.principal)}</span>
+                          <span>{formatCurrency(payment.outstandingBalance)}</span>
+                          <span>{formatCurrency(payment.interest)}</span>
+                          <span style={{ fontWeight: '600', color: '#6366f1' }}>{formatCurrency(payment.amount)}</span>
                         </div>
                       ))}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '0.8fr 1fr 1fr 1fr 1.2fr',
+                        gap: '0.5rem',
+                        padding: '0.75rem 0',
+                        marginTop: '0.5rem',
+                        borderTop: '2px solid #e2e8f0',
+                        fontSize: '0.875rem',
+                        fontWeight: '600'
+                      }}>
+                        <span>Total</span>
+                        <span>{formatCurrency(testResults.loanDetails.loanAmount)}</span>
+                        <span>-</span>
+                        <span>{formatCurrency(testResults.loanDetails.totalInterest)}</span>
+                        <span style={{ color: '#6366f1' }}>{formatCurrency(testResults.loanDetails.totalRepayment)}</span>
+                      </div>
                     </div>
                   </div>
                 )}
