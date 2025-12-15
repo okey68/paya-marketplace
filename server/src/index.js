@@ -30,6 +30,8 @@ const uploadRoutes = require('./routes/uploads');
 const supportRoutes = require('./routes/support');
 const integrationsRoutes = require('./routes/integrations');
 const underwritingRoutes = require('./routes/underwriting');
+const cdlCompaniesRoutes = require('./routes/cdlCompanies');
+const hrVerificationRoutes = require('./routes/hrVerification');
 
 // Security middleware
 app.use(
@@ -164,6 +166,11 @@ mongoose
         '⚠️  Shopify credentials not found - scheduled sync disabled'
       );
     }
+
+    // Initialize HR Verification scheduler
+    const { initializeScheduler } = require('./services/hrVerificationScheduler');
+    initializeScheduler();
+    console.log('✅ HR Verification scheduler initialized');
   })
   .catch((error) => {
     console.error('MongoDB connection error:', error);
@@ -181,6 +188,8 @@ app.use('/api/uploads', uploadRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/underwriting', underwritingRoutes);
+app.use('/api/cdl-companies', cdlCompaniesRoutes);
+app.use('/api/hr-verification', hrVerificationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -109,7 +109,10 @@ const orderSchema = new mongoose.Schema({
       'underwriting',
       'approved',
       'rejected',
-      'payment_processing', 
+      'hr_verification_pending',  // Awaiting HR verification
+      'hr_verified',              // HR verification successful
+      'hr_unverified',            // HR verification failed
+      'payment_processing',
       'paid',
       'processing',
       'shipped',
@@ -118,6 +121,12 @@ const orderSchema = new mongoose.Schema({
       'refunded'
     ],
     default: 'pending_payment'
+  },
+
+  // HR Verification Reference
+  hrVerification: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'HRVerification'
   },
   
   // Payment Information
@@ -230,10 +239,14 @@ orderSchema.index({ status: 1 });
 orderSchema.index({ 'payment.status': 1 });
 orderSchema.index({ createdAt: -1 });
 orderSchema.index({ 'payment.bnpl.dueDate': 1 });
+orderSchema.index({ hrVerification: 1 });
 
 // Virtual for merchants involved in order
 orderSchema.virtual('merchants').get(function() {
-  const merchantIds = [...new Set(this.items.map(item => item.merchant.toString()))];
+  if (!this.items || !Array.isArray(this.items)) {
+    return [];
+  }
+  const merchantIds = [...new Set(this.items.filter(item => item?.merchant).map(item => item.merchant.toString()))];
   return merchantIds;
 });
 

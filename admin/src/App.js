@@ -15,6 +15,9 @@ import Products from './pages/Products';
 import Users from './pages/Users';
 import Model from './pages/Model';
 import Support from './pages/Support';
+import HRVerifications from './pages/HRVerifications';
+import HRVerificationDetail from './pages/HRVerificationDetail';
+import CDLCompanies from './pages/CDLCompanies';
 
 // Configure axios defaults
 axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
@@ -114,6 +117,9 @@ function App() {
           <Route path="/users" element={<Users />} />
           <Route path="/model" element={<Model />} />
           <Route path="/support" element={<Support />} />
+          <Route path="/hr-verifications" element={<HRVerifications />} />
+          <Route path="/hr-verifications/:id" element={<HRVerificationDetail />} />
+          <Route path="/cdl-companies" element={<CDLCompanies />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
