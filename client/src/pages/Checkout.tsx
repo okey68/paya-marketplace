@@ -1368,7 +1368,7 @@ const Checkout = () => {
             sx={{ color: "#667FEA" }}
           />
         }
-        label="I confirm that the income information I have entered is accurate and true"
+        label="I authorize Paya to review my Payslip, and use that data for loan underwriting"
         sx={{ mb: 4 }}
       />
 
@@ -1599,7 +1599,7 @@ const Checkout = () => {
           }}
           sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: "#667FEA" }}
         >
-          Continue to Next of Kin
+          Continue to Agreement
         </Button>
       </Box>
     </Box>
