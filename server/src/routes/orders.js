@@ -2,9 +2,12 @@ const express = require('express');
 const { body, query, validationResult } = require('express-validator');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const User = require('../models/User');
+const UnderwritingModel = require('../models/UnderwritingModel');
 const { authenticateToken, requireRole, requireApprovedMerchant } = require('../middleware/auth');
 const slackService = require('../../services/slackService');
 const hrVerificationService = require('../services/hrVerificationService');
+const { generateBNPLAgreement } = require('../services/pdfService');
 
 const router = express.Router();
 
@@ -432,6 +435,37 @@ router.patch('/:id/status', [
     if (status === 'approved' && order.payment?.method === 'paya_bnpl') {
       await slackService.notifyBNPLApproval(order);
 
+      // Generate BNPL agreement PDF when order is approved
+      try {
+        // Get customer - either from order.customer or look up by email
+        let customer = order.customer ? await User.findById(order.customer) : null;
+        if (!customer && order.customerInfo?.email) {
+          customer = await User.findOne({ email: order.customerInfo.email });
+        }
+
+        // Get loan details from underwriting model
+        const underwritingModel = await UnderwritingModel.findOne({ isActive: true });
+        const loanDetails = underwritingModel
+          ? underwritingModel.calculateLoanDetails(order.totalAmount)
+          : null;
+
+        // Generate the agreement PDF
+        const agreementPdfPath = await generateBNPLAgreement({
+          order,
+          customer,
+          loanDetails
+        });
+
+        // Save the agreement PDF path to the order
+        order.payment.bnpl.agreementPdfPath = agreementPdfPath;
+        await order.save();
+
+        console.log(`BNPL Agreement PDF generated for order ${order.orderNumber}: ${agreementPdfPath}`);
+      } catch (pdfError) {
+        console.error('Error generating BNPL agreement PDF:', pdfError.message);
+        // Continue without PDF - it's not critical for order processing
+      }
+
       // Trigger HR verification after underwriting approval (unless skipped)
       if (!skipHRVerification) {
         try {
@@ -595,14 +629,30 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
     // Admins can access any order
 
-    const order = await Order.findOne(query)
-      .populate('customer', 'firstName lastName email phoneNumber')
+    let order = await Order.findOne(query)
+      .populate('customer', 'firstName lastName email phoneNumber financialInfo')
       .populate('items.product', 'name images')
       .populate('items.merchant', 'businessInfo.businessName firstName lastName')
-      .populate('fulfillment.merchant', 'businessInfo.businessName firstName lastName');
+      .populate('fulfillment.merchant', 'businessInfo.businessName firstName lastName')
+      .populate('hrVerification', 'payslipPath payslipOriginalName agreementPdfPath status');
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found or access denied' });
+    }
+
+    // For guest orders (customer is null), look up the user by email to get their financialInfo
+    // This handles the case where payslip was uploaded during underwriting but order has no customer link
+    if (!order.customer && order.customerInfo?.email) {
+      const User = require('../models/User');
+      const customerByEmail = await User.findOne({
+        email: order.customerInfo.email
+      }).select('firstName lastName email phoneNumber financialInfo');
+
+      if (customerByEmail) {
+        // Convert order to plain object so we can add the customer data
+        order = order.toObject();
+        order.customer = customerByEmail;
+      }
     }
 
     res.json(order);

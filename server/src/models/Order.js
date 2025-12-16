@@ -150,6 +150,7 @@ const orderSchema = new mongoose.Schema({
       loanTerm: { type: Number, default: 30 }, // days
       agreementAccepted: { type: Boolean, default: false },
       agreementAcceptedAt: { type: Date },
+      agreementPdfPath: { type: String }, // Path to generated BNPL agreement PDF
       dueDate: { type: Date },
       advanceRate: { type: Number, default: 0.99 }, // 99%
       advanceAmount: { type: Number }, // Amount advanced to merchant

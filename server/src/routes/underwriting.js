@@ -48,7 +48,7 @@ router.post('/upload-financial-info', uploadPayslip.single('payslip'), [
         filename: req.file.filename,
         originalName: req.file.originalname,
         uploadDate: new Date(),
-        path: req.file.path
+        path: req.file.filename // Store just the filename, not full path
       };
     }
 
@@ -120,6 +120,33 @@ router.post('/add-next-of-kin', [
   } catch (error) {
     console.error('Error adding next of kin:', error);
     res.status(500).json({ message: 'Error adding next of kin information', error: error.message });
+  }
+});
+
+// Get loan parameters for frontend display (public endpoint)
+router.get('/loan-parameters', async (req, res) => {
+  try {
+    const model = await UnderwritingModel.findOne({ isActive: true }).sort({ createdAt: -1 });
+
+    // Return default values if no model exists
+    const parameters = model?.parameters || {
+      interestRate: 8,
+      termMonths: 4
+    };
+
+    res.json({
+      interestRate: parameters.interestRate,
+      termMonths: parameters.termMonths,
+      calculationMethod: 'declining_balance'
+    });
+  } catch (error) {
+    console.error('Error fetching loan parameters:', error);
+    // Return defaults on error
+    res.json({
+      interestRate: 8,
+      termMonths: 4,
+      calculationMethod: 'declining_balance'
+    });
   }
 });
 

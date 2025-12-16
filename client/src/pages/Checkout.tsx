@@ -18,6 +18,9 @@ import {
   Alert,
   MenuItem,
   InputAdornment,
+  ListItemText,
+  List,
+  ListItem,
 } from "@mui/material";
 import {
   CheckCircle as CheckIcon,
@@ -66,11 +69,28 @@ const Checkout = () => {
     subtotal: 0,
     totalAmount: 0,
     totalInterest: 0,
-    interestRate: 8,
-    numberOfPayments: 4,
+    interestRate: 8, // Will be fetched from API
+    numberOfPayments: 4, // Will be fetched from API
     paymentAmount: 0,
     payments: [] as any[],
   });
+
+  // Fetch loan parameters from API on component mount
+  useEffect(() => {
+    const fetchLoanParameters = async () => {
+      try {
+        const response = await api.get("/underwriting/loan-parameters");
+        setBnplTerms((prev) => ({
+          ...prev,
+          interestRate: response.data.interestRate,
+          numberOfPayments: response.data.termMonths,
+        }));
+      } catch (error) {
+        console.error("Failed to fetch loan parameters, using defaults");
+      }
+    };
+    fetchLoanParameters();
+  }, []);
 
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [underwritingResult, setUnderwritingResult] = useState<any>(null);
@@ -107,27 +127,51 @@ const Checkout = () => {
 
   useEffect(() => {
     const subtotal = getSubtotal();
-    const totalInterest =
-      subtotal * (bnplTerms.interestRate / 100) * bnplTerms.numberOfPayments;
-    const totalWithInterest = subtotal + totalInterest;
-    const paymentAmount = totalWithInterest / bnplTerms.numberOfPayments;
+    const interestRate = bnplTerms.interestRate / 100; // Convert percentage to decimal
+    const numberOfPayments = bnplTerms.numberOfPayments;
+    const principalPerPayment = subtotal / numberOfPayments;
 
-    const payments: Array<{ number: number; amount: number; date: string }> =
-      [];
+    // Calculate payment schedule using declining balance method
+    let outstandingBalance = subtotal;
+    let totalInterest = 0;
+    const payments: Array<{
+      number: number;
+      principal: number;
+      outstandingBalance: number;
+      interest: number;
+      amount: number;
+      date: string;
+    }> = [];
     const today = new Date();
-    for (let i = 0; i < bnplTerms.numberOfPayments; i++) {
+
+    for (let i = 0; i < numberOfPayments; i++) {
       const paymentDate = new Date(today);
       paymentDate.setMonth(paymentDate.getMonth() + i + 1);
+
+      // Interest is calculated on the outstanding balance
+      const interest = outstandingBalance * interestRate;
+      const monthlyPayment = principalPerPayment + interest;
+
       payments.push({
         number: i + 1,
-        amount: paymentAmount,
+        principal: principalPerPayment,
+        outstandingBalance: outstandingBalance,
+        interest: interest,
+        amount: monthlyPayment,
         date: paymentDate.toLocaleDateString("en-US", {
           year: "numeric",
           month: "long",
           day: "numeric",
         }),
       });
+
+      totalInterest += interest;
+      outstandingBalance -= principalPerPayment;
     }
+
+    const totalWithInterest = subtotal + totalInterest;
+    // First payment amount (highest) for display purposes
+    const paymentAmount = payments.length > 0 ? payments[0].amount : 0;
 
     setBnplTerms((prev) => ({
       ...prev,
@@ -1507,18 +1551,13 @@ const Checkout = () => {
           </Box>
           <Box>
             <Typography variant="body2" color="text.secondary">
-              Interest Rate
-            </Typography>
-            <Typography variant="h6" fontWeight={700}>
-              {bnplTerms.interestRate}%
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="body2" color="text.secondary">
-              Total Monthly Payment
+              First Payment (Highest)
             </Typography>
             <Typography variant="h6" fontWeight={700} color="#667FEA">
               {formatCurrency(bnplTerms.paymentAmount)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Payments decrease each month
             </Typography>
           </Box>
         </Box>
@@ -1526,150 +1565,28 @@ const Checkout = () => {
         <Divider sx={{ my: 2 }} />
 
         <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-          Payment Schedule
+          Payment Schedule (Declining Balance)
         </Typography>
-        
-        {/* Desktop view - Table */}
-        <Box sx={{ display: { xs: "none", md: "block" } }}>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "1.2fr 1fr 1fr 1fr 1.2fr",
-              gap: 2,
-              p: 1.5,
-              bgcolor: "grey.100",
-              borderRadius: 1,
-              mb: 1,
-            }}
-          >
-            <Typography variant="caption" fontWeight={700} color="text.secondary">
-              PAYMENT
-            </Typography>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" textAlign="right">
-              PRINCIPAL
-            </Typography>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" textAlign="right">
-              OUTSTANDING
-            </Typography>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" textAlign="right">
-              INTEREST
-            </Typography>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" textAlign="right">
-              MONTHLY PAYMENT
-            </Typography>
-          </Box>
-
-          {bnplTerms.payments.map((payment, index) => {
-            const principalPerPayment = bnplTerms.subtotal / bnplTerms.numberOfPayments;
-            const interestPerPayment = bnplTerms.totalInterest / bnplTerms.numberOfPayments;
-            const outstandingAmount = bnplTerms.subtotal - (principalPerPayment * (index + 1));
-
-            return (
-              <Box
-                key={payment.number}
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "1.2fr 1fr 1fr 1fr 1.2fr",
-                  gap: 2,
-                  p: 1.5,
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  mb: 1,
-                  alignItems: "center",
-                  "&:hover": {
-                    bgcolor: "grey.50",
-                  },
-                }}
-              >
-                <Box>
-                  <Typography variant="body2" fontWeight={600}>
-                    Payment {payment.number}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {payment.date}
-                  </Typography>
-                </Box>
-                <Typography variant="body2" textAlign="right">
-                  {formatCurrency(principalPerPayment)}
-                </Typography>
-                <Typography variant="body2" textAlign="right">
-                  {formatCurrency(Math.max(0, outstandingAmount))}
-                </Typography>
-                <Typography variant="body2" textAlign="right">
-                  {formatCurrency(interestPerPayment)}
-                </Typography>
-                <Typography variant="body2" fontWeight={700} color="#667FEA" textAlign="right">
+        <List dense>
+          {bnplTerms.payments.map((payment: any) => (
+            <ListItem key={payment.number} sx={{ px: 0, flexDirection: 'column', alignItems: 'stretch' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mb: 0.5 }}>
+                <ListItemText
+                  primary={`Payment ${payment.number}`}
+                  secondary={payment.date}
+                />
+                <Typography fontWeight={700} color="#667FEA">
                   {formatCurrency(payment.amount)}
                 </Typography>
               </Box>
-            );
-          })}
-        </Box>
-
-        {/* Mobile view - Cards */}
-        <Box sx={{ display: { xs: "block", md: "none" } }}>
-          {bnplTerms.payments.map((payment, index) => {
-            const principalPerPayment = bnplTerms.subtotal / bnplTerms.numberOfPayments;
-            const interestPerPayment = bnplTerms.totalInterest / bnplTerms.numberOfPayments;
-            const outstandingAmount = bnplTerms.subtotal - (principalPerPayment * (index + 1));
-
-            return (
-              <Box
-                key={payment.number}
-                sx={{
-                  p: 2,
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  mb: 2,
-                }}
-              >
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                  <Typography variant="body2" fontWeight={700}>
-                    Payment {payment.number}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {payment.date}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Principal:
-                  </Typography>
-                  <Typography variant="body2">
-                    {formatCurrency(principalPerPayment)}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Outstanding:
-                  </Typography>
-                  <Typography variant="body2">
-                    {formatCurrency(Math.max(0, outstandingAmount))}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Interest:
-                  </Typography>
-                  <Typography variant="body2">
-                    {formatCurrency(interestPerPayment)}
-                  </Typography>
-                </Box>
-                <Divider sx={{ my: 1 }} />
-                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                  <Typography variant="body2" fontWeight={700}>
-                    Monthly Payment:
-                  </Typography>
-                  <Typography variant="body2" fontWeight={700} color="#667FEA">
-                    {formatCurrency(payment.amount)}
-                  </Typography>
-                </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pl: 2 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Principal: {formatCurrency(payment.principal)} | Interest: {formatCurrency(payment.interest)}
+                </Typography>
               </Box>
-            );
-          })}
-        </Box>
+            </ListItem>
+          ))}
+        </List>
       </Paper>
 
       <Box sx={{ display: "flex", justifyContent: "center" }}>
@@ -2061,10 +1978,11 @@ const Checkout = () => {
           <Typography component="li" variant="body2" paragraph>
             You agree to pay the total amount of{" "}
             {formatCurrency(bnplTerms.totalAmount)} in{" "}
-            {bnplTerms.numberOfPayments} equal monthly installments.
+            {bnplTerms.numberOfPayments} monthly installments using declining balance method.
           </Typography>
           <Typography component="li" variant="body2" paragraph>
-            Each payment of {formatCurrency(bnplTerms.paymentAmount)} will be
+            Monthly payments will decrease from {formatCurrency(bnplTerms.payments[0]?.amount || 0)} to{" "}
+            {formatCurrency(bnplTerms.payments[bnplTerms.payments.length - 1]?.amount || 0)} and will be
             automatically deducted from your payroll.
           </Typography>
           <Typography component="li" variant="body2" paragraph>
@@ -2393,15 +2311,7 @@ const Checkout = () => {
               </Typography>
             </Box>
 
-            {orderDetails.bnplTerms.payments.map((payment: any) => {
-              const principalPerPayment =
-                orderDetails.bnplTerms.subtotal /
-                orderDetails.bnplTerms.numberOfPayments;
-              const interestPerPayment =
-                orderDetails.bnplTerms.totalInterest /
-                orderDetails.bnplTerms.numberOfPayments;
-
-              return (
+            {orderDetails.bnplTerms.payments.map((payment: any) => (
                 <Box
                   key={payment.number}
                   sx={{
@@ -2444,10 +2354,10 @@ const Checkout = () => {
                     </Typography>
                   </Box>
                   <Typography variant="body2" textAlign="right">
-                    {formatCurrency(principalPerPayment)}
+                    {formatCurrency(payment.principal)}
                   </Typography>
                   <Typography variant="body2" textAlign="right">
-                    {formatCurrency(interestPerPayment)}
+                    {formatCurrency(payment.interest)}
                   </Typography>
                   <Typography
                     variant="body2"
@@ -2458,21 +2368,12 @@ const Checkout = () => {
                     {formatCurrency(payment.amount)}
                   </Typography>
                 </Box>
-              );
-            })}
+              ))}
           </Box>
 
           {/* Mobile view */}
           <Box sx={{ mb: 2, display: { xs: "block", md: "none" } }}>
-            {orderDetails.bnplTerms.payments.map((payment: any) => {
-              const principalPerPayment =
-                orderDetails.bnplTerms.subtotal /
-                orderDetails.bnplTerms.numberOfPayments;
-              const interestPerPayment =
-                orderDetails.bnplTerms.totalInterest /
-                orderDetails.bnplTerms.numberOfPayments;
-
-              return (
+            {orderDetails.bnplTerms.payments.map((payment: any) => (
                 <Box
                   key={payment.number}
                   sx={{
@@ -2529,7 +2430,7 @@ const Checkout = () => {
                       Principal:
                     </Typography>
                     <Typography variant="body2">
-                      {formatCurrency(principalPerPayment)}
+                      {formatCurrency(payment.principal)}
                     </Typography>
                   </Box>
                   <Box
@@ -2543,7 +2444,7 @@ const Checkout = () => {
                       Interest:
                     </Typography>
                     <Typography variant="body2">
-                      {formatCurrency(interestPerPayment)}
+                      {formatCurrency(payment.interest)}
                     </Typography>
                   </Box>
                   <Divider sx={{ my: 1 }} />
@@ -2562,8 +2463,7 @@ const Checkout = () => {
                     </Typography>
                   </Box>
                 </Box>
-              );
-            })}
+              ))}
           </Box>
 
           <Divider sx={{ my: 2 }} />

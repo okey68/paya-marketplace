@@ -88,9 +88,22 @@ const generateBNPLAgreement = async (options) => {
 
       const loanAmount = loanDetails?.loanAmount || order.totalAmount;
       const interestRate = loanDetails?.interestRate || 8;
-      const totalInterest = loanDetails?.totalInterest || (loanAmount * interestRate / 100 * 4);
-      const totalRepayment = loanDetails?.totalRepayment || (loanAmount + totalInterest);
       const termMonths = loanDetails?.termMonths || 4;
+
+      // Calculate declining balance totals if not provided
+      let totalInterest = loanDetails?.totalInterest;
+      if (!totalInterest) {
+        // Calculate using declining balance method
+        const rate = interestRate / 100;
+        const principalPerPayment = loanAmount / termMonths;
+        let outstanding = loanAmount;
+        totalInterest = 0;
+        for (let i = 0; i < termMonths; i++) {
+          totalInterest += outstanding * rate;
+          outstanding -= principalPerPayment;
+        }
+      }
+      const totalRepayment = loanDetails?.totalRepayment || (loanAmount + totalInterest);
 
       // Loan details table
       doc.fontSize(10).font('Helvetica');
@@ -126,24 +139,26 @@ const generateBNPLAgreement = async (options) => {
 
       doc.moveDown(0.5);
 
-      // Payment schedule table header
-      doc.fontSize(10);
+      // Payment schedule table header (Declining Balance format)
+      doc.fontSize(8);
       const scheduleTop = doc.y;
-      const cols = [50, 150, 250, 350];
+      const cols = [50, 100, 170, 250, 330, 420];
 
       doc.font('Helvetica-Bold')
-        .text('Payment #', cols[0], scheduleTop)
+        .text('#', cols[0], scheduleTop)
         .text('Due Date', cols[1], scheduleTop)
-        .text('Amount (KES)', cols[2], scheduleTop)
-        .text('Status', cols[3], scheduleTop);
+        .text('Principal', cols[2], scheduleTop)
+        .text('Outstanding', cols[3], scheduleTop)
+        .text('Interest', cols[4], scheduleTop)
+        .text('Payment', cols[5], scheduleTop);
 
-      doc.moveTo(50, scheduleTop + 15)
-        .lineTo(500, scheduleTop + 15)
+      doc.moveTo(50, scheduleTop + 12)
+        .lineTo(500, scheduleTop + 12)
         .stroke();
 
-      // Payment rows
-      const payments = loanDetails?.payments || generateDefaultPayments(totalRepayment, termMonths);
-      let paymentY = scheduleTop + 25;
+      // Payment rows - generate using declining balance if not provided
+      const payments = loanDetails?.payments || generateDefaultPayments(loanAmount, termMonths, interestRate);
+      let paymentY = scheduleTop + 20;
 
       payments.forEach((payment, index) => {
         const dueDate = payment.dueDate instanceof Date
@@ -153,10 +168,12 @@ const generateBNPLAgreement = async (options) => {
         doc.font('Helvetica')
           .text(`${index + 1}`, cols[0], paymentY)
           .text(dueDate, cols[1], paymentY)
-          .text(payment.amount.toLocaleString(), cols[2], paymentY)
-          .text('Pending', cols[3], paymentY);
+          .text(Math.round(payment.principal || payment.amount / 1.08).toLocaleString(), cols[2], paymentY)
+          .text(Math.round(payment.outstandingBalance || 0).toLocaleString(), cols[3], paymentY)
+          .text(Math.round(payment.interest || 0).toLocaleString(), cols[4], paymentY)
+          .text(Math.round(payment.amount).toLocaleString(), cols[5], paymentY);
 
-        paymentY += 20;
+        paymentY += 18;
       });
 
       doc.y = paymentY + 20;
@@ -268,22 +285,32 @@ const generateBNPLAgreement = async (options) => {
 };
 
 /**
- * Generate default payment schedule
+ * Generate default payment schedule using declining balance method
  */
-const generateDefaultPayments = (totalRepayment, termMonths) => {
-  const monthlyPayment = totalRepayment / termMonths;
+const generateDefaultPayments = (loanAmount, termMonths, interestRate = 8) => {
+  const rate = interestRate / 100;
+  const principalPerPayment = loanAmount / termMonths;
+  let outstandingBalance = loanAmount;
   const payments = [];
 
   for (let i = 0; i < termMonths; i++) {
     const dueDate = new Date();
     dueDate.setMonth(dueDate.getMonth() + i + 1);
 
+    // Interest calculated on outstanding balance (declining balance method)
+    const interest = outstandingBalance * rate;
+    const monthlyPayment = principalPerPayment + interest;
+
     payments.push({
       paymentNumber: i + 1,
-      percentage: 100 / termMonths,
-      amount: Math.round(monthlyPayment),
+      principal: principalPerPayment,
+      outstandingBalance: outstandingBalance,
+      interest: interest,
+      amount: monthlyPayment,
       dueDate
     });
+
+    outstandingBalance -= principalPerPayment;
   }
 
   return payments;

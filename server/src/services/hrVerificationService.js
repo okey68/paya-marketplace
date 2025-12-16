@@ -58,10 +58,20 @@ const initiateVerification = async (orderId) => {
     throw new Error('No HR contact found for company');
   }
 
-  // Get payslip path
-  const payslipPath = customer.financialInfo?.payslip?.path
-    ? path.join(__dirname, '../../uploads', customer.financialInfo.payslip.path)
-    : null;
+  // Get payslip path - handle both full paths and filenames
+  let payslipPath = null;
+  if (customer.financialInfo?.payslip?.path) {
+    const storedPath = customer.financialInfo.payslip.path;
+    // Check if it's already a full path or just a filename
+    if (storedPath.includes('/uploads/') || storedPath.startsWith('/')) {
+      // It's a full path, extract just the filename and build correct path
+      const filename = path.basename(storedPath);
+      payslipPath = path.join(__dirname, '../../uploads', filename);
+    } else {
+      // It's just a filename
+      payslipPath = path.join(__dirname, '../../uploads', storedPath);
+    }
+  }
 
   // Generate BNPL agreement PDF
   const underwritingModel = await UnderwritingModel.findOne({ isActive: true });

@@ -171,26 +171,42 @@ underwritingModelSchema.methods.evaluateApplicant = function(applicant, loanAmou
   return results;
 };
 
-// Method to calculate loan details
+// Method to calculate loan details using declining balance method
 underwritingModelSchema.methods.calculateLoanDetails = function(loanAmount) {
-  const totalInterest = (loanAmount * this.parameters.interestRate / 100) * this.parameters.termMonths;
+  const interestRate = this.parameters.interestRate / 100; // Convert percentage to decimal
+  const termMonths = this.parameters.termMonths;
+  const principalPerPayment = loanAmount / termMonths;
+
+  // Calculate payment schedule using declining balance method
+  let outstandingBalance = loanAmount;
+  let totalInterest = 0;
+  const payments = [];
+
+  for (let i = 0; i < termMonths; i++) {
+    const dueDate = new Date();
+    dueDate.setMonth(dueDate.getMonth() + i + 1);
+
+    // Interest is calculated on the outstanding balance
+    const interest = outstandingBalance * interestRate;
+    const monthlyPayment = principalPerPayment + interest;
+
+    payments.push({
+      paymentNumber: i + 1,
+      principal: principalPerPayment,
+      outstandingBalance: outstandingBalance,
+      interest: interest,
+      amount: monthlyPayment,
+      dueDate: dueDate
+    });
+
+    totalInterest += interest;
+    outstandingBalance -= principalPerPayment;
+  }
+
   const totalRepayment = loanAmount + totalInterest;
   const merchantAdvance = loanAmount * (this.parameters.advanceRate / 100);
   const payaFee = loanAmount * ((100 - this.parameters.advanceRate) / 100);
-  
-  // Calculate payment schedule
-  const payments = this.parameters.paymentSchedule.map((percentage, index) => {
-    const dueDate = new Date();
-    dueDate.setMonth(dueDate.getMonth() + index + 1);
-    
-    return {
-      paymentNumber: index + 1,
-      percentage: percentage,
-      amount: (totalRepayment * percentage) / 100,
-      dueDate: dueDate
-    };
-  });
-  
+
   return {
     loanAmount,
     interestRate: this.parameters.interestRate,
