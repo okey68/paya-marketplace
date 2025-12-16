@@ -497,7 +497,11 @@ const HRVerificationDetail = () => {
                 <div style={{ display: 'grid', gap: '0.75rem' }}>
                   <div>
                     <label style={{ fontWeight: '600', color: '#718096', fontSize: '0.875rem' }}>Name</label>
-                    <div>{verification.customerSnapshot?.firstName} {verification.customerSnapshot?.lastName}</div>
+                    <div>
+                      {verification.customerSnapshot?.firstName}
+                      {verification.customerSnapshot?.middleName ? ` ${verification.customerSnapshot.middleName}` : ''}{' '}
+                      {verification.customerSnapshot?.lastName}
+                    </div>
                   </div>
                   <div>
                     <label style={{ fontWeight: '600', color: '#718096', fontSize: '0.875rem' }}>Email</label>
@@ -507,6 +511,12 @@ const HRVerificationDetail = () => {
                       </a>
                     </div>
                   </div>
+                  {verification.customerSnapshot?.nationalId && (
+                    <div>
+                      <label style={{ fontWeight: '600', color: '#718096', fontSize: '0.875rem' }}>National ID</label>
+                      <div>{verification.customerSnapshot.nationalId}</div>
+                    </div>
+                  )}
                   <div>
                     <label style={{ fontWeight: '600', color: '#718096', fontSize: '0.875rem' }}>Employer</label>
                     <div>{verification.customerSnapshot?.employerName || '-'}</div>

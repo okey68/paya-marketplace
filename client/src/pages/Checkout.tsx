@@ -49,12 +49,13 @@ const Checkout = () => {
 
   const [personalInfo, setPersonalInfo] = useState({
     firstName: "",
+    middleName: "",
     lastName: "",
     dateOfBirth: "",
     companyEmail: "",
     phoneCountryCode: "+254",
     phoneNumber: "",
-    kraPin: "",
+    nationalId: "",
   });
 
   const [shippingAddress, setShippingAddress] = useState({
@@ -206,7 +207,7 @@ const Checkout = () => {
       !personalInfo.dateOfBirth ||
       !personalInfo.companyEmail ||
       !personalInfo.phoneNumber ||
-      !personalInfo.kraPin
+      !personalInfo.nationalId
     ) {
       toast.error("Please fill in all required fields");
       return;
@@ -235,12 +236,13 @@ const Checkout = () => {
     try {
       await api.post("/auth/customer/add-info", {
         firstName: personalInfo.firstName,
+        middleName: personalInfo.middleName || undefined,
         lastName: personalInfo.lastName,
         dateOfBirth: personalInfo.dateOfBirth,
         companyEmail: personalInfo.companyEmail,
         phoneCountryCode: personalInfo.phoneCountryCode.replace("+", ""),
         phoneNumber: personalInfo.phoneNumber,
-        kraPin: personalInfo.kraPin,
+        nationalId: personalInfo.nationalId,
       });
 
       // OTP sent via email automatically
@@ -408,11 +410,13 @@ const Checkout = () => {
         } payments of ${formatCurrency(bnplTerms.paymentAmount)}`,
         customerInfo: {
           firstName: personalInfo.firstName,
+          middleName: personalInfo.middleName || undefined,
           lastName: personalInfo.lastName,
           email: personalInfo.companyEmail,
           phoneCountryCode: personalInfo.phoneCountryCode,
           phoneNumber: personalInfo.phoneNumber,
           dateOfBirth: new Date(personalInfo.dateOfBirth),
+          nationalId: personalInfo.nationalId,
         },
         payment: {
           method: "paya_bnpl",
@@ -689,7 +693,7 @@ const Checkout = () => {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr 1fr" },
           gap: 2,
           mb: 3,
         }}
@@ -702,6 +706,15 @@ const Checkout = () => {
           onChange={(e) =>
             setPersonalInfo({ ...personalInfo, firstName: e.target.value })
           }
+        />
+        <TextField
+          label="Middle Name"
+          fullWidth
+          value={personalInfo.middleName}
+          onChange={(e) =>
+            setPersonalInfo({ ...personalInfo, middleName: e.target.value })
+          }
+          helperText="Optional"
         />
         <TextField
           label="Last Name"
@@ -749,21 +762,20 @@ const Checkout = () => {
 
       <Box sx={{ mb: 3 }}>
         <TextField
-          label="KRA PIN"
+          label="National ID Number"
           required
           fullWidth
-          placeholder="A001234567Z"
-          value={personalInfo.kraPin}
+          placeholder="12345678"
+          value={personalInfo.nationalId}
           onChange={(e) => {
-            const value = e.target.value.toUpperCase();
-            if (value.length <= 11) {
-              setPersonalInfo({ ...personalInfo, kraPin: value });
+            const value = e.target.value.replace(/\D/g, ""); // Only allow digits
+            if (value.length <= 8) {
+              setPersonalInfo({ ...personalInfo, nationalId: value });
             }
           }}
-          helperText="Enter your Kenya Revenue Authority PIN (11 characters)"
+          helperText="Enter your Kenya National ID number (8 digits)"
           inputProps={{
-            maxLength: 11,
-            style: { textTransform: "uppercase" },
+            maxLength: 8,
           }}
         />
       </Box>

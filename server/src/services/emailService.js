@@ -350,6 +350,315 @@ const sendHRReminderEmail = async (options) => {
 };
 
 /**
+ * Send order completion email to customer (Shopify-style)
+ * @param {Object} options - Email options
+ * @param {string} options.customerEmail - Customer email address
+ * @param {string} options.customerName - Customer full name
+ * @param {string} options.merchantName - Primary merchant name
+ * @param {string} options.orderNumber - Order number
+ * @param {Array} options.orderItems - Array of order items
+ * @param {Object} options.shippingAddress - Shipping address object
+ * @param {number} options.subtotal - Order subtotal
+ * @param {number} options.totalAmount - Total amount
+ * @param {Date} options.estimatedDeliveryDate - Estimated delivery date
+ * @returns {Promise<Object>} API response
+ */
+const sendOrderCompletionCustomerEmail = async (options) => {
+  const {
+    customerEmail,
+    customerName,
+    merchantName,
+    orderNumber,
+    orderItems,
+    shippingAddress,
+    subtotal,
+    totalAmount,
+    estimatedDeliveryDate
+  } = options;
+
+  const subject = `Order Confirmed - #${orderNumber}`;
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return `KSh${(amount || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  // Format delivery date
+  const deliveryDateStr = estimatedDeliveryDate
+    ? new Date(estimatedDeliveryDate).toLocaleDateString('en-US', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'short'
+      })
+    : 'To be confirmed';
+
+  // Generate items HTML
+  const itemsHtml = orderItems.map(item => `
+    <tr>
+      <td style="padding: 15px 0; border-bottom: 1px solid #e5e5e5;">
+        <div style="display: flex; align-items: center;">
+          <div style="width: 60px; height: 60px; background-color: #f5f5f5; border-radius: 8px; margin-right: 15px; display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 24px;">📦</span>
+          </div>
+          <div>
+            <div style="font-weight: 500; color: #333;">${item.productName}</div>
+            <div style="color: #666; font-size: 14px;">× ${item.quantity}</div>
+          </div>
+        </div>
+      </td>
+      <td style="padding: 15px 0; border-bottom: 1px solid #e5e5e5; text-align: right; font-weight: 600;">
+        ${formatCurrency(item.productPrice * item.quantity)}
+      </td>
+    </tr>
+  `).join('');
+
+  // Format billing address
+  const billingAddressHtml = `
+    ${customerName}<br>
+    ${shippingAddress.street}<br>
+    ${shippingAddress.city}, ${shippingAddress.county}<br>
+    ${shippingAddress.postalCode}<br>
+    ${shippingAddress.country || 'Kenya'}
+  `;
+
+  const body = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+    .header { padding: 20px 30px; border-bottom: 1px solid #e5e5e5; display: flex; justify-content: space-between; align-items: center; }
+    .merchant-name { font-size: 18px; font-weight: 600; color: #333; }
+    .order-number { font-size: 14px; color: #666; }
+    .thank-you { padding: 40px 30px; text-align: center; }
+    .thank-you h1 { margin: 0 0 10px; font-size: 24px; font-weight: 500; }
+    .thank-you p { margin: 0 0 20px; color: #666; }
+    .delivery-info { background-color: #f8f9fa; padding: 15px 30px; margin: 0 30px 30px; border-radius: 8px; }
+    .btn { display: inline-block; background-color: #1a365d; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; margin-right: 15px; }
+    .link { color: #1a365d; text-decoration: underline; }
+    .order-summary { padding: 0 30px 30px; }
+    .order-summary h3 { font-size: 16px; font-weight: 600; margin: 0 0 15px; color: #333; }
+    .totals { padding: 20px 30px; background-color: #f8f9fa; }
+    .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
+    .total-final { font-weight: bold; font-size: 18px; border-top: 2px solid #333; padding-top: 15px; margin-top: 10px; }
+    .customer-info { padding: 30px; background-color: #f8f9fa; margin: 30px; border-radius: 8px; }
+    .customer-info h4 { margin: 0 0 15px; font-size: 14px; font-weight: 600; color: #333; }
+    .customer-info p { margin: 0 0 15px; color: #555; font-size: 14px; }
+    .payment-method { background-color: #e8f5e9; padding: 10px 15px; border-radius: 6px; display: inline-block; color: #2e7d32; font-weight: 500; }
+    .footer { padding: 30px; text-align: center; color: #666; font-size: 12px; border-top: 1px solid #e5e5e5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="merchant-name">${merchantName}</div>
+      <div class="order-number">ORDER #${orderNumber}</div>
+    </div>
+
+    <div class="thank-you">
+      <h1>Thank you for your purchase!</h1>
+      <p>You'll receive an email when your order is ready for pickup or shipped.</p>
+      <p><strong>Estimated delivery: ${deliveryDateStr}</strong></p>
+    </div>
+
+    <div class="order-summary">
+      <h3>Order summary</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        ${itemsHtml}
+      </table>
+    </div>
+
+    <div class="totals">
+      <div class="total-row">
+        <span>Subtotal</span>
+        <span>${formatCurrency(subtotal)}</span>
+      </div>
+      <div class="total-row">
+        <span>Shipping</span>
+        <span>KSh0.00</span>
+      </div>
+      <div class="total-row">
+        <span>Taxes</span>
+        <span>KSh0.00</span>
+      </div>
+      <div class="total-row total-final">
+        <span>Total</span>
+        <span>${formatCurrency(totalAmount)}</span>
+      </div>
+      <div class="total-row" style="color: #666;">
+        <span>Total paid today</span>
+        <span>KSh0.00</span>
+      </div>
+    </div>
+
+    <div class="customer-info">
+      <h4>Customer information</h4>
+      <p><strong>Billing address</strong><br>${billingAddressHtml}</p>
+      <p><strong>Payment</strong><br><span class="payment-method">Lipa pole pole (BNPL)</span></p>
+    </div>
+
+    <div class="footer">
+      <p>If you have any questions, reply to this email or contact us at <a href="mailto:support@paya.co.ke">support@paya.co.ke</a></p>
+      <p>&copy; ${new Date().getFullYear()} Paya. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  return sendEmail({
+    to: customerEmail,
+    subject,
+    body
+  });
+};
+
+/**
+ * Send order notification email to merchant
+ * @param {Object} options - Email options
+ * @param {string} options.merchantEmail - Merchant email address
+ * @param {string} options.merchantName - Merchant business name
+ * @param {string} options.orderNumber - Order number
+ * @param {string} options.customerName - Customer full name
+ * @param {Array} options.orderItems - Array of merchant's order items
+ * @param {Object} options.shippingAddress - Shipping address object
+ * @param {number} options.totalAmount - Total amount for this merchant
+ * @returns {Promise<Object>} API response
+ */
+const sendOrderCompletionMerchantEmail = async (options) => {
+  const {
+    merchantEmail,
+    merchantName,
+    orderNumber,
+    customerName,
+    orderItems,
+    shippingAddress,
+    totalAmount
+  } = options;
+
+  const subject = `New Order Ready for Fulfillment - #${orderNumber}`;
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return `KSh${(amount || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  // Generate items HTML
+  const itemsHtml = orderItems.map(item => `
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e5e5;">${item.productName}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: center;">${item.quantity}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: right;">${formatCurrency(item.productPrice)}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: right; font-weight: 600;">${formatCurrency(item.productPrice * item.quantity)}</td>
+    </tr>
+  `).join('');
+
+  // Format shipping address
+  const shippingAddressHtml = `
+    ${customerName}<br>
+    ${shippingAddress.street}<br>
+    ${shippingAddress.city}, ${shippingAddress.county}<br>
+    ${shippingAddress.postalCode}<br>
+    ${shippingAddress.country || 'Kenya'}
+  `;
+
+  const body = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+    .header { background-color: #1a365d; color: white; padding: 25px 30px; }
+    .header h2 { margin: 0; font-size: 20px; }
+    .content { padding: 30px; }
+    .alert-box { background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px 20px; margin-bottom: 25px; }
+    .alert-box h3 { margin: 0 0 5px; color: #2e7d32; }
+    .section { margin-bottom: 25px; }
+    .section h4 { margin: 0 0 10px; color: #1a365d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .info-box { background-color: #f8f9fa; padding: 15px; border-radius: 6px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background-color: #f8f9fa; padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e5e5; }
+    .total-row { background-color: #f8f9fa; font-weight: bold; }
+    .footer { padding: 20px 30px; text-align: center; color: #666; font-size: 12px; border-top: 1px solid #e5e5e5; }
+    .btn { display: inline-block; background-color: #4caf50; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>📦 New Order Ready for Fulfillment</h2>
+    </div>
+
+    <div class="content">
+      <div class="alert-box">
+        <h3>Action Required</h3>
+        <p style="margin: 0;">Please prepare and ship the following order.</p>
+      </div>
+
+      <div class="section">
+        <h4>Order Details</h4>
+        <div class="info-box">
+          <p style="margin: 5px 0;"><strong>Order Number:</strong> ${orderNumber}</p>
+          <p style="margin: 5px 0;"><strong>Customer:</strong> ${customerName}</p>
+          <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h4>Items to Fulfill</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th style="text-align: center;">Qty</th>
+              <th style="text-align: right;">Unit Price</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+            <tr class="total-row">
+              <td colspan="3" style="padding: 12px; text-align: right;">Order Total:</td>
+              <td style="padding: 12px; text-align: right;">${formatCurrency(totalAmount)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <h4>Shipping Address</h4>
+        <div class="info-box">
+          ${shippingAddressHtml}
+        </div>
+      </div>
+
+      <p style="text-align: center; margin-top: 30px;">
+        <a href="https://merchant.paya.co.ke/orders" class="btn">View Order in Dashboard</a>
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>If you have any questions, contact us at <a href="mailto:merchant-support@paya.co.ke">merchant-support@paya.co.ke</a></p>
+      <p>&copy; ${new Date().getFullYear()} Paya. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  return sendEmail({
+    to: merchantEmail,
+    subject,
+    body
+  });
+};
+
+/**
  * Get MIME type from file extension
  */
 const getMimeType = (filePath) => {
@@ -370,5 +679,7 @@ module.exports = {
   sendEmail,
   sendHRVerificationEmail,
   sendCustomerFollowUpEmail,
-  sendHRReminderEmail
+  sendHRReminderEmail,
+  sendOrderCompletionCustomerEmail,
+  sendOrderCompletionMerchantEmail
 };

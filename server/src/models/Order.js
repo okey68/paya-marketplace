@@ -54,12 +54,13 @@ const orderSchema = new mongoose.Schema({
   },
   customerInfo: {
     firstName: { type: String, required: true },
+    middleName: { type: String }, // Optional middle name
     lastName: { type: String, required: true },
     email: { type: String, required: true },
     phoneCountryCode: { type: String, default: '+254' },
     phoneNumber: { type: String },
     dateOfBirth: { type: Date, required: true },
-    kraPin: { type: String, required: false } // Optional for guest orders
+    nationalId: { type: String, required: false } // National ID number
   },
   
   // Shipping Address
@@ -112,6 +113,7 @@ const orderSchema = new mongoose.Schema({
       'hr_verification_pending',  // Awaiting HR verification
       'hr_verified',              // HR verification successful
       'hr_unverified',            // HR verification failed
+      'order_complete',           // Order complete, ready for merchant fulfillment
       'payment_processing',
       'paid',
       'processing',
@@ -154,7 +156,14 @@ const orderSchema = new mongoose.Schema({
       dueDate: { type: Date },
       advanceRate: { type: Number, default: 0.99 }, // 99%
       advanceAmount: { type: Number }, // Amount advanced to merchant
-      advancedAt: { type: Date }
+      advancedAt: { type: Date },
+      // Paya internal agreement signing (admin confirms DocuSign completed)
+      payaAgreementSigned: { type: Boolean, default: false },
+      payaAgreementSignedAt: { type: Date },
+      payaAgreementSignedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      }
     }
   },
   
@@ -225,6 +234,19 @@ const orderSchema = new mongoose.Schema({
     },
     refundAmount: { type: Number },
     refundedAt: { type: Date }
+  },
+
+  // Order Completion (after HR verification and Paya agreement signed)
+  completion: {
+    completedAt: { type: Date },
+    completedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    customerEmailSent: { type: Boolean, default: false },
+    customerEmailSentAt: { type: Date },
+    merchantEmailSent: { type: Boolean, default: false },
+    merchantEmailSentAt: { type: Date }
   }
 }, {
   timestamps: true,
