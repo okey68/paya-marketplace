@@ -15,6 +15,11 @@ const userSchema = new mongoose.Schema({
     trim: true,
     maxlength: [50, 'Last name cannot exceed 50 characters']
   },
+  middleName: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'Middle name cannot exceed 50 characters']
+  },
   email: {
     type: String,
     required: [true, 'Email is required'],
@@ -43,9 +48,12 @@ const userSchema = new mongoose.Schema({
   },
   kraPin: {
     type: String,
-    required: function() { return this.role === 'customer'; },
     trim: true,
     uppercase: true
+  },
+  nationalId: {
+    type: String,
+    trim: true
   },
   phoneCountryCode: {
     type: String,

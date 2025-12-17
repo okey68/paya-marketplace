@@ -631,6 +631,9 @@ router.post(
       .trim()
       .isLength({ min: 1 })
       .withMessage("First name is required"),
+    body("middleName")
+      .optional()
+      .trim(),
     body("lastName")
       .trim()
       .isLength({ min: 1 })
@@ -650,10 +653,10 @@ router.post(
       .trim()
       .isLength({ min: 1 })
       .withMessage("Phone number is required"),
-    body("kraPin")
+    body("nationalId")
       .trim()
       .isLength({ min: 1 })
-      .withMessage("KRA PIN is required"),
+      .withMessage("National ID is required"),
   ],
   async (req, res) => {
     try {
@@ -667,12 +670,13 @@ router.post(
 
       const {
         firstName,
+        middleName,
         lastName,
         dateOfBirth,
         companyEmail,
         phoneCountryCode,
         phoneNumber,
-        kraPin,
+        nationalId,
       } = req.body;
 
       // Check if user already exists with this email
@@ -681,22 +685,24 @@ router.post(
       if (user) {
         // User exists - update their info and send new OTP
         user.firstName = firstName;
+        user.middleName = middleName || undefined;
         user.lastName = lastName;
         user.dateOfBirth = new Date(dateOfBirth);
         user.phoneCountryCode = phoneCountryCode;
         user.phoneNumber = phoneNumber;
-        user.kraPin = kraPin.toUpperCase();
+        user.nationalId = nationalId;
         user.isVerified = false; // Reset verification status to allow re-verification
       } else {
         // Create new customer user (without password - will be set later)
         user = new User({
           firstName,
+          middleName: middleName || undefined,
           lastName,
           email: companyEmail,
           dateOfBirth: new Date(dateOfBirth),
           phoneCountryCode,
           phoneNumber,
-          kraPin: kraPin.toUpperCase(),
+          nationalId,
           role: "customer",
           isVerified: false,
           isActive: true,

@@ -717,4 +717,99 @@ router.patch('/:id/cancel', authenticateToken, requireRole('customer'), [
   }
 });
 
+// ============================================
+// ORDER COMPLETION ENDPOINTS (Admin only)
+// ============================================
+
+const orderCompletionService = require('../services/orderCompletionService');
+
+/**
+ * @route   PATCH /api/orders/:id/mark-agreement-signed
+ * @desc    Mark Paya BNPL agreement as signed (admin confirms DocuSign completed)
+ * @access  Admin only
+ */
+router.patch('/:id/mark-agreement-signed', authenticateToken, requireRole('admin'), async (req, res) => {
+  try {
+    const order = await orderCompletionService.markPayaAgreementSigned(
+      req.params.id,
+      req.user._id
+    );
+
+    res.json({
+      success: true,
+      message: 'Agreement marked as signed',
+      order: {
+        _id: order._id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        payment: {
+          bnpl: {
+            payaAgreementSigned: order.payment?.bnpl?.payaAgreementSigned,
+            payaAgreementSignedAt: order.payment?.bnpl?.payaAgreementSignedAt
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error marking agreement signed:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Failed to mark agreement as signed'
+    });
+  }
+});
+
+/**
+ * @route   POST /api/orders/:id/complete
+ * @desc    Complete order and send notification emails to customer and merchant(s)
+ * @access  Admin only
+ */
+router.post('/:id/complete', authenticateToken, requireRole('admin'), async (req, res) => {
+  try {
+    const order = await orderCompletionService.completeOrder(
+      req.params.id,
+      req.user._id
+    );
+
+    res.json({
+      success: true,
+      message: 'Order completed and notifications sent',
+      order: {
+        _id: order._id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        completion: order.completion
+      }
+    });
+  } catch (error) {
+    console.error('Error completing order:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Failed to complete order'
+    });
+  }
+});
+
+/**
+ * @route   GET /api/orders/:id/completion-status
+ * @desc    Get order completion status (for admin UI)
+ * @access  Admin only
+ */
+router.get('/:id/completion-status', authenticateToken, requireRole('admin'), async (req, res) => {
+  try {
+    const status = await orderCompletionService.getCompletionStatus(req.params.id);
+
+    res.json({
+      success: true,
+      ...status
+    });
+  } catch (error) {
+    console.error('Error getting completion status:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Failed to get completion status'
+    });
+  }
+});
+
 module.exports = router;

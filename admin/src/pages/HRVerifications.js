@@ -126,11 +126,17 @@ const HRVerifications = () => {
     }
   };
 
+  const getCustomerFullName = (snapshot) => {
+    if (!snapshot) return '';
+    return `${snapshot.firstName || ''}${snapshot.middleName ? ' ' + snapshot.middleName : ''} ${snapshot.lastName || ''}`.trim();
+  };
+
   const downloadCSV = () => {
-    const headers = ['Order Number', 'Customer', 'Company', 'HR Email', 'Status', 'Created', 'Order Amount'];
+    const headers = ['Order Number', 'Customer', 'National ID', 'Company', 'HR Email', 'Status', 'Created', 'Order Amount'];
     const rows = verifications.map(v => [
       v.order?.orderNumber || '',
-      `${v.customerSnapshot?.firstName} ${v.customerSnapshot?.lastName}`,
+      getCustomerFullName(v.customerSnapshot),
+      v.customerSnapshot?.nationalId || '',
       v.hrContactSnapshot?.companyName || '',
       v.hrContactSnapshot?.email || '',
       v.status,
@@ -328,7 +334,7 @@ const HRVerifications = () => {
                     <td>
                       <div>
                         <strong>
-                          {verification.customerSnapshot?.firstName} {verification.customerSnapshot?.lastName}
+                          {getCustomerFullName(verification.customerSnapshot)}
                         </strong>
                         <div style={{ fontSize: '0.85rem', color: '#718096' }}>
                           {verification.customerSnapshot?.email}

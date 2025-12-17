@@ -8,6 +8,8 @@ const AdminOrderDetail = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showTimeline, setShowTimeline] = useState(false);
+  const [completingOrder, setCompletingOrder] = useState(false);
+  const [markingAgreement, setMarkingAgreement] = useState(false);
 
   useEffect(() => {
     fetchOrderDetail();
@@ -48,6 +50,37 @@ const AdminOrderDetail = () => {
       
     } catch (error) {
       console.error('Error updating order status:', error);
+    }
+  };
+
+  const handleMarkAgreementSigned = async () => {
+    try {
+      setMarkingAgreement(true);
+      await axios.patch(`/orders/${id}/mark-agreement-signed`);
+      fetchOrderDetail();
+    } catch (error) {
+      console.error('Error marking agreement signed:', error);
+      alert(error.response?.data?.message || 'Failed to mark agreement as signed');
+    } finally {
+      setMarkingAgreement(false);
+    }
+  };
+
+  const handleCompleteOrder = async () => {
+    if (!window.confirm('Complete this order and send notification emails to customer and merchant(s)?')) {
+      return;
+    }
+
+    try {
+      setCompletingOrder(true);
+      await axios.post(`/orders/${id}/complete`);
+      fetchOrderDetail();
+      alert('Order completed! Notification emails have been sent.');
+    } catch (error) {
+      console.error('Error completing order:', error);
+      alert(error.response?.data?.message || 'Failed to complete order');
+    } finally {
+      setCompletingOrder(false);
     }
   };
 
@@ -133,9 +166,9 @@ const AdminOrderDetail = () => {
     );
   }
 
-  const customerName = order.customer 
-    ? `${order.customer.firstName} ${order.customer.lastName}` 
-    : `${order.customerInfo?.firstName || ''} ${order.customerInfo?.lastName || ''}`.trim() || 'N/A';
+  const customerName = order.customer
+    ? `${order.customer.firstName}${order.customer.middleName ? ' ' + order.customer.middleName : ''} ${order.customer.lastName}`
+    : `${order.customerInfo?.firstName || ''}${order.customerInfo?.middleName ? ' ' + order.customerInfo.middleName : ''} ${order.customerInfo?.lastName || ''}`.trim() || 'N/A';
 
   const customerEmail = order.customer?.email || order.customerInfo?.email || 'N/A';
   const paymentSchedule = generatePaymentSchedule(order.payment?.bnpl);
@@ -173,6 +206,10 @@ const AdminOrderDetail = () => {
             <option value="pending_payment">Pending Payment</option>
             <option value="underwriting">Underwriting</option>
             <option value="approved">Approved</option>
+            <option value="hr_verification_pending">HR Verification Pending</option>
+            <option value="hr_verified">HR Verified</option>
+            <option value="hr_unverified">HR Unverified</option>
+            <option value="order_complete">Order Complete</option>
             <option value="paid">Paid</option>
             <option value="processing">Processing</option>
             <option value="shipped">Shipped</option>
@@ -208,6 +245,12 @@ const AdminOrderDetail = () => {
                   {order.customerInfo?.phoneCountryCode || order.customer?.phoneCountryCode || '+254'}{' '}
                   {order.customerInfo?.phoneNumber || order.customer?.phoneNumber}
                 </strong>
+              </div>
+            )}
+            {(order.customerInfo?.nationalId || order.customer?.nationalId) && (
+              <div className="customer-item">
+                <span>National ID:</span>
+                <strong>{order.customerInfo?.nationalId || order.customer?.nationalId}</strong>
               </div>
             )}
             <div className="customer-item">
@@ -678,6 +721,167 @@ const AdminOrderDetail = () => {
                 </button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Order Completion Section - Show when order is HR verified */}
+        {order.status === 'hr_verified' && order.payment?.method === 'paya_bnpl' && (
+          <div className="info-card" style={{
+            marginTop: '1.5rem',
+            backgroundColor: '#f0fdf4',
+            border: '2px solid #22c55e',
+            borderRadius: '8px',
+            padding: '1.5rem'
+          }}>
+            <h3 style={{
+              marginBottom: '1rem',
+              color: '#166534',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '1.1rem'
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              Ready for Order Completion
+            </h3>
+
+            <p style={{ marginBottom: '1rem', color: '#374151' }}>
+              HR verification is complete. Please verify the Paya agreement is signed before completing the order.
+            </p>
+
+            {/* Checklist */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              {/* HR Verified - Always checked if we're here */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ color: '#22c55e', fontSize: '1.25rem' }}>✓</span>
+                <span style={{ color: '#166534', fontWeight: '500' }}>HR Verification Complete</span>
+              </div>
+
+              {/* Paya Agreement Checkbox */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {order.payment?.bnpl?.payaAgreementSigned ? (
+                  <>
+                    <span style={{ color: '#22c55e', fontSize: '1.25rem' }}>✓</span>
+                    <span style={{ color: '#166534', fontWeight: '500' }}>
+                      Paya BNPL Agreement Signed
+                    </span>
+                    {order.payment?.bnpl?.payaAgreementSignedAt && (
+                      <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                        ({formatDate(order.payment.bnpl.payaAgreementSignedAt)})
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="checkbox"
+                      checked={false}
+                      onChange={handleMarkAgreementSigned}
+                      disabled={markingAgreement}
+                      style={{ width: '20px', height: '20px', accentColor: '#22c55e', cursor: 'pointer' }}
+                    />
+                    <span style={{ color: '#374151' }}>
+                      {markingAgreement ? 'Marking as signed...' : 'Paya BNPL Agreement Signed'}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Complete Order Button */}
+            <button
+              onClick={handleCompleteOrder}
+              disabled={!order.payment?.bnpl?.payaAgreementSigned || completingOrder}
+              style={{
+                backgroundColor: order.payment?.bnpl?.payaAgreementSigned ? '#22c55e' : '#9ca3af',
+                color: 'white',
+                padding: '0.75rem 1.5rem',
+                borderRadius: '6px',
+                border: 'none',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: order.payment?.bnpl?.payaAgreementSigned ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              {completingOrder ? (
+                <>
+                  <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
+                  Completing Order...
+                </>
+              ) : (
+                <>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  Complete Order & Send Notifications
+                </>
+              )}
+            </button>
+
+            {!order.payment?.bnpl?.payaAgreementSigned && (
+              <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#dc2626' }}>
+                Please confirm the Paya agreement is signed before completing the order.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Order Completed Section - Show when order is complete */}
+        {order.status === 'order_complete' && (
+          <div className="info-card" style={{
+            marginTop: '1.5rem',
+            backgroundColor: '#f0fdf4',
+            border: '2px solid #22c55e',
+            borderRadius: '8px',
+            padding: '1.5rem'
+          }}>
+            <h3 style={{
+              color: '#166534',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginBottom: '0.75rem'
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              Order Completed
+            </h3>
+            <p style={{ color: '#374151', margin: '0.5rem 0' }}>
+              <strong>Completed on:</strong> {order.completion?.completedAt ? formatDate(order.completion.completedAt) : '-'}
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+              {order.completion?.customerEmailSent && (
+                <span style={{
+                  fontSize: '0.875rem',
+                  color: '#166534',
+                  backgroundColor: '#dcfce7',
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '4px'
+                }}>
+                  ✓ Customer email sent
+                </span>
+              )}
+              {order.completion?.merchantEmailSent && (
+                <span style={{
+                  fontSize: '0.875rem',
+                  color: '#166534',
+                  backgroundColor: '#dcfce7',
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '4px'
+                }}>
+                  ✓ Merchant email sent
+                </span>
+              )}
+            </div>
           </div>
         )}
 

@@ -44,11 +44,19 @@ const Orders = () => {
     }).format(amount);
   };
 
+  const getFullName = (customer, customerInfo) => {
+    if (customer) {
+      return `${customer.firstName}${customer.middleName ? ' ' + customer.middleName : ''} ${customer.lastName}`;
+    }
+    return `${customerInfo?.firstName || ''}${customerInfo?.middleName ? ' ' + customerInfo.middleName : ''} ${customerInfo?.lastName || ''}`.trim();
+  };
+
   const downloadCSV = () => {
-    const headers = ['Customer', 'Email', 'Merchant', 'Order Number', 'Total Amount', 'Advanced (99%)', 'Status', 'Date'];
+    const headers = ['Customer', 'Email', 'National ID', 'Merchant', 'Order Number', 'Total Amount', 'Advanced (99%)', 'Status', 'Date'];
     const rows = orders.map(order => [
-      order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : `${order.customerInfo.firstName} ${order.customerInfo.lastName}`,
+      getFullName(order.customer, order.customerInfo),
       order.customerInfo.email,
+      order.customerInfo?.nationalId || order.customer?.nationalId || '',
       order.items && order.items.length > 0 && order.items[0].merchant ? order.items[0].merchant.businessInfo?.businessName || 'Unknown' : 'Unknown',
       order.orderNumber,
       order.totalAmount,
@@ -220,10 +228,7 @@ const Orders = () => {
                     <td>
                       <div>
                         <div style={{ fontWeight: '500' }}>
-                          {order.customer ? 
-                            `${order.customer.firstName} ${order.customer.lastName}` : 
-                            `${order.customerInfo.firstName} ${order.customerInfo.lastName}`
-                          }
+                          {getFullName(order.customer, order.customerInfo)}
                         </div>
                         <small style={{ color: '#718096', fontSize: '0.75rem' }}>
                           {order.customerInfo.email}

@@ -70,11 +70,14 @@ const generateBNPLAgreement = async (options) => {
 
       doc.font('Helvetica-Bold')
         .text('2. BORROWER:');
+      const fullName = customer.middleName
+        ? `${customer.firstName} ${customer.middleName} ${customer.lastName}`
+        : `${customer.firstName} ${customer.lastName}`;
       doc.font('Helvetica')
-        .text(`   Name: ${customer.firstName} ${customer.lastName}`)
+        .text(`   Name: ${fullName}`)
         .text(`   Email: ${customer.email}`)
         .text(`   Phone: ${customer.phoneCountryCode || '+254'}${customer.phoneNumber || 'N/A'}`)
-        .text(`   KRA PIN: ${customer.kraPin || 'N/A'}`)
+        .text(`   National ID: ${customer.nationalId || 'N/A'}`)
         .text('   ("Customer" or "Borrower")');
 
       doc.moveDown(1.5);
