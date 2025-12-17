@@ -30,6 +30,7 @@ import {
   ViewList as ListViewIcon,
 } from "@mui/icons-material";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import ProductCard from "../components/ProductCard";
 import api from "../utils/api";
 import toast from "react-hot-toast";
@@ -46,8 +47,12 @@ const Marketplace = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  // Wishlist localStorage key
+  const getWishlistKey = () => `wishlist_${user?._id || 'guest'}`;
 
   const categories = [
     "All Categories",
@@ -104,7 +109,23 @@ const Marketplace = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+    loadWishlistFromStorage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // Load wishlist IDs from localStorage
+  const loadWishlistFromStorage = () => {
+    try {
+      const savedWishlist = localStorage.getItem(getWishlistKey());
+      if (savedWishlist) {
+        const wishlistItems = JSON.parse(savedWishlist);
+        const wishlistIds = wishlistItems.map((item: any) => item.product?._id || item._id);
+        setWishlist(wishlistIds);
+      }
+    } catch (error) {
+      console.error('Error loading wishlist:', error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -133,16 +154,47 @@ const Marketplace = () => {
   };
 
   const toggleWishlist = (productId: string) => {
-    setWishlist((prev) => {
-      const isInWishlist = prev.includes(productId);
+    const product = products.find((p) => p._id === productId);
+    if (!product) return;
+
+    try {
+      const savedWishlist = localStorage.getItem(getWishlistKey());
+      let wishlistItems = savedWishlist ? JSON.parse(savedWishlist) : [];
+
+      const isInWishlist = wishlist.includes(productId);
+
       if (isInWishlist) {
+        // Remove from wishlist
+        wishlistItems = wishlistItems.filter(
+          (item: any) => (item.product?._id || item._id) !== productId
+        );
+        setWishlist((prev) => prev.filter((id) => id !== productId));
         toast.success("Removed from wishlist");
-        return prev.filter((id) => id !== productId);
       } else {
+        // Add to wishlist
+        const wishlistItem = {
+          _id: productId,
+          product: {
+            _id: product._id,
+            name: product.name,
+            price: product.price,
+            images: product.images || [],
+            merchantName: product.merchantName || '',
+            category: product.category || '',
+            inventory: product.inventory,
+          },
+          addedAt: new Date().toISOString(),
+        };
+        wishlistItems.push(wishlistItem);
+        setWishlist((prev) => [...prev, productId]);
         toast.success("Added to wishlist");
-        return [...prev, productId];
       }
-    });
+
+      localStorage.setItem(getWishlistKey(), JSON.stringify(wishlistItems));
+    } catch (error) {
+      console.error('Error updating wishlist:', error);
+      toast.error('Failed to update wishlist');
+    }
   };
 
   const filteredProducts = products

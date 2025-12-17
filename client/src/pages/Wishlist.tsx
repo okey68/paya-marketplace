@@ -17,6 +17,7 @@ import {
   Favorite as FavoriteIcon,
   ArrowBack as ArrowBackIcon,
   Store as StoreIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -41,7 +42,7 @@ interface WishlistItem {
 
 const Wishlist = () => {
   const { user } = useAuth();
-  const { addToCart } = useCart();
+  const { addToCart, items: cartItems } = useCart();
   const navigate = useNavigate();
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,22 +57,21 @@ const Wishlist = () => {
 
   const fetchWishlist = async () => {
     try {
-      // Try to fetch from API first
-      if (user) {
-        try {
-          const response = await api.get('/wishlist');
-          if (response.data && response.data.items) {
-            setWishlistItems(response.data.items);
-            setLoading(false);
-            return;
-          }
-        } catch (error) {
-          // If API fails, fall back to localStorage
-          console.log('Using localStorage wishlist');
-        }
-      }
+      // TODO: Enable API endpoint when backend is ready
+      // if (user) {
+      //   try {
+      //     const response = await api.get('/wishlist');
+      //     if (response.data && response.data.items) {
+      //       setWishlistItems(response.data.items);
+      //       setLoading(false);
+      //       return;
+      //     }
+      //   } catch (error) {
+      //     console.log('Using localStorage wishlist');
+      //   }
+      // }
 
-      // Fallback to localStorage
+      // Using localStorage for wishlist storage
       const savedWishlist = localStorage.getItem(getWishlistKey());
       if (savedWishlist) {
         const parsedWishlist = JSON.parse(savedWishlist);
@@ -88,18 +88,25 @@ const Wishlist = () => {
     localStorage.setItem(getWishlistKey(), JSON.stringify(items));
   };
 
+  // Check if a product is in the cart
+  const isInCart = (productId: string) => {
+    return cartItems.some((item: any) =>
+      item.id === productId || item.product?._id === productId
+    );
+  };
+
   const handleRemoveItem = async (itemId: string) => {
     try {
-      // Try API first
-      if (user) {
-        try {
-          await api.delete(`/wishlist/${itemId}`);
-        } catch (error) {
-          console.log('API remove failed, updating local storage');
-        }
-      }
+      // TODO: Enable API endpoint when backend is ready
+      // if (user) {
+      //   try {
+      //     await api.delete(`/wishlist/${itemId}`);
+      //   } catch (error) {
+      //     console.log('API remove failed, updating local storage');
+      //   }
+      // }
 
-      // Update local state
+      // Update local state and localStorage
       const updatedItems = wishlistItems.filter(
         (item) => item._id !== itemId && item.product?._id !== itemId
       );
@@ -145,6 +152,25 @@ const Wishlist = () => {
       currency: 'KES',
       minimumFractionDigits: 0,
     }).format(amount);
+  };
+
+  // Helper function to extract image path from various formats
+  const getImagePath = (image: any): string | null => {
+    if (!image) return null;
+    
+    // If it's a string, use it directly
+    if (typeof image === 'string') {
+      return image;
+    }
+    
+    // If it's an object, try different properties
+    if (typeof image === 'object') {
+      if (image.path) return image.path;
+      if (image.filename) return image.filename;
+      if (image._id) return image._id;
+    }
+    
+    return null;
   };
 
   if (loading) {
@@ -290,10 +316,10 @@ const Wishlist = () => {
                   }}
                   onClick={() => navigate(`/product/${item.product?._id}`)}
                 >
-                  {item.product?.images?.[0] ? (
+                  {getImagePath(item.product?.images?.[0]) ? (
                     <Box
                       component="img"
-                      src={getImageUrl(item.product.images[0])}
+                      src={getImageUrl(getImagePath(item.product.images[0]))}
                       alt={item.product?.name}
                       sx={{
                         width: '100%',
@@ -362,15 +388,24 @@ const Wishlist = () => {
                   <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                     <Button
                       variant="contained"
-                      startIcon={<CartIcon />}
+                      startIcon={isInCart(item.product?._id) ? <CheckCircleIcon /> : <CartIcon />}
                       onClick={() => handleAddToCart(item)}
-                      disabled={item.product?.inventory?.quantity === 0}
+                      disabled={item.product?.inventory?.quantity === 0 || isInCart(item.product?._id)}
                       sx={{
-                        bgcolor: '#667FEA',
-                        '&:hover': { bgcolor: '#4338ca' },
+                        bgcolor: isInCart(item.product?._id) ? '#10b981' : '#667FEA',
+                        '&:hover': { bgcolor: isInCart(item.product?._id) ? '#059669' : '#4338ca' },
+                        '&:disabled': {
+                          bgcolor: isInCart(item.product?._id) ? '#10b981' : '#e2e8f0',
+                          color: isInCart(item.product?._id) ? 'white' : '#94a3b8',
+                          opacity: isInCart(item.product?._id) ? 1 : 0.6,
+                        },
                       }}
                     >
-                      Add to Cart
+                      {item.product?.inventory?.quantity === 0
+                        ? 'Out of Stock'
+                        : isInCart(item.product?._id)
+                        ? 'Added to Cart'
+                        : 'Add to Cart'}
                     </Button>
                     <Button
                       variant="outlined"
