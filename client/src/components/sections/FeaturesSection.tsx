@@ -8,7 +8,11 @@ import {
 
 const FeaturesSection: React.FC = () => {
   return (
-    <Box sx={{ py: 10, bgcolor: '#fff' }}>
+    <Box sx={{ py: 10, bgcolor: '#fff' }}
+    // /#about
+    // href="#about"
+    id="about"
+    >
       <Container maxWidth="lg">
         <Box sx={{ textAlign: 'center', mb: 8 }}>
           <Typography 

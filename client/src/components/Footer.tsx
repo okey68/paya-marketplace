@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -17,30 +17,51 @@ import {
 } from '@mui/icons-material';
 
 const Footer = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    if (path.includes('#')) {
+      e.preventDefault();
+      const [basePath, hash] = path.split('#');
+      
+      if (location.pathname === '/' || basePath === '/') {
+        // Already on home page, just scroll to section
+        const element = document.getElementById(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      } else {
+        // Navigate to home page with hash
+        navigate('/', { state: { scrollTo: hash } });
+      }
+    }
+  };
+
   const footerSections = [
     {
       title: 'For Customers',
       links: [
         { label: 'Browse Products', path: '/marketplace' },
-        { label: 'How BNPL Works', path: '/how-it-works' },
+        { label: 'How BNPL Works', path: '/#how-it-works' },
         { label: 'Customer Support', path: '/support' },
-        { label: 'Track Your Order', path: '/track-order' },
+        // { label: 'Track Your Order', path: '/track-order' },
       ],
     },
     {
       title: 'For Merchants',
       links: [
-        { label: 'Become a Seller', path: '/register?role=merchant' },
-        { label: 'Seller Resources', path: '/seller-resources' },
-        { label: 'Fee Structure', path: '/fees' },
-        { label: 'Merchant Support', path: '/merchant-support' },
+        { label: 'Become a Seller', path: '/register' },
+        { label: 'Seller Resources', path: '/merchants' },
+        // { label: 'Fee Structure', path: '/fees' },
+        { label: 'Merchant Support', path: '/support' },
       ],
     },
     {
       title: 'Company',
       links: [
-        { label: 'About Us', path: '/about' },
-        { label: 'Careers', path: '/careers' },
+        { label: 'About Us', path: '/#about' },
+        // { label: 'Careers', path: '/careers' },
         { label: 'Privacy Policy', path: '/privacy' },
         { label: 'Terms of Service', path: '/terms' },
       ],
@@ -154,10 +175,12 @@ const Footer = () => {
                     key={link.path}
                     component={RouterLink}
                     to={link.path}
+                    onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleLinkClick(e, link.path)}
                     color="grey.400"
                     underline="none"
                     sx={{
                       fontSize: '0.875rem',
+                      cursor: 'pointer',
                       '&:hover': {
                         color: 'primary.main',
                       },

@@ -25,6 +25,8 @@ import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
 import Support from "./pages/Support";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import "./App.css";
 
 function App() {
@@ -53,6 +55,8 @@ function App() {
                   />
                   <Route path="/merchants/:id" element={<MerchantDetail />} />
                   <Route path="/support" element={<Support />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
 
                   {/* Protected Routes - Require Authentication */}
                   <Route
